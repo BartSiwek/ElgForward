@@ -20,6 +20,8 @@ if(MSVC)
   endforeach()
 endif()
 
+include("${CMAKE_EXTRAS}/dxfw.cmake")
+
 set(PROJECT_ASSETS_DIR "${ROOT_DIR}/assets")
 set(PROJECT_INCLUDE_DIR "${ROOT_DIR}/src")
 set(PROJECT_SOURCE_DIR "${ROOT_DIR}/src")
@@ -36,8 +38,7 @@ include_directories("${PROJECT_INCLUDE_DIR}")
 
 add_executable(${PROJECT_NAME} "${PROJECT_SRCS}")
 
-# dxfw
-target_link_libraries(${PROJECT_NAME} d3d11.lib D3DCompiler.lib Shlwapi.lib)
+target_link_libraries(${PROJECT_NAME} libdxfw d3d11.lib D3DCompiler.lib Shlwapi.lib)
 
 set_target_properties(${PROJECT_NAME} PROPERTIES COMPILE_DEFINITIONS "_UNICODE;UNICODE")
 # set_target_properties(${PROJECT_NAME} PROPERTIES LINK_FLAGS "/subsystem:windows /ENTRY:mainCRTStartup")
