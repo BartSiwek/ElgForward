@@ -22,6 +22,7 @@ endif()
 
 include("${CMAKE_EXTRAS}/dxfw.cmake")
 include("${CMAKE_EXTRAS}/tinyobjloader.cmake")
+include("${CMAKE_EXTRAS}/json.cmake")
 
 set(PROJECT_ASSETS_DIR "${ROOT_DIR}/assets")
 set(PROJECT_INCLUDE_DIR "${ROOT_DIR}/src")
@@ -39,7 +40,7 @@ include_directories("${PROJECT_INCLUDE_DIR}")
 
 add_executable(${PROJECT_NAME} "${PROJECT_SRCS}")
 
-target_link_libraries(${PROJECT_NAME} libdxfw libtinyobjloader d3d11.lib D3DCompiler.lib Shlwapi.lib)
+target_link_libraries(${PROJECT_NAME} libdxfw libtinyobjloader libjson d3d11.lib D3DCompiler.lib Shlwapi.lib)
 
 set_target_properties(${PROJECT_NAME} PROPERTIES COMPILE_DEFINITIONS "_UNICODE;UNICODE")
 # set_target_properties(${PROJECT_NAME} PROPERTIES LINK_FLAGS "/subsystem:windows /ENTRY:mainCRTStartup")

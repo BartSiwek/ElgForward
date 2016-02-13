@@ -22,7 +22,7 @@ if(NOT DEFINED TINYOBJLOADER_CONFIGURED)
 	set_target_properties(libtinyobjloader PROPERTIES
 	  "IMPORTED_IMPLIB" "${binary_dir}/${CMAKE_CFG_INTDIR}/tinyobjloader.lib"
 	)
-	include_directories("${source_dir}/include")
+	include_directories("${source_dir}")
 
 	set(TINYOBJLOADER_CONFIGURED TRUE)
 endif()
