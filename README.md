@@ -1,5 +1,5 @@
 # ElgForward
-## An experimental forward renderer written with DirectX 11
+An experimental forward renderer written with DirectX 11
 
 Goals:
 - Support Blinn-Phong and Cook-Torrance shading models
