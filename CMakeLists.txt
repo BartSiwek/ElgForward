@@ -2,6 +2,8 @@ cmake_minimum_required(VERSION 3.4)
 
 project(ElgForward VERSION 0.1 LANGUAGES CXX)
 
+include(CheckIncludeFiles)
+
 set(ROOT_DIR "${CMAKE_CURRENT_SOURCE_DIR}")
 
 set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/lib)
@@ -28,26 +30,28 @@ set(PROJECT_ASSETS_DIR "${ROOT_DIR}/assets")
 set(PROJECT_INCLUDE_DIR "${ROOT_DIR}/src")
 set(PROJECT_SOURCE_DIR "${ROOT_DIR}/src")
 
-set(PROJECT_ASSETS
-  # ${PROJECT_ASSETS_DIR}/shaders.hlsl
-)
+file(GLOB_RECURSE PROJECT_ASSETS ${PROJECT_ASSETS_DIR}/*)
+# file(GLOB_RECURSE PROJECT_SHADERS ${PROJECT_ASSETS_DIR}/*.hlsl)
 
 set(PROJECT_SRCS
   ${PROJECT_SOURCE_DIR}/main.cpp
+  ${PROJECT_SOURCE_DIR}/interleaved_mesh.h
 )
 
 include_directories("${PROJECT_INCLUDE_DIR}")
 
-add_executable(${PROJECT_NAME} "${PROJECT_SRCS}")
+add_executable(${PROJECT_NAME} "${PROJECT_SRCS}" "${PROJECT_SHADERS}")
 
 target_link_libraries(${PROJECT_NAME} libdxfw libtinyobjloader libjson d3d11.lib D3DCompiler.lib Shlwapi.lib)
 
 set_target_properties(${PROJECT_NAME} PROPERTIES COMPILE_DEFINITIONS "_UNICODE;UNICODE")
-# set_target_properties(${PROJECT_NAME} PROPERTIES LINK_FLAGS "/subsystem:windows /ENTRY:mainCRTStartup")
+set_target_properties(${PROJECT_NAME} PROPERTIES LINK_FLAGS "/subsystem:windows /ENTRY:mainCRTStartup")
 
+get_filename_component(PROJECT_ASSETS_PARENT_DIR ${PROJECT_ASSETS_DIR} DIRECTORY)
 foreach(CURRENT_ASSET ${PROJECT_ASSETS})
+	file(RELATIVE_PATH CURRENT_ASSET_PATH ${PROJECT_ASSETS_PARENT_DIR} ${CURRENT_ASSET})
 	add_custom_command(TARGET ${PROJECT_NAME} POST_BUILD
-                   	   COMMAND ${CMAKE_COMMAND} -E copy_if_different "${CURRENT_ASSET}" $<TARGET_FILE_DIR:${PROJECT_NAME}>)
+                   	   COMMAND ${CMAKE_COMMAND} -E copy_if_different "${CURRENT_ASSET}" "$<TARGET_FILE_DIR:${PROJECT_NAME}>/${CURRENT_ASSET_PATH}")
 endforeach()
 
 
