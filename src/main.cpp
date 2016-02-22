@@ -169,12 +169,12 @@ void CreateViewport(dxfwWindow* window, D3D11_VIEWPORT* viewport) {
 }
 
 bool InitializeScene(const filesystem::path& base_path, dxfwWindow* window, DirectXState* state, Scene* scene) {
-  bool vs_ok = LoadVertexShader(base_path / "assets/shaders/sahders.hlsl", state->device.Get(), &scene->material.VertexShader, "VS", "vs_4_0");
+  bool vs_ok = LoadVertexShader(base_path / "assets/shaders/shaders.hlsl", state->device.Get(), &scene->material.VertexShader, "VS", "vs_4_0");
   if (!vs_ok) {
     return false;
   }
 
-  bool ps_ok = LoadPixelShader(base_path / "assets/shaders/sahders.hlsl", state->device.Get(), &scene->material.PixelShader, "PS", "ps_4_0");
+  bool ps_ok = LoadPixelShader(base_path / "assets/shaders/shaders.hlsl", state->device.Get(), &scene->material.PixelShader, "PS", "ps_4_0");
   if (!ps_ok) {
     return false;
   }

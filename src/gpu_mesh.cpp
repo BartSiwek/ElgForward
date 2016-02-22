@@ -58,22 +58,22 @@ bool CreateIndexBuffer(const std::vector<IndexType>& data, ID3D11Device* device,
 }
 
 bool CreateGpuMesh(const Mesh& mesh, ID3D11Device* device, GpuMesh* gpu_mesh) {
-  bool positions_ok = CreateVertexBuffer(mesh.Positions(), device, gpu_mesh->position_vertex_buffer.GetAddressOf());
+  bool positions_ok = CreateVertexBuffer(mesh.Positions, device, gpu_mesh->position_vertex_buffer.GetAddressOf());
   if (!positions_ok) {
     return false;
   }
 
-  bool normals_ok = CreateVertexBuffer(mesh.Normals(), device, gpu_mesh->normal_vertex_buffer.GetAddressOf());
+  bool normals_ok = CreateVertexBuffer(mesh.Normals, device, gpu_mesh->normal_vertex_buffer.GetAddressOf());
   if (!normals_ok) {
     return false;
   }
 
-  bool texture_coords_ok = CreateVertexBuffer(mesh.TextureCoords(), device, gpu_mesh->texture_vertex_buffer.GetAddressOf());
+  bool texture_coords_ok = CreateVertexBuffer(mesh.TextureCoords, device, gpu_mesh->texture_vertex_buffer.GetAddressOf());
   if (!texture_coords_ok) {
     return false;
   }
 
-  bool indices_ok = CreateIndexBuffer(mesh.Indices(), device, gpu_mesh->index_buffer.GetAddressOf());
+  bool indices_ok = CreateIndexBuffer(mesh.Indices, device, gpu_mesh->index_buffer.GetAddressOf());
   if (!indices_ok) {
     return false;
   }

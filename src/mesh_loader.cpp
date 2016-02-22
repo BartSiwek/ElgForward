@@ -56,16 +56,14 @@ bool LoadMesh(const filesystem::path& path, std::vector<Mesh>* meshes) {
     meshes->emplace_back(vertex_count, index_count);
     auto& mesh = meshes->back();
 
-    for (size_t v = 0; v < 3 * vertex_count; v += 3) {
-      DirectX::XMFLOAT3 position = { shape.mesh.positions[v], shape.mesh.positions[v + 1], shape.mesh.positions[v + 2] };
-      DirectX::XMFLOAT3 normal = {shape.mesh.normals[v], shape.mesh.normals[v + 1], shape.mesh.normals[v + 2] };
-      DirectX::XMFLOAT2 tex_coord = { shape.mesh.texcoords[v], shape.mesh.texcoords[v + 1] };
-
-      mesh.AddVertex(position, normal, tex_coord);
+    for (size_t v = 0; v < vertex_count; ++v) {
+      mesh.Positions.emplace_back(shape.mesh.positions[3 * v], shape.mesh.positions[3 * v + 1], shape.mesh.positions[3 * v + 2]);
+      mesh.Normals.emplace_back(shape.mesh.normals[3 * v], shape.mesh.normals[3 * v + 1], shape.mesh.normals[3 * v + 2]);
+      mesh.TextureCoords.emplace_back(shape.mesh.texcoords[2 * v], shape.mesh.texcoords[2 * v + 1]);
     }
 
     for (size_t i = 0; i < shape.mesh.indices.size(); ++i) {
-      mesh.AddIndex(shape.mesh.indices[i]);
+      mesh.Indices.emplace_back(shape.mesh.indices[i]);
     }
   }
 
