@@ -35,7 +35,19 @@ file(GLOB_RECURSE PROJECT_ASSETS ${PROJECT_ASSETS_DIR}/*)
 
 set(PROJECT_SRCS
   ${PROJECT_SOURCE_DIR}/main.cpp
-  ${PROJECT_SOURCE_DIR}/interleaved_mesh.h
+  ${PROJECT_SOURCE_DIR}/filesystem.h
+  ${PROJECT_SOURCE_DIR}/filesystem.cpp
+  ${PROJECT_SOURCE_DIR}/dxfw_helpers.h
+  ${PROJECT_SOURCE_DIR}/material.h
+  ${PROJECT_SOURCE_DIR}/mesh.h
+  ${PROJECT_SOURCE_DIR}/gpu_mesh.h
+  ${PROJECT_SOURCE_DIR}/gpu_mesh.cpp
+  ${PROJECT_SOURCE_DIR}/mesh_loader.h
+  ${PROJECT_SOURCE_DIR}/mesh_loader.cpp
+  ${PROJECT_SOURCE_DIR}/shader.h
+  ${PROJECT_SOURCE_DIR}/shader.cpp
+  ${PROJECT_SOURCE_DIR}/vertex_data.h
+  ${PROJECT_SOURCE_DIR}/vertex_data.cpp
 )
 
 include_directories("${PROJECT_INCLUDE_DIR}")
