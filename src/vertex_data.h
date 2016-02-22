@@ -54,7 +54,7 @@ struct VertexDataNormal {
   VertexDataNormal& operator=(VertexDataNormal&&) = default;
 
   static const uint32_t InputLayoutElementCount = 1;
-  static const D3D11_INPUT_ELEMENT_DESC InputLayout[InputLayoutElementCount];
+  static const std::array<D3D11_INPUT_ELEMENT_DESC, InputLayoutElementCount> InputLayout;
 
   DirectX::XMFLOAT3 Normal;
 };
@@ -63,7 +63,7 @@ static_assert(sizeof(VertexDataNormal<0>) == sizeof(DirectX::XMFLOAT3), "Invalid
 static_assert(alignof(VertexDataNormal<0>) == alignof(DirectX::XMFLOAT3), "Invalid VertexDataNormal alignment");
 
 template<uint32_t InputSlot>
-const D3D11_INPUT_ELEMENT_DESC VertexDataNormal<InputSlot>::InputLayout[VertexDataNormal<InputSlot>::InputLayoutElementCount] = {
+const std::array<D3D11_INPUT_ELEMENT_DESC, VertexDataNormal<InputSlot>::InputLayoutElementCount> VertexDataNormal<InputSlot>::InputLayout = {
   { "NORMAL", 0, DXGI_FORMAT_R32G32B32_FLOAT, InputSlot, D3D11_APPEND_ALIGNED_ELEMENT, D3D11_INPUT_PER_VERTEX_DATA, 0 },
 };
 
@@ -85,7 +85,7 @@ struct VertexDataTexture {
   VertexDataTexture& operator=(VertexDataTexture&&) = default;
 
   static const uint32_t InputLayoutElementCount = 1;
-  static const D3D11_INPUT_ELEMENT_DESC InputLayout[InputLayoutElementCount];
+  static const std::array<D3D11_INPUT_ELEMENT_DESC, InputLayoutElementCount> InputLayout;
 
   DirectX::XMFLOAT2 TextureCoords;
 };
@@ -94,6 +94,6 @@ static_assert(sizeof(VertexDataTexture<0, 0>) == sizeof(DirectX::XMFLOAT2), "Inv
 static_assert(alignof(VertexDataTexture<0, 0>) == alignof(DirectX::XMFLOAT2), "Invalid VertexDataTexture alignment");
 
 template<uint32_t Index, uint32_t InputSlot>
-const D3D11_INPUT_ELEMENT_DESC VertexDataTexture<Index, InputSlot>::InputLayout[VertexDataTexture<Index, InputSlot>::InputLayoutElementCount] = {
+const std::array<D3D11_INPUT_ELEMENT_DESC, VertexDataTexture<Index, InputSlot>::InputLayoutElementCount> VertexDataTexture<Index, InputSlot>::InputLayout = {
   { "TEXCOORD", Index, DXGI_FORMAT_R32G32B32_FLOAT, InputSlot, D3D11_APPEND_ALIGNED_ELEMENT, D3D11_INPUT_PER_VERTEX_DATA, 0 },
 };

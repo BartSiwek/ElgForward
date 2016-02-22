@@ -1,5 +1,7 @@
 #pragma once
 
+#include <memory>
+
 #include <d3d11.h>
 #include <wrl.h>
 
@@ -10,10 +12,18 @@ struct GpuMesh {
   using NormalType = Mesh::NormalType;
   using TextureType = Mesh::TextureType;
 
-  Microsoft::WRL::ComPtr<ID3D11Buffer> position_vertex_buffer;
-  Microsoft::WRL::ComPtr<ID3D11Buffer> normal_vertex_buffer;
-  Microsoft::WRL::ComPtr<ID3D11Buffer> texture_vertex_buffer;
-  Microsoft::WRL::ComPtr<ID3D11Buffer> index_buffer;
-};
+  static const size_t PositionVertexBufferIndex = 0;
+  static const size_t NormalVertexBufferIndex = 1;
+  static const size_t TextureCoordVertexBufferIndex = 2;
 
-bool CreateGpuMesh(const Mesh& mesh, ID3D11Device* device, GpuMesh* gpu_mesh);
+  static const size_t VertexBufferCount = 3;
+
+  static bool Create(const Mesh& mesh, ID3D11Device* device, GpuMesh* gpu_mesh);
+
+  static void InitializeLayout();
+
+  std::vector<Microsoft::WRL::ComPtr<ID3D11Buffer>> VertexBuffers;
+  Microsoft::WRL::ComPtr<ID3D11Buffer> IndexBuffer;
+
+  static std::vector<D3D11_INPUT_ELEMENT_DESC> VetexBuffersLayout;
+};
