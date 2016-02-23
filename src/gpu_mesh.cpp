@@ -7,6 +7,8 @@
 
 #include "mesh.h"
 
+const std::array<D3D11_INPUT_ELEMENT_DESC, GpuMesh::MeshLayoutElementCount> GpuMesh::VetexBuffersLayout = GpuMesh::InitializeLayout();
+
 template<typename EntryType>
 bool CreateVertexBuffer(const std::vector<EntryType>& data, ID3D11Device* device, ID3D11Buffer** buffer) {
   D3D11_BUFFER_DESC bufferDesc;
@@ -58,8 +60,6 @@ bool CreateIndexBuffer(const std::vector<IndexType>& data, ID3D11Device* device,
 }
 
 bool CreateGpuMesh(const Mesh& mesh, ID3D11Device* device, GpuMesh* gpu_mesh) {
-  InitializeLayout();
-
   gpu_mesh->VertexBuffers.resize(GpuMesh::VertexBufferCount);
   bool positions_ok = CreateVertexBuffer(mesh.Positions, device, gpu_mesh->VertexBuffers[GpuMesh::PositionVertexBufferIndex].GetAddressOf());
   if (!positions_ok) {
@@ -84,22 +84,24 @@ bool CreateGpuMesh(const Mesh& mesh, ID3D11Device* device, GpuMesh* gpu_mesh) {
   return true;
 }
 
-void GpuMesh::InitializeLayout() {
-  if (VetexBuffersLayout.empty()) {
-    VetexBuffersLayout.reserve(GpuMesh::PositionType::InputLayoutElementCount +
-                               GpuMesh::NormalType::InputLayoutElementCount +
-                               GpuMesh::TextureType::InputLayoutElementCount);
+std::array<D3D11_INPUT_ELEMENT_DESC, GpuMesh::MeshLayoutElementCount> GpuMesh::InitializeLayout() {
+  std::array<D3D11_INPUT_ELEMENT_DESC, GpuMesh::MeshLayoutElementCount> result;
+  size_t insert_pos = 0;
 
-    VetexBuffersLayout.insert(VetexBuffersLayout.end(),
-                              GpuMesh::PositionType::InputLayout.begin(),
-                              GpuMesh::PositionType::InputLayout.end());
-    
-    VetexBuffersLayout.insert(VetexBuffersLayout.end(),
-                              GpuMesh::NormalType::InputLayout.begin(),
-                              GpuMesh::NormalType::InputLayout.end());
-    
-    VetexBuffersLayout.insert(VetexBuffersLayout.end(),
-                              GpuMesh::TextureType::InputLayout.begin(),
-                              GpuMesh::TextureType::InputLayout.end());
+  for (size_t i = 0; i < GpuMesh::PositionType::InputLayoutElementCount; ++i) {
+    result[insert_pos] = GpuMesh::PositionType::InputLayout[i];
+    ++insert_pos;
   }
+
+  for (size_t i = 0; i < GpuMesh::NormalType::InputLayoutElementCount; ++i) {
+    result[insert_pos] = GpuMesh::NormalType::InputLayout[i];
+    ++insert_pos;
+  }
+
+  for (size_t i = 0; i < GpuMesh::TextureType::InputLayoutElementCount; ++i) {
+    result[insert_pos] = GpuMesh::TextureType::InputLayout[i];
+    ++insert_pos;
+  }
+
+  return result;
 }
