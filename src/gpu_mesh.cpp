@@ -7,6 +7,16 @@
 
 #include "mesh.h"
 
+static_assert(GpuMesh::PositionType::InputLayoutElementCount == 1, "PositionType has incorrect input element count");
+static_assert(GpuMesh::NormalType::InputLayoutElementCount == 1, "NormalType has incorrect input element count");
+static_assert(GpuMesh::TextureType::InputLayoutElementCount == 1, "TextureType has incorrect input element count");
+
+const std::array<D3D11_INPUT_ELEMENT_DESC, GpuMesh::InputLayoutElementCount> GpuMesh::InputLayout = {
+  GpuMesh::PositionType::InputLayout[0],
+  GpuMesh::NormalType::InputLayout[0],
+  GpuMesh::TextureType::InputLayout[0]
+};
+
 template<typename EntryType>
 bool CreateVertexBuffer(const std::vector<EntryType>& data, ID3D11Device* device, ID3D11Buffer** buffer) {
   D3D11_BUFFER_DESC bufferDesc;
@@ -58,8 +68,6 @@ bool CreateIndexBuffer(const std::vector<IndexType>& data, ID3D11Device* device,
 }
 
 bool CreateGpuMesh(const Mesh& mesh, ID3D11Device* device, GpuMesh* gpu_mesh) {
-  InitializeLayout();
-
   gpu_mesh->VertexBuffers.resize(GpuMesh::VertexBufferCount);
   bool positions_ok = CreateVertexBuffer(mesh.Positions, device, gpu_mesh->VertexBuffers[GpuMesh::PositionVertexBufferIndex].GetAddressOf());
   if (!positions_ok) {
@@ -82,24 +90,4 @@ bool CreateGpuMesh(const Mesh& mesh, ID3D11Device* device, GpuMesh* gpu_mesh) {
   }
 
   return true;
-}
-
-void GpuMesh::InitializeLayout() {
-  if (VetexBuffersLayout.empty()) {
-    VetexBuffersLayout.reserve(GpuMesh::PositionType::InputLayoutElementCount +
-                               GpuMesh::NormalType::InputLayoutElementCount +
-                               GpuMesh::TextureType::InputLayoutElementCount);
-
-    VetexBuffersLayout.insert(VetexBuffersLayout.end(),
-                              GpuMesh::PositionType::InputLayout.begin(),
-                              GpuMesh::PositionType::InputLayout.end());
-    
-    VetexBuffersLayout.insert(VetexBuffersLayout.end(),
-                              GpuMesh::NormalType::InputLayout.begin(),
-                              GpuMesh::NormalType::InputLayout.end());
-    
-    VetexBuffersLayout.insert(VetexBuffersLayout.end(),
-                              GpuMesh::TextureType::InputLayout.begin(),
-                              GpuMesh::TextureType::InputLayout.end());
-  }
 }
