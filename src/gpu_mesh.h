@@ -19,8 +19,8 @@ struct GpuMesh {
   static const size_t VertexBufferCount = 3;
 
   static const uint32_t InputLayoutElementCount = PositionType::InputLayoutElementCount
-    + NormalType::InputLayoutElementCount
-    + TextureType::InputLayoutElementCount;
+                                                + NormalType::InputLayoutElementCount
+                                                + TextureType::InputLayoutElementCount;
   static const std::array<D3D11_INPUT_ELEMENT_DESC, InputLayoutElementCount> InputLayout;
 
   std::vector<Microsoft::WRL::ComPtr<ID3D11Buffer>> VertexBuffers;
