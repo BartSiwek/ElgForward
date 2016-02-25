@@ -2,6 +2,8 @@
 
 #include <vector>
 
+#include <d3d11.h>
+
 #include "vertex_data.h"
 
 class Mesh {
@@ -9,6 +11,8 @@ public:
   static constexpr uint32_t PositionInputSlot = 0;
   static constexpr uint32_t NormalInputSlot = 1;
   static constexpr uint32_t Texture0InputSlot = 0;
+
+  static constexpr D3D_PRIMITIVE_TOPOLOGY PrimitiveTopology = D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST;
 
   using PositionType = VertexDataPoisition<PositionInputSlot>;
   using NormalType = VertexDataNormal<NormalInputSlot>;

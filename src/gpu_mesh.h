@@ -1,30 +1,37 @@
 #pragma once
 
-#include <memory>
+#include <array>
 
 #include <d3d11.h>
 #include <wrl.h>
 
-#include "mesh.h"
+#include "com_helpers.h"
 
 struct GpuMesh {
-  using PositionType = Mesh::PositionType;
-  using NormalType = Mesh::NormalType;
-  using TextureType = Mesh::TextureType;
+  static constexpr size_t VertexBufferCount = 3;
 
-  static const size_t PositionVertexBufferIndex = 0;
-  static const size_t NormalVertexBufferIndex = 1;
-  static const size_t TextureCoordVertexBufferIndex = 2;
+  static constexpr D3D_PRIMITIVE_TOPOLOGY PrimitiveTopology = Mesh::PrimitiveTopology;
 
-  static const size_t VertexBufferCount = 3;
+  GpuMesh() : IndexBuffer(nullptr) {
+    for (size_t i = 0; i < VertexBufferCount; ++i) {
+      VertexBuffers[i] = nullptr;
+      VertexBufferStrides[i] = 0;
+    }
+  }
 
-  static const uint32_t InputLayoutElementCount = PositionType::InputLayoutElementCount
-                                                + NormalType::InputLayoutElementCount
-                                                + TextureType::InputLayoutElementCount;
-  static const std::array<D3D11_INPUT_ELEMENT_DESC, InputLayoutElementCount> InputLayout;
+  ~GpuMesh() {
+    for (size_t i = 0; i < VertexBufferCount; ++i) {
+      SAFE_RELEASE(VertexBuffers[i]);
+    }
+  }
 
-  std::vector<Microsoft::WRL::ComPtr<ID3D11Buffer>> VertexBuffers;
+  GpuMesh(const GpuMesh&) = delete;
+  GpuMesh& operator=(const GpuMesh&) = delete;
+
+  GpuMesh(GpuMesh&&) = default;
+  GpuMesh& operator=(GpuMesh&&) = default;
+
+  std::array<ID3D11Buffer*, VertexBufferCount> VertexBuffers;
+  std::array<uint32_t, VertexBufferCount> VertexBufferStrides;
   Microsoft::WRL::ComPtr<ID3D11Buffer> IndexBuffer;
 };
-
-bool CreateGpuMesh(const Mesh& mesh, ID3D11Device* device, GpuMesh* gpu_mesh);

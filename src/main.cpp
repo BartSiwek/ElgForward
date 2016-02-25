@@ -22,6 +22,7 @@
 #include "mesh.h"
 #include "mesh_loader.h"
 #include "gpu_mesh.h"
+#include "gpu_mesh_factory.h"
 #include "material.h"
 
 struct DirectXState {
@@ -141,12 +142,7 @@ bool InitializeDirect3d11(dxfwWindow* window, DirectXState* state) {
 }
 
 bool CreateInputLayout(ID3D11Device* device, ID3DBlob* vs_buffer, ID3D11InputLayout** vertex_layout) {
-  D3D11_INPUT_ELEMENT_DESC layout[] = {
-    { "POSITION", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, 0, D3D11_INPUT_PER_VERTEX_DATA, 0 }
-  };
-  UINT layout_elements_count = 1;
-
-  HRESULT create_input_layout_result = device->CreateInputLayout(layout, layout_elements_count, vs_buffer->GetBufferPointer(), vs_buffer->GetBufferSize(), vertex_layout);
+  HRESULT create_input_layout_result = device->CreateInputLayout(&GpuMeshFactory::InputLayout[0], GpuMeshFactory::InputLayoutElementCount, vs_buffer->GetBufferPointer(), vs_buffer->GetBufferSize(), vertex_layout);
   if (FAILED(create_input_layout_result)) {
     DXFW_DIRECTX_TRACE(__FILE__, __LINE__, create_input_layout_result, true);
     return false;
@@ -179,9 +175,6 @@ bool InitializeScene(const filesystem::path& base_path, dxfwWindow* window, Dire
     return false;
   }
 
-  state->device_context->VSSetShader(scene->material.VertexShader.Shader.Get(), 0, 0);
-  state->device_context->PSSetShader(scene->material.PixelShader.Shader.Get(), 0, 0);
-
   std::vector<Mesh> meshes;
   bool load_ok = LoadMesh(base_path / "assets/meshes/cube.obj", &meshes);
   if (!load_ok) {
@@ -192,7 +185,7 @@ bool InitializeScene(const filesystem::path& base_path, dxfwWindow* window, Dire
   for (const auto& mesh : meshes) {
     scene->meshes.emplace_back();
     auto& gpu_mesh = scene->meshes.back();
-    bool gpu_mesh_ok = CreateGpuMesh(mesh, state->device.Get(), &gpu_mesh);
+    bool gpu_mesh_ok = GpuMeshFactory::CreateGpuMesh(mesh, state->device.Get(), &gpu_mesh);
     if (!gpu_mesh_ok) {
       return false;
     }
@@ -210,16 +203,21 @@ bool InitializeScene(const filesystem::path& base_path, dxfwWindow* window, Dire
   return true;
 }
 
-void Render(DirectXState* /* state */) {
-  // UINT stride = sizeof(Vertex);
-  // UINT offset = 0;
-  // state->device_context->IASetVertexBuffers(0, 1, scene->triangle_vertex_buffer.GetAddressOf(), &stride, &offset);
-  // state->device_context->IASetIndexBuffer(scene->triangle_index_buffer.Get(), DXGI_FORMAT_R32_UINT, 0);
+void Render(const Scene& scene, DirectXState* state) {
+  state->device_context->VSSetShader(scene.material.VertexShader.Shader.Get(), 0, 0);
+  state->device_context->PSSetShader(scene.material.PixelShader.Shader.Get(), 0, 0);
 
-  // state->device_context->IASetInputLayout(scene->vertex_layout.Get());
-  // state->device_context->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
+  for (const auto& mesh : scene.meshes) {
+    std::vector<uint32_t> offsets(GpuMesh::VertexBufferCount, 0);
+    state->device_context->IASetVertexBuffers(0, GpuMesh::VertexBufferCount, &mesh.VertexBuffers[0], &mesh.VertexBufferStrides[0], &offsets[0]);
 
-  // state->device_context->DrawIndexed(36, 0, 0);
+    state->device_context->IASetIndexBuffer(mesh.IndexBuffer.Get(), GpuMeshFactory::IndexBufferFormat, 0);
+    state->device_context->IASetPrimitiveTopology(GpuMesh::PrimitiveTopology);
+
+    // state->device_context->IASetInputLayout(scene->vertex_layout.Get());
+
+    // state->device_context->DrawIndexed(36, 0, 0);
+  }
 }
 
 int main(int /* argc */, char** /* argv */) {
@@ -254,7 +252,7 @@ int main(int /* argc */, char** /* argv */) {
     float bgColor[4] = { (0.0f, 0.0f, 0.0f, 0.0f) };
     state.device_context->ClearRenderTargetView(state.render_target_view.Get(), bgColor);
 
-    Render(&state);
+    Render(scene, &state);
 
     state.swap_chain->Present(0, 0);
 
