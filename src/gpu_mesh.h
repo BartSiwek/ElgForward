@@ -6,6 +6,7 @@
 #include <wrl.h>
 
 #include "com_helpers.h"
+#include "mesh.h"
 
 struct GpuMesh {
   static constexpr size_t VertexBufferCount = 3;
@@ -33,5 +34,7 @@ struct GpuMesh {
 
   std::array<ID3D11Buffer*, VertexBufferCount> VertexBuffers;
   std::array<uint32_t, VertexBufferCount> VertexBufferStrides;
+
   Microsoft::WRL::ComPtr<ID3D11Buffer> IndexBuffer;
+  uint32_t IndexCount;
 };

@@ -92,5 +92,7 @@ bool GpuMeshFactory::CreateGpuMesh(const Mesh& mesh, ID3D11Device* device, GpuMe
   gpu_mesh->VertexBufferStrides[NormalVertexBufferIndex] = sizeof(Mesh::NormalType);
   gpu_mesh->VertexBufferStrides[TextureCoordVertexBufferIndex] = sizeof(Mesh::TextureType);
 
+  gpu_mesh->IndexCount = mesh.Indices.size();
+
   return true;
 }

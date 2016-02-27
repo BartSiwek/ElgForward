@@ -50,8 +50,12 @@ set(PROJECT_SRCS
   ${PROJECT_SOURCE_DIR}/mesh_loader.cpp
   ${PROJECT_SOURCE_DIR}/shader.h
   ${PROJECT_SOURCE_DIR}/shader.cpp
+  ${PROJECT_SOURCE_DIR}/trackball_camera.h
+  ${PROJECT_SOURCE_DIR}/trackball_camera.cpp
   ${PROJECT_SOURCE_DIR}/vertex_data.h
   ${PROJECT_SOURCE_DIR}/vertex_data.cpp
+  ${PROJECT_SOURCE_DIR}/vertex_layout_factory.h
+  ${PROJECT_SOURCE_DIR}/hlsl_definitions.h
 )
 
 include_directories("${PROJECT_INCLUDE_DIR}")
@@ -70,5 +74,5 @@ foreach(CURRENT_ASSET ${PROJECT_ASSETS})
                    	   COMMAND ${CMAKE_COMMAND} -E copy_if_different "${CURRENT_ASSET}" "$<TARGET_FILE_DIR:${PROJECT_NAME}>/${CURRENT_ASSET_PATH}")
 endforeach()
 
-
-
+add_custom_command(TARGET ${PROJECT_NAME} POST_BUILD
+                   COMMAND ${CMAKE_COMMAND} -E copy_if_different "${PROJECT_SOURCE_DIR}/hlsl_definitions.h" "$<TARGET_FILE_DIR:${PROJECT_NAME}>/assets/shaders")

@@ -23,13 +23,19 @@
 #include "mesh_loader.h"
 #include "gpu_mesh.h"
 #include "gpu_mesh_factory.h"
+#include "vertex_layout_factory.h"
 #include "material.h"
+#include "hlsl_definitions.h"
 
 struct DirectXState {
   Microsoft::WRL::ComPtr<ID3D11Device> device;
   Microsoft::WRL::ComPtr<IDXGISwapChain> swap_chain;
   Microsoft::WRL::ComPtr<ID3D11DeviceContext> device_context;
   Microsoft::WRL::ComPtr<ID3D11RenderTargetView> render_target_view;
+};
+
+struct PerFrameConstantBuffer {
+  DirectX::XMMATRIX ModelViewMatrix;
 };
 
 struct Scene {
@@ -141,16 +147,6 @@ bool InitializeDirect3d11(dxfwWindow* window, DirectXState* state) {
   return true;
 }
 
-bool CreateInputLayout(ID3D11Device* device, ID3DBlob* vs_buffer, ID3D11InputLayout** vertex_layout) {
-  HRESULT create_input_layout_result = device->CreateInputLayout(&GpuMeshFactory::InputLayout[0], GpuMeshFactory::InputLayoutElementCount, vs_buffer->GetBufferPointer(), vs_buffer->GetBufferSize(), vertex_layout);
-  if (FAILED(create_input_layout_result)) {
-    DXFW_DIRECTX_TRACE(__FILE__, __LINE__, create_input_layout_result, true);
-    return false;
-  }
-
-  return true;
-}
-
 void CreateViewport(dxfwWindow* window, D3D11_VIEWPORT* viewport) {
   ZeroMemory(viewport, sizeof(D3D11_VIEWPORT));
 
@@ -162,6 +158,53 @@ void CreateViewport(dxfwWindow* window, D3D11_VIEWPORT* viewport) {
   viewport->TopLeftY = 0;
   viewport->Width = static_cast<float>(width);
   viewport->Height = static_cast<float>(height);
+}
+
+template<typename BufferType>
+bool CrateConstantBuffer(BufferType* initial, DirectXState* state, ID3D11Buffer** constant_buffer) {
+  D3D11_BUFFER_DESC desc;
+  desc.ByteWidth = sizeof(BufferType);
+  desc.Usage = D3D11_USAGE_DYNAMIC;
+  desc.BindFlags = D3D11_BIND_CONSTANT_BUFFER;
+  desc.CPUAccessFlags = D3D11_CPU_ACCESS_WRITE;
+  desc.MiscFlags = 0;
+  desc.StructureByteStride = 0;
+
+  HRESULT cb_result;
+  if (initial != nullptr) {
+    D3D11_SUBRESOURCE_DATA data;
+    data.pSysMem = initial;
+    data.SysMemPitch = 0;
+    data.SysMemSlicePitch = 0;
+
+    cb_result = state->device->CreateBuffer(&desc, &data, constant_buffer);
+  } else {
+    cb_result = state->device->CreateBuffer(&desc, nullptr, constant_buffer);
+  }
+
+  if (FAILED(cb_result)) {
+    DXFW_DIRECTX_TRACE(__FILE__, __LINE__, cb_result, true);
+    return false;
+  }
+
+  return true;
+}
+
+template<typename BufferType>
+bool UpdateConstantBuffer(BufferType* data, DirectXState* state, ID3D11Buffer* constant_buffer) {
+  D3D11_MAPPED_SUBRESOURCE mapped_subresource;
+
+  auto map_result = state->device_context->Map(constant_buffer, 0, D3D11_MAP::D3D11_MAP_WRITE_DISCARD, 0, &mapped_subresource);
+  if (FAILED(map_result)) {
+    DXFW_DIRECTX_TRACE(__FILE__, __LINE__, map_result, true);
+    return false;
+  }
+
+  memcpy(mapped_subresource.pData, data, sizeof(BufferType));
+
+  state->device_context->Unmap(constant_buffer, 0);
+
+  return true;
 }
 
 bool InitializeScene(const filesystem::path& base_path, dxfwWindow* window, DirectXState* state, Scene* scene) {
@@ -190,8 +233,7 @@ bool InitializeScene(const filesystem::path& base_path, dxfwWindow* window, Dire
       return false;
     }
   }
-
-  bool il_ok = CreateInputLayout(state->device.Get(), scene->material.VertexShader.Buffer.Get(), scene->vertex_layout.GetAddressOf());
+  bool il_ok = VertexLayoutFactory::CreateVertexLayout(state->device.Get(), &scene->material, scene->vertex_layout.GetAddressOf());
   if (!il_ok) {
     return false;
   }
@@ -203,9 +245,11 @@ bool InitializeScene(const filesystem::path& base_path, dxfwWindow* window, Dire
   return true;
 }
 
-void Render(const Scene& scene, DirectXState* state) {
+void Render(const Scene& scene, ID3D11Buffer* perFrameConstantBuffer, DirectXState* state) {
   state->device_context->VSSetShader(scene.material.VertexShader.Shader.Get(), 0, 0);
   state->device_context->PSSetShader(scene.material.PixelShader.Shader.Get(), 0, 0);
+
+  state->device_context->VSSetConstantBuffers(PER_FRAME_CB_INDEX, 1, &perFrameConstantBuffer);
 
   for (const auto& mesh : scene.meshes) {
     std::vector<uint32_t> offsets(GpuMesh::VertexBufferCount, 0);
@@ -214,9 +258,9 @@ void Render(const Scene& scene, DirectXState* state) {
     state->device_context->IASetIndexBuffer(mesh.IndexBuffer.Get(), GpuMeshFactory::IndexBufferFormat, 0);
     state->device_context->IASetPrimitiveTopology(GpuMesh::PrimitiveTopology);
 
-    // state->device_context->IASetInputLayout(scene->vertex_layout.Get());
+    state->device_context->IASetInputLayout(scene.vertex_layout.Get());
 
-    // state->device_context->DrawIndexed(36, 0, 0);
+    state->device_context->DrawIndexed(mesh.IndexCount, 0, 0);
   }
 }
 
@@ -247,12 +291,30 @@ int main(int /* argc */, char** /* argv */) {
     return -1;
   }
 
+  ID3D11Buffer* constant_buffer;
+  bool cb_ok = CrateConstantBuffer<PerFrameConstantBuffer>(nullptr, &state, &constant_buffer);
+  if (!cb_ok) {
+    return -1;
+  }
+
+  PerFrameConstantBuffer perFrameConstaneBuffer;
+  DirectX::XMVECTOR axis = { 1, 1, 1, 0 };
   while (!dxfwShouldWindowClose(window.get())) {
+    // Update constant buffers contents
+    float t = (float)fmod(dxfwGetTime(), 2.0);
+    perFrameConstaneBuffer.ModelViewMatrix = DirectX::XMMatrixRotationAxis(axis, t * DirectX::XM_PI);
+
+    // Update constant buffer
+    bool update_ok = UpdateConstantBuffer(&perFrameConstaneBuffer, &state, constant_buffer);
+    if (!update_ok) {
+      return -1;
+    }
+
     // Clear
     float bgColor[4] = { (0.0f, 0.0f, 0.0f, 0.0f) };
     state.device_context->ClearRenderTargetView(state.render_target_view.Get(), bgColor);
 
-    Render(scene, &state);
+    Render(scene, constant_buffer, &state);
 
     state.swap_chain->Present(0, 0);
 
