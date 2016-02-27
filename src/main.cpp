@@ -2,14 +2,10 @@
 #include <memory>
 #include <sstream>
 #include <iostream>
-#include <filesystem>
-
-namespace filesystem = std::experimental::filesystem;
 
 #ifndef WIN32_LEAN_AND_MEAN
 #define WIN32_LEAN_AND_MEAN
 #include <Windows.h>
-#include <Shlwapi.h>
 #include <dxgi.h>
 #include <d3d11.h>
 #include <DirectXMath.h>
@@ -21,49 +17,15 @@ namespace filesystem = std::experimental::filesystem;
 
 #include <dxfw/dxfw.h>
 
-#include "interleaved_mesh.h"
-
-class DxfwGuard {
-public:
-  DxfwGuard() : m_is_initialized_(false) {
-    m_is_initialized_ = dxfwInitialize();
-  }
-
-  DxfwGuard(const DxfwGuard&) = delete;
-  DxfwGuard& operator=(const DxfwGuard&) = delete;
-  DxfwGuard(DxfwGuard&&) = delete;
-  DxfwGuard& operator=(DxfwGuard&&) = delete;
-
-  ~DxfwGuard() {
-    if (m_is_initialized_) {
-      dxfwTerminate();
-    }
-  }
-
-  bool IsInitialized() {
-    return m_is_initialized_;
-  }
-
-private:
-  bool m_is_initialized_;
-};
-
-class DxfwWindowDeleter {
- public:
-  void operator()(dxfwWindow* window) const {
-    dxfwDestroyWindow(window);
-  }
-};
-
-struct Vertex {
-  Vertex() {
-  }
-
-  Vertex(float x, float y, float z) : position(x, y, z) {
-  }
-
-  DirectX::XMFLOAT3 position;
-};
+#include "filesystem.h"
+#include "dxfw_helpers.h"
+#include "mesh.h"
+#include "mesh_loader.h"
+#include "gpu_mesh.h"
+#include "gpu_mesh_factory.h"
+#include "vertex_layout_factory.h"
+#include "material.h"
+#include "hlsl_definitions.h"
 
 struct DirectXState {
   Microsoft::WRL::ComPtr<ID3D11Device> device;
@@ -72,25 +34,18 @@ struct DirectXState {
   Microsoft::WRL::ComPtr<ID3D11RenderTargetView> render_target_view;
 };
 
+struct PerFrameConstantBuffer {
+  DirectX::XMMATRIX ModelViewMatrix;
+};
+
 struct Scene {
-  Microsoft::WRL::ComPtr<ID3D11Buffer> triangle_vertex_buffer;
-  Microsoft::WRL::ComPtr<ID3D11Buffer> triangle_index_buffer;
-  Microsoft::WRL::ComPtr<ID3DBlob> vs_buffer;
-  Microsoft::WRL::ComPtr<ID3DBlob> ps_buffer;
-  Microsoft::WRL::ComPtr<ID3D11VertexShader> vs;
-  Microsoft::WRL::ComPtr<ID3D11PixelShader> ps;
+  std::vector<GpuMesh> meshes;
+  Material material;
   Microsoft::WRL::ComPtr<ID3D11InputLayout> vertex_layout;
 };
 
 void ErrorCallback(dxfwError error) {
   DXFW_ERROR_TRACE(__FILE__, __LINE__, error, true);
-}
-
-filesystem::path GetBasePath() {
-  wchar_t path[MAX_PATH];
-  GetModuleFileNameW(nullptr, path, MAX_PATH);
-  PathRemoveFileSpecW(path);
-  return filesystem::path(path);
 }
 
 bool InitializeDeviceAndSwapChain(dxfwWindow* window, DirectXState* state) {
@@ -192,117 +147,6 @@ bool InitializeDirect3d11(dxfwWindow* window, DirectXState* state) {
   return true;
 }
 
-bool InitializeVertexShader(const filesystem::path& base_path, ID3D11Device* device, ID3DBlob** buffer, ID3D11VertexShader** vs) {
-  Microsoft::WRL::ComPtr<ID3DBlob> error_blob;
-
-  filesystem::path full_path = base_path / "assets/shaders/shaders.hlsl";
-    
-  HRESULT shader_compilation_result = D3DCompileFromFile(full_path.c_str(), nullptr, D3D_COMPILE_STANDARD_FILE_INCLUDE, "VS", "vs_4_0", 0, 0, buffer, error_blob.GetAddressOf());
-  if (FAILED(shader_compilation_result))
-  {
-    if (error_blob) {
-      DXFW_TRACE(__FILE__, __LINE__, (const char*)error_blob->GetBufferPointer(), false);
-    }
-    DXFW_DIRECTX_TRACE(__FILE__, __LINE__, shader_compilation_result, true);
-    return false;
-  }
-
-  HRESULT shader_creation_result = device->CreateVertexShader((*buffer)->GetBufferPointer(), (*buffer)->GetBufferSize(), NULL, vs);
-  if (FAILED(shader_creation_result)) {
-    DXFW_DIRECTX_TRACE(__FILE__, __LINE__, shader_creation_result, true);
-    return false;
-  }
-
-  return true;
-}
-
-bool InitializePixelShader(const filesystem::path& base_path, ID3D11Device* device, ID3DBlob** buffer, ID3D11PixelShader** ps) {
-  Microsoft::WRL::ComPtr<ID3DBlob> error_blob;
-
-  filesystem::path full_path = base_path / "assets/shaders/shaders.hlsl";
-
-  HRESULT shader_compilation_result = D3DCompileFromFile(full_path.c_str(), nullptr, D3D_COMPILE_STANDARD_FILE_INCLUDE, "PS", "ps_4_0", 0, 0, buffer, error_blob.GetAddressOf());
-  if (FAILED(shader_compilation_result))
-  {
-    if (error_blob) {
-      DXFW_TRACE(__FILE__, __LINE__, (const char*)error_blob->GetBufferPointer(), false);
-    }
-    DXFW_DIRECTX_TRACE(__FILE__, __LINE__, shader_compilation_result, true);
-    return false;
-  }
-
-  HRESULT shader_creation_result = device->CreatePixelShader((*buffer)->GetBufferPointer(), (*buffer)->GetBufferSize(), NULL, ps);
-  if (FAILED(shader_creation_result)) {
-    DXFW_DIRECTX_TRACE(__FILE__, __LINE__, shader_creation_result, true);
-    return false;
-  }
-
-  return true;
-}
-
-bool CreateVertexBuffer(const std::vector<Vertex>& data, ID3D11Device* device, ID3D11Buffer** buffer) {
-  D3D11_BUFFER_DESC bufferDesc;
-  ZeroMemory(&bufferDesc, sizeof(bufferDesc));
-
-  bufferDesc.Usage = D3D11_USAGE_DEFAULT;
-  bufferDesc.ByteWidth = data.size() * sizeof(Vertex);
-  bufferDesc.BindFlags = D3D11_BIND_VERTEX_BUFFER;
-  bufferDesc.CPUAccessFlags = 0;
-  bufferDesc.MiscFlags = 0;
-
-  D3D11_SUBRESOURCE_DATA bufferData;
-  ZeroMemory(&bufferData, sizeof(bufferData));
-  bufferData.pSysMem = &data[0];
-
-  HRESULT create_buffer_result = device->CreateBuffer(&bufferDesc, &bufferData, buffer);
-  
-  if (FAILED(create_buffer_result)) {
-    DXFW_DIRECTX_TRACE(__FILE__, __LINE__, create_buffer_result, true);
-    return false;
-  }
-
-  return true;
-}
-
-bool CreateIndexBuffer(const std::vector<unsigned int>& data, ID3D11Device* device, ID3D11Buffer** buffer) {
-  D3D11_BUFFER_DESC bufferDesc;
-  ZeroMemory(&bufferDesc, sizeof(bufferDesc));
-
-  bufferDesc.Usage = D3D11_USAGE_DEFAULT;
-  bufferDesc.ByteWidth = data.size() * sizeof(unsigned int);
-  bufferDesc.BindFlags = D3D11_BIND_INDEX_BUFFER;
-  bufferDesc.CPUAccessFlags = 0;
-  bufferDesc.MiscFlags = 0;
-
-  D3D11_SUBRESOURCE_DATA bufferData;
-  ZeroMemory(&bufferData, sizeof(bufferData));
-  bufferData.pSysMem = &data[0];
-
-  HRESULT create_buffer_result = device->CreateBuffer(&bufferDesc, &bufferData, buffer);
-
-  if (FAILED(create_buffer_result)) {
-    DXFW_DIRECTX_TRACE(__FILE__, __LINE__, create_buffer_result, true);
-    return false;
-  }
-
-  return true;
-}
-
-bool CreateInputLayout(ID3D11Device* device, ID3DBlob* vs_buffer, ID3D11InputLayout** vertex_layout) {
-  D3D11_INPUT_ELEMENT_DESC layout[] = {
-    { "POSITION", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, 0, D3D11_INPUT_PER_VERTEX_DATA, 0 }
-  };
-  UINT layout_elements_count = 1;
-
-  HRESULT create_input_layout_result = device->CreateInputLayout(layout, layout_elements_count, vs_buffer->GetBufferPointer(), vs_buffer->GetBufferSize(), vertex_layout);
-  if (FAILED(create_input_layout_result)) {
-    DXFW_DIRECTX_TRACE(__FILE__, __LINE__, create_input_layout_result, true);
-    return false;
-  }
-
-  return true;
-}
-
 void CreateViewport(dxfwWindow* window, D3D11_VIEWPORT* viewport) {
   ZeroMemory(viewport, sizeof(D3D11_VIEWPORT));
 
@@ -316,132 +160,108 @@ void CreateViewport(dxfwWindow* window, D3D11_VIEWPORT* viewport) {
   viewport->Height = static_cast<float>(height);
 }
 
-bool LoadModel(const filesystem::path& base_path, ID3D11Device* device, ID3D11Buffer** triangle_vertex_buffer, ID3D11Buffer** triangle_index_buffer) {
-  auto mesh_path = base_path / "assets/meshes/cube.obj";
-  auto mesh_path_string = mesh_path.string();
+template<typename BufferType>
+bool CrateConstantBuffer(BufferType* initial, DirectXState* state, ID3D11Buffer** constant_buffer) {
+  D3D11_BUFFER_DESC desc;
+  desc.ByteWidth = sizeof(BufferType);
+  desc.Usage = D3D11_USAGE_DYNAMIC;
+  desc.BindFlags = D3D11_BIND_CONSTANT_BUFFER;
+  desc.CPUAccessFlags = D3D11_CPU_ACCESS_WRITE;
+  desc.MiscFlags = 0;
+  desc.StructureByteStride = 0;
 
-  auto materials_base_path = base_path / "assets/materials/";
-  auto materials_base_path_string = materials_base_path.string();
+  HRESULT cb_result;
+  if (initial != nullptr) {
+    D3D11_SUBRESOURCE_DATA data;
+    data.pSysMem = initial;
+    data.SysMemPitch = 0;
+    data.SysMemSlicePitch = 0;
 
-  std::vector<tinyobj::shape_t> shapes;
-  std::vector<tinyobj::material_t> materials;
-  std::string err;
-  bool ret = tinyobj::LoadObj(shapes, materials, err, mesh_path_string.c_str(), materials_base_path_string.c_str());
-
-  if (!err.empty()) { // `err` may contain warning message.
-    DXFW_TRACE(__FILE__, __LINE__, err.c_str(), true);
+    cb_result = state->device->CreateBuffer(&desc, &data, constant_buffer);
+  } else {
+    cb_result = state->device->CreateBuffer(&desc, nullptr, constant_buffer);
   }
 
-  if (!ret) {
+  if (FAILED(cb_result)) {
+    DXFW_DIRECTX_TRACE(__FILE__, __LINE__, cb_result, true);
     return false;
-  }
-
-  const auto& shape = shapes[0];
-  size_t vertex_count = shape.mesh.positions.size();
-
-  std::vector<Vertex> vertices;
-  vertices.reserve(vertex_count);
-  for (size_t v = 0; v < shapes[0].mesh.positions.size(); v += 3) {
-    vertices.emplace_back(shape.mesh.positions[v], shape.mesh.positions[v + 1], shape.mesh.positions[v + 2]);
-  }
-  
-  CreateVertexBuffer(vertices, device, triangle_vertex_buffer);
-  CreateIndexBuffer(shape.mesh.indices, device, triangle_index_buffer);
-
-
-  std::cout << "# of shapes    : " << shapes.size() << std::endl;
-  std::cout << "# of materials : " << materials.size() << std::endl;
-
-  for (size_t i = 0; i < shapes.size(); i++) {
-    printf("shape[%ld].name = %s\n", i, shapes[i].name.c_str());
-    printf("Size of shape[%ld].indices: %ld\n", i, shapes[i].mesh.indices.size());
-    printf("Size of shape[%ld].material_ids: %ld\n", i, shapes[i].mesh.material_ids.size());
-    assert((shapes[i].mesh.indices.size() % 3) == 0);
-    for (size_t f = 0; f < shapes[i].mesh.indices.size() / 3; f++) {
-      unsigned int a = shapes[i].mesh.indices[3 * f + 0];
-      unsigned int b = shapes[i].mesh.indices[3 * f + 1];
-      unsigned int c = shapes[i].mesh.indices[3 * f + 2];
-
-      printf("  idx[%ld] = %d, %d, %d. mat_id = %d\n", f, a, b, c, shapes[i].mesh.material_ids[f]);
-      printf("  (%f, %f, %f) -> (%f, %f, %f) -> (%f, %f, %f)\n",
-        shapes[i].mesh.positions[3 * a + 0], shapes[i].mesh.positions[3 * a + 1], shapes[i].mesh.positions[3 * a + 2],
-        shapes[i].mesh.positions[3 * b + 0], shapes[i].mesh.positions[3 * b + 1], shapes[i].mesh.positions[3 * b + 2],
-        shapes[i].mesh.positions[3 * c + 0], shapes[i].mesh.positions[3 * c + 1], shapes[i].mesh.positions[3 * c + 2]);
-    }
-
-    printf("shape[%ld].vertices: %ld\n", i, shapes[i].mesh.positions.size());
-    assert((shapes[i].mesh.positions.size() % 3) == 0);
-    for (size_t v = 0; v < shapes[i].mesh.positions.size() / 3; v++) {
-      printf("  v[%ld] = (%f, %f, %f)\n", v,
-        shapes[i].mesh.positions[3 * v + 0],
-        shapes[i].mesh.positions[3 * v + 1],
-        shapes[i].mesh.positions[3 * v + 2]);
-    }
-  }
-
-  for (size_t i = 0; i < materials.size(); i++) {
-    printf("material[%ld].name = %s\n", i, materials[i].name.c_str());
-    printf("  material.Ka = (%f, %f ,%f)\n", materials[i].ambient[0], materials[i].ambient[1], materials[i].ambient[2]);
-    printf("  material.Kd = (%f, %f ,%f)\n", materials[i].diffuse[0], materials[i].diffuse[1], materials[i].diffuse[2]);
-    printf("  material.Ks = (%f, %f ,%f)\n", materials[i].specular[0], materials[i].specular[1], materials[i].specular[2]);
-    printf("  material.Tr = (%f, %f ,%f)\n", materials[i].transmittance[0], materials[i].transmittance[1], materials[i].transmittance[2]);
-    printf("  material.Ke = (%f, %f ,%f)\n", materials[i].emission[0], materials[i].emission[1], materials[i].emission[2]);
-    printf("  material.Ns = %f\n", materials[i].shininess);
-    printf("  material.Ni = %f\n", materials[i].ior);
-    printf("  material.dissolve = %f\n", materials[i].dissolve);
-    printf("  material.illum = %d\n", materials[i].illum);
-    printf("  material.map_Ka = %s\n", materials[i].ambient_texname.c_str());
-    printf("  material.map_Kd = %s\n", materials[i].diffuse_texname.c_str());
-    printf("  material.map_Ks = %s\n", materials[i].specular_texname.c_str());
-    printf("  material.map_Ns = %s\n", materials[i].specular_highlight_texname.c_str());
-    std::map<std::string, std::string>::const_iterator it(materials[i].unknown_parameter.begin());
-    std::map<std::string, std::string>::const_iterator itEnd(materials[i].unknown_parameter.end());
-    for (; it != itEnd; it++) {
-      printf("  material.%s = %s\n", it->first.c_str(), it->second.c_str());
-    }
-    printf("\n");
   }
 
   return true;
 }
 
+template<typename BufferType>
+bool UpdateConstantBuffer(BufferType* data, DirectXState* state, ID3D11Buffer* constant_buffer) {
+  D3D11_MAPPED_SUBRESOURCE mapped_subresource;
+
+  auto map_result = state->device_context->Map(constant_buffer, 0, D3D11_MAP::D3D11_MAP_WRITE_DISCARD, 0, &mapped_subresource);
+  if (FAILED(map_result)) {
+    DXFW_DIRECTX_TRACE(__FILE__, __LINE__, map_result, true);
+    return false;
+  }
+
+  memcpy(mapped_subresource.pData, data, sizeof(BufferType));
+
+  state->device_context->Unmap(constant_buffer, 0);
+
+  return true;
+}
+
 bool InitializeScene(const filesystem::path& base_path, dxfwWindow* window, DirectXState* state, Scene* scene) {
-  bool vs_ok = InitializeVertexShader(base_path, state->device.Get(), scene->vs_buffer.GetAddressOf(), scene->vs.GetAddressOf());
+  bool vs_ok = LoadVertexShader(base_path / "assets/shaders/shaders.hlsl", state->device.Get(), &scene->material.VertexShader, "VS", "vs_4_0");
   if (!vs_ok) {
     return false;
   }
 
-  bool ps_ok = InitializePixelShader(base_path, state->device.Get(), scene->ps_buffer.GetAddressOf(), scene->ps.GetAddressOf());
+  bool ps_ok = LoadPixelShader(base_path / "assets/shaders/shaders.hlsl", state->device.Get(), &scene->material.PixelShader, "PS", "ps_4_0");
   if (!ps_ok) {
     return false;
   }
 
-  state->device_context->VSSetShader(scene->vs.Get(), 0, 0);
-  state->device_context->PSSetShader(scene->ps.Get(), 0, 0);
-
-  bool model_ok = LoadModel(base_path, state->device.Get(), scene->triangle_vertex_buffer.GetAddressOf(), scene->triangle_index_buffer.GetAddressOf());
-  if (!model_ok) {
+  std::vector<Mesh> meshes;
+  bool load_ok = LoadMesh(base_path / "assets/meshes/cube.obj", &meshes);
+  if (!load_ok) {
     return false;
   }
 
-  UINT stride = sizeof(Vertex);
-  UINT offset = 0;
-  state->device_context->IASetVertexBuffers(0, 1, scene->triangle_vertex_buffer.GetAddressOf(), &stride, &offset);
-  state->device_context->IASetIndexBuffer(scene->triangle_index_buffer.Get(), DXGI_FORMAT_R32_UINT, 0);
-
-  bool il_ok = CreateInputLayout(state->device.Get(), scene->vs_buffer.Get(), scene->vertex_layout.GetAddressOf());
+  scene->meshes.reserve(meshes.size());
+  for (const auto& mesh : meshes) {
+    scene->meshes.emplace_back();
+    auto& gpu_mesh = scene->meshes.back();
+    bool gpu_mesh_ok = GpuMeshFactory::CreateGpuMesh(mesh, state->device.Get(), &gpu_mesh);
+    if (!gpu_mesh_ok) {
+      return false;
+    }
+  }
+  bool il_ok = VertexLayoutFactory::CreateVertexLayout(state->device.Get(), &scene->material, scene->vertex_layout.GetAddressOf());
   if (!il_ok) {
     return false;
   }
-
-  state->device_context->IASetInputLayout(scene->vertex_layout.Get());
-  state->device_context->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
 
   D3D11_VIEWPORT viewport;
   CreateViewport(window, &viewport);
   state->device_context->RSSetViewports(1, &viewport);
 
   return true;
+}
+
+void Render(const Scene& scene, ID3D11Buffer* perFrameConstantBuffer, DirectXState* state) {
+  state->device_context->VSSetShader(scene.material.VertexShader.Shader.Get(), 0, 0);
+  state->device_context->PSSetShader(scene.material.PixelShader.Shader.Get(), 0, 0);
+
+  state->device_context->VSSetConstantBuffers(PER_FRAME_CB_INDEX, 1, &perFrameConstantBuffer);
+
+  for (const auto& mesh : scene.meshes) {
+    std::vector<uint32_t> offsets(GpuMesh::VertexBufferCount, 0);
+    state->device_context->IASetVertexBuffers(0, GpuMesh::VertexBufferCount, &mesh.VertexBuffers[0], &mesh.VertexBufferStrides[0], &offsets[0]);
+
+    state->device_context->IASetIndexBuffer(mesh.IndexBuffer.Get(), GpuMeshFactory::IndexBufferFormat, 0);
+    state->device_context->IASetPrimitiveTopology(GpuMesh::PrimitiveTopology);
+
+    state->device_context->IASetInputLayout(scene.vertex_layout.Get());
+
+    state->device_context->DrawIndexed(mesh.IndexCount, 0, 0);
+  }
 }
 
 int main(int /* argc */, char** /* argv */) {
@@ -471,15 +291,31 @@ int main(int /* argc */, char** /* argv */) {
     return -1;
   }
 
+  ID3D11Buffer* constant_buffer;
+  bool cb_ok = CrateConstantBuffer<PerFrameConstantBuffer>(nullptr, &state, &constant_buffer);
+  if (!cb_ok) {
+    return -1;
+  }
+
+  PerFrameConstantBuffer perFrameConstaneBuffer;
+  DirectX::XMVECTOR axis = { 1, 1, 1, 0 };
   while (!dxfwShouldWindowClose(window.get())) {
+    // Update constant buffers contents
+    float t = (float)fmod(dxfwGetTime(), 2.0);
+    perFrameConstaneBuffer.ModelViewMatrix = DirectX::XMMatrixRotationAxis(axis, t * DirectX::XM_PI);
+
+    // Update constant buffer
+    bool update_ok = UpdateConstantBuffer(&perFrameConstaneBuffer, &state, constant_buffer);
+    if (!update_ok) {
+      return -1;
+    }
+
     // Clear
     float bgColor[4] = { (0.0f, 0.0f, 0.0f, 0.0f) };
     state.device_context->ClearRenderTargetView(state.render_target_view.Get(), bgColor);
 
-    // Render
-    state.device_context->DrawIndexed(36, 0, 0);
+    Render(scene, constant_buffer, &state);
 
-    // Swap buffers
     state.swap_chain->Present(0, 0);
 
     dxfwPollOsEvents();
