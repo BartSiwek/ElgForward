@@ -15,8 +15,6 @@ struct PixelShader {
   Microsoft::WRL::ComPtr<ID3D11PixelShader> Shader;
 };
 
-bool LoadVertexShader(const filesystem::path& path, ID3D11Device* device, VertexShader* vertex_shader,
-                      const char* entry_point, const char* target);
+bool LoadVertexShader(const filesystem::path& path, ID3D11Device* device, VertexShader* vertex_shader);
 
-bool LoadPixelShader(const filesystem::path& path, ID3D11Device* device, PixelShader* pixel_shader,
-                     const char* entry_point, const char* target);
+bool LoadPixelShader(const filesystem::path& path, ID3D11Device* device, PixelShader* pixel_shader);

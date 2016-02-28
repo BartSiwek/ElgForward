@@ -25,7 +25,7 @@
 #include "gpu_mesh_factory.h"
 #include "vertex_layout_factory.h"
 #include "material.h"
-#include "hlsl_definitions.h"
+#include "shaders/hlsl_definitions.h"
 
 struct DirectXState {
   Microsoft::WRL::ComPtr<ID3D11Device> device;
@@ -208,12 +208,12 @@ bool UpdateConstantBuffer(BufferType* data, DirectXState* state, ID3D11Buffer* c
 }
 
 bool InitializeScene(const filesystem::path& base_path, dxfwWindow* window, DirectXState* state, Scene* scene) {
-  bool vs_ok = LoadVertexShader(base_path / "assets/shaders/shaders.hlsl", state->device.Get(), &scene->material.VertexShader, "VS", "vs_4_0");
+  bool vs_ok = LoadVertexShader(base_path / "vs.cso", state->device.Get(), &scene->material.VertexShader);
   if (!vs_ok) {
     return false;
   }
 
-  bool ps_ok = LoadPixelShader(base_path / "assets/shaders/shaders.hlsl", state->device.Get(), &scene->material.PixelShader, "PS", "ps_4_0");
+  bool ps_ok = LoadPixelShader(base_path / "ps.cso", state->device.Get(), &scene->material.PixelShader);
   if (!ps_ok) {
     return false;
   }

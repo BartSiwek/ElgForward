@@ -31,7 +31,6 @@ set(PROJECT_INCLUDE_DIR "${ROOT_DIR}/src")
 set(PROJECT_SOURCE_DIR "${ROOT_DIR}/src")
 
 file(GLOB_RECURSE PROJECT_ASSETS ${PROJECT_ASSETS_DIR}/*)
-# file(GLOB_RECURSE PROJECT_SHADERS ${PROJECT_ASSETS_DIR}/*.hlsl)
 
 set(PROJECT_SRCS
   ${PROJECT_SOURCE_DIR}/main.cpp
@@ -55,7 +54,15 @@ set(PROJECT_SRCS
   ${PROJECT_SOURCE_DIR}/vertex_data.h
   ${PROJECT_SOURCE_DIR}/vertex_data.cpp
   ${PROJECT_SOURCE_DIR}/vertex_layout_factory.h
-  ${PROJECT_SOURCE_DIR}/hlsl_definitions.h
+  ${PROJECT_SOURCE_DIR}/shaders/hlsl_definitions.h
+)
+
+set_source_files_properties(${PROJECT_SOURCE_DIR}/shaders/vs.hlsl PROPERTIES VS_SHADER_TYPE Vertex VS_SHADER_MODEL 5.0 VS_SHADER_ENTRYPOINT main)
+set_source_files_properties(${PROJECT_SOURCE_DIR}/shaders/ps.hlsl PROPERTIES VS_SHADER_TYPE Pixel VS_SHADER_MODEL 5.0 VS_SHADER_ENTRYPOINT main)
+
+set(PROJECT_SHADERS
+  ${PROJECT_SOURCE_DIR}/shaders/vs.hlsl
+  ${PROJECT_SOURCE_DIR}/shaders/ps.hlsl
 )
 
 include_directories("${PROJECT_INCLUDE_DIR}")
@@ -74,5 +81,5 @@ foreach(CURRENT_ASSET ${PROJECT_ASSETS})
                    	   COMMAND ${CMAKE_COMMAND} -E copy_if_different "${CURRENT_ASSET}" "$<TARGET_FILE_DIR:${PROJECT_NAME}>/${CURRENT_ASSET_PATH}")
 endforeach()
 
-add_custom_command(TARGET ${PROJECT_NAME} POST_BUILD
-                   COMMAND ${CMAKE_COMMAND} -E copy_if_different "${PROJECT_SOURCE_DIR}/hlsl_definitions.h" "$<TARGET_FILE_DIR:${PROJECT_NAME}>/assets/shaders")
+# add_custom_command(TARGET ${PROJECT_NAME} POST_BUILD
+#                    COMMAND ${CMAKE_COMMAND} -E copy_if_different "${PROJECT_SOURCE_DIR}/hlsl_definitions.h" "$<TARGET_FILE_DIR:${PROJECT_NAME}>/assets/shaders")
