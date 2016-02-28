@@ -15,3 +15,10 @@ Articles:
 Needed per-vertex data:
 - Normal (for Blinn-Phong and Cook-Torrance, normal mapping, bump mapping)
 - Texture coords (diffuse, specular, normal/bump, normal mapping)
+
+Current agenda:
+- Trackball camera
+- FPS camera (?, http://in2gpu.com/2016/02/26/opengl-fps-camera/)
+- Restructure the mesh, material, input layout architecture
+  - Shader reflection
+  - ...
