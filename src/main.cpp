@@ -291,8 +291,8 @@ int main(int /* argc */, char** /* argv */) {
     return -1;
   }
 
-  ID3D11Buffer* constant_buffer;
-  bool cb_ok = CrateConstantBuffer<PerFrameConstantBuffer>(nullptr, &state, &constant_buffer);
+  Microsoft::WRL::ComPtr<ID3D11Buffer> constant_buffer;
+  bool cb_ok = CrateConstantBuffer<PerFrameConstantBuffer>(nullptr, &state, constant_buffer.GetAddressOf());
   if (!cb_ok) {
     return -1;
   }
@@ -305,16 +305,16 @@ int main(int /* argc */, char** /* argv */) {
     perFrameConstaneBuffer.ModelViewMatrix = DirectX::XMMatrixRotationAxis(axis, t * DirectX::XM_PI);
 
     // Update constant buffer
-    bool update_ok = UpdateConstantBuffer(&perFrameConstaneBuffer, &state, constant_buffer);
+    bool update_ok = UpdateConstantBuffer(&perFrameConstaneBuffer, &state, constant_buffer.Get());
     if (!update_ok) {
       return -1;
     }
 
     // Clear
-    float bgColor[4] = { (0.0f, 0.0f, 0.0f, 0.0f) };
+    float bgColor[4] = { 0.0f, 0.0f, 0.0f, 0.0f };
     state.device_context->ClearRenderTargetView(state.render_target_view.Get(), bgColor);
 
-    Render(scene, constant_buffer, &state);
+    Render(scene, constant_buffer.Get(), &state);
 
     state.swap_chain->Present(0, 0);
 
