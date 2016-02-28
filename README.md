@@ -21,4 +21,7 @@ Current agenda:
 - FPS camera (?, http://in2gpu.com/2016/02/26/opengl-fps-camera/)
 - Restructure the mesh, material, input layout architecture
   - Shader reflection
+  - Move to using fcx to compile shaders
+  - Add common semnatic names to C++/HLSL defines file
   - ...
+- ...
