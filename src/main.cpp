@@ -13,8 +13,6 @@
 #include <wrl.h>
 #endif
 
-#include <tiny_obj_loader.h>
-
 #include <dxfw/dxfw.h>
 
 #include "filesystem.h"

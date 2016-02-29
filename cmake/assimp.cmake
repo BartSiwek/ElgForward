@@ -44,6 +44,7 @@ if(NOT DEFINED ASSIMP_CONFIGURED)
 	# Set libassimp properties
 	set_target_properties(libassimp PROPERTIES
 	  "IMPORTED_IMPLIB" "${binary_dir}/code/${CMAKE_CFG_INTDIR}/assimp${LIBRARY_SUFFIX}.lib"
+	  "IMPORTED_LOCATION" "${binary_dir}/code/${CMAKE_CFG_INTDIR}/assimp${LIBRARY_SUFFIX}.dll"
 	)
 	include_directories("${source_dir}/include")
 
