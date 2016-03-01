@@ -23,5 +23,18 @@ Current agenda:
   - Shader reflection
   - ~~Move to using fcx to compile shaders~~
   - Add common semnatic names to C++/HLSL defines file
+  - ~~Move to using AssImp for loading to support wider range of mesh data~~
   - ...
 - ...
+
+Vertex channels:
+- Positions (HasPositions & mVertices)
+- Normals (HasNormals & mNormals)
+- Tangents (HasTangentsAndBitangents & mTangents)
+- Bitangents (HasTangentsAndBitangents & mBitangents)
+- Texture coordinates 0..AI_MAX_NUMBER_OF_TEXTURECOORDS (HasTextureCoords & mTextureCoords & mNumUVComponents)
+- Colors 0..AI_MAX_NUMBER_OF_COLOR_SETS (HasVertexColors & mColors)
+- Max channels = 1 + 1 + 1 + 1 + AI_MAX_NUMBER_OF_TEXTURECOORDS + AI_MAX_NUMBER_OF_COLOR_SETS = 20
+
+Indices:
+- Organized in faces (HasFaces & mFaces)

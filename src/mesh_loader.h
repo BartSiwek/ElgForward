@@ -1,6 +1,8 @@
 #pragma once
 
-#include "filesystem.h"
-#include "mesh.h"
+#include <d3d11.h>
 
-bool LoadMesh(const filesystem::path& path, std::vector<Mesh>* meshes);
+#include "filesystem.h"
+#include "gpu_mesh.h"
+
+bool LoadMesh(const filesystem::path& path, ID3D11Device* device, std::vector<GpuMesh>* meshes);

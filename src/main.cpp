@@ -216,12 +216,13 @@ bool InitializeScene(const filesystem::path& base_path, dxfwWindow* window, Dire
     return false;
   }
 
-  std::vector<Mesh> meshes;
-  bool load_ok = LoadMesh(base_path / "assets/meshes/cube.obj", &meshes);
+  std::vector<GpuMesh> meshes;
+  bool load_ok = LoadMesh(base_path / "assets/meshes/cube.obj", state->device.Get(), &meshes);
   if (!load_ok) {
     return false;
   }
 
+  /*
   scene->meshes.reserve(meshes.size());
   for (const auto& mesh : meshes) {
     scene->meshes.emplace_back();
@@ -235,6 +236,7 @@ bool InitializeScene(const filesystem::path& base_path, dxfwWindow* window, Dire
   if (!il_ok) {
     return false;
   }
+  */
 
   D3D11_VIEWPORT viewport;
   CreateViewport(window, &viewport);
@@ -249,6 +251,7 @@ void Render(const Scene& scene, ID3D11Buffer* perFrameConstantBuffer, DirectXSta
 
   state->device_context->VSSetConstantBuffers(PER_FRAME_CB_INDEX, 1, &perFrameConstantBuffer);
 
+  /*
   for (const auto& mesh : scene.meshes) {
     std::vector<uint32_t> offsets(GpuMesh::VertexBufferCount, 0);
     state->device_context->IASetVertexBuffers(0, GpuMesh::VertexBufferCount, &mesh.VertexBuffers[0], &mesh.VertexBufferStrides[0], &offsets[0]);
@@ -260,6 +263,7 @@ void Render(const Scene& scene, ID3D11Buffer* perFrameConstantBuffer, DirectXSta
 
     state->device_context->DrawIndexed(mesh.IndexCount, 0, 0);
   }
+  */
 }
 
 int main(int /* argc */, char** /* argv */) {
