@@ -34,10 +34,15 @@ file(GLOB_RECURSE PROJECT_ASSETS ${PROJECT_ASSETS_DIR}/*)
 
 set(PROJECT_SRCS
   ${PROJECT_SOURCE_DIR}/main.cpp
+
+  ${PROJECT_SOURCE_DIR}/shaders/hlsl_definitions.h
+
+  ${PROJECT_SOURCE_DIR}/com_helpers.h
+  ${PROJECT_SOURCE_DIR}/drawable.h
+  ${PROJECT_SOURCE_DIR}/drawable.cpp
+  ${PROJECT_SOURCE_DIR}/dxfw_helpers.h
   ${PROJECT_SOURCE_DIR}/filesystem.h
   ${PROJECT_SOURCE_DIR}/filesystem.cpp
-  ${PROJECT_SOURCE_DIR}/com_helpers.h
-  ${PROJECT_SOURCE_DIR}/dxfw_helpers.h
   ${PROJECT_SOURCE_DIR}/material.h
   ${PROJECT_SOURCE_DIR}/mesh.h
   ${PROJECT_SOURCE_DIR}/mesh.cpp
@@ -54,7 +59,6 @@ set(PROJECT_SRCS
   ${PROJECT_SOURCE_DIR}/vertex_data.h
   ${PROJECT_SOURCE_DIR}/vertex_data.cpp
   ${PROJECT_SOURCE_DIR}/vertex_layout_factory.h
-  ${PROJECT_SOURCE_DIR}/shaders/hlsl_definitions.h
 )
 
 set_source_files_properties(${PROJECT_SOURCE_DIR}/shaders/vs.hlsl PROPERTIES VS_SHADER_TYPE Vertex VS_SHADER_MODEL 5.0 VS_SHADER_ENTRYPOINT main)

@@ -3,6 +3,8 @@
 #include <fstream>
 #include <memory>
 
+#include <d3d11.h>
+
 #pragma warning(push)
 #pragma warning(disable: 4201)
 #include <assimp/cimport.h>
@@ -71,7 +73,7 @@ public:
 };
 
 template<typename T>
-bool AddVertexBufferToGpuMesh(const std::vector<T>& data, VertexDataChannel channel, ID3D11Device* device, GpuMesh* mesh) {
+bool AddVertexBufferToGpuMesh(const std::vector<T>& data, DXGI_FORMAT format, VertexDataChannel channel, ID3D11Device* device, GpuMesh* mesh) {
   Microsoft::WRL::ComPtr<ID3D11Buffer> vb;
   bool vb_ok = CreateVertexBuffer(data, device, vb.GetAddressOf());
   if (!vb_ok) {
@@ -79,6 +81,7 @@ bool AddVertexBufferToGpuMesh(const std::vector<T>& data, VertexDataChannel chan
   }
 
   mesh->VertexBuffers.emplace_back(vb);
+  mesh->VertexBufferFormats.emplace_back(format);
   mesh->VertexBufferStrides.emplace_back(sizeof(T));
   mesh->ChannelsMask |= channel;
 
@@ -93,7 +96,7 @@ bool PrepareFloat1VertexBuffer(const aiVector3D* input, uint32_t vertex_count, V
     data[i] = input[i].x;
   }
 
-  AddVertexBufferToGpuMesh(data, channel, device, mesh);
+  AddVertexBufferToGpuMesh(data, DXGI_FORMAT_R32_FLOAT, channel, device, mesh);
 
   return true;
 }
@@ -107,7 +110,7 @@ bool PrepareFloat2VertexBuffer(const aiVector3D* input, uint32_t vertex_count, V
     data[i].y = input[i].y;
   }
 
-  AddVertexBufferToGpuMesh(data, channel, device, mesh);
+  AddVertexBufferToGpuMesh(data, DXGI_FORMAT_R32G32_FLOAT, channel, device, mesh);
 
   return true;
 }
@@ -122,7 +125,7 @@ bool PrepareFloat3VertexBuffer(const aiVector3D* input, uint32_t vertex_count, V
     data[i].z = input[i].z;
   }
 
-  AddVertexBufferToGpuMesh(data, channel, device, mesh);
+  AddVertexBufferToGpuMesh(data, DXGI_FORMAT_R32G32B32_FLOAT, channel, device, mesh);
 
   return true;
 }
@@ -138,7 +141,7 @@ bool PrepareFloat4VertexBuffer(const aiColor4D* input, uint32_t vertex_count, Ve
     data[i].w = input[i].a;
   }
 
-  AddVertexBufferToGpuMesh(data, channel, device, mesh);
+  AddVertexBufferToGpuMesh(data, DXGI_FORMAT_R32G32B32A32_FLOAT, channel, device, mesh);
 
   return true;
 }

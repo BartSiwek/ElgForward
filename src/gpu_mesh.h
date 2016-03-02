@@ -11,7 +11,7 @@
 struct GpuMesh {
   static constexpr D3D_PRIMITIVE_TOPOLOGY PrimitiveTopology = Mesh::PrimitiveTopology;
 
-  GpuMesh() : VertexBuffers(), VertexBufferStrides(), ChannelsMask(0), IndexBuffer(), IndexCount(0) {
+  GpuMesh() : VertexBuffers(), VertexBufferFormats(), VertexBufferStrides(), ChannelsMask(0), IndexBuffer(), IndexCount(0) {
   }
 
   ~GpuMesh() = default;
@@ -23,6 +23,7 @@ struct GpuMesh {
   GpuMesh& operator=(GpuMesh&&) = default;
 
   std::vector<Microsoft::WRL::ComPtr<ID3D11Buffer>> VertexBuffers;
+  std::vector<DXGI_FORMAT> VertexBufferFormats;
   std::vector<uint32_t> VertexBufferStrides;
   VertexDataChannelsMask ChannelsMask;
 
