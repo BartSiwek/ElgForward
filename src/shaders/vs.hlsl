@@ -5,9 +5,9 @@ cbuffer PerFrameConstants  : register(PER_FRAME_CB_REGISTER) {
 };
 
 struct VertexShaderInput {
-  float4 Position : POSITION;
-  float4 Normal : NORMAL;
-  float4 TexCoord : TEXCOORD0;
+  float3 Position : POSITION;
+  float3 Normal : NORMAL;
+  float2 TexCoord : TEXCOORD0;
 };
 
 struct VertexShaderOutput {
@@ -18,7 +18,9 @@ struct VertexShaderOutput {
 VertexShaderOutput main(VertexShaderInput input) {
   VertexShaderOutput output;
 
-  output.Position = float4((mul(input.Position, ModelViewMatrix).xyz * 0.5) + float3(0, 0, 0.5), 1);
+  float4 position = float4(input.Position, 1.0);
+
+  output.Position = float4((mul(position, ModelViewMatrix).xyz * 0.5) + float3(0, 0, 0.5), 1);
   output.Color = float4(0.5, 0.5, 0.5, 1);
 
   return output;
