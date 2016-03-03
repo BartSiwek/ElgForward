@@ -241,25 +241,26 @@ bool InitializeScene(const filesystem::path& base_path, dxfwWindow* window, Dire
   return true;
 }
 
-void Render(const Scene& scene, ID3D11Buffer* perFrameConstantBuffer, DirectXState* state) {
-  state->device_context->VSSetShader(scene.material.VertexShader.Shader.Get(), 0, 0);
-  state->device_context->PSSetShader(scene.material.PixelShader.Shader.Get(), 0, 0);
+void Render(Scene* scene, ID3D11Buffer* perFrameConstantBuffer, DirectXState* state) {
+  for (auto& drawable : scene->drawables) {
+    state->device_context->VSSetShader(drawable.GetVertexShader(), 0, 0);
+    state->device_context->PSSetShader(drawable.GetPixelShader(), 0, 0);
 
-  state->device_context->VSSetConstantBuffers(PER_FRAME_CB_INDEX, 1, &perFrameConstantBuffer);
+    state->device_context->VSSetConstantBuffers(PER_FRAME_CB_INDEX, 1, &perFrameConstantBuffer);
 
-  /*
-  for (const auto& mesh : scene.meshes) {
-    std::vector<uint32_t> offsets(GpuMesh::VertexBufferCount, 0);
-    state->device_context->IASetVertexBuffers(0, GpuMesh::VertexBufferCount, &mesh.VertexBuffers[0], &mesh.VertexBufferStrides[0], &offsets[0]);
+    state->device_context->IASetVertexBuffers(0,
+                                              D3D11_IA_VERTEX_INPUT_RESOURCE_SLOT_COUNT,
+                                              drawable.GetVertexBuffers(),
+                                              drawable.GetVertexBufferStrides(),
+                                              drawable.GetVertexBufferOffsets());
 
-    state->device_context->IASetIndexBuffer(mesh.IndexBuffer.Get(), GpuMeshFactory::IndexBufferFormat, 0);
-    state->device_context->IASetPrimitiveTopology(GpuMesh::PrimitiveTopology);
+    state->device_context->IASetIndexBuffer(drawable.GetIndexBuffer(), drawable.GetIndexBufferFormat(), 0);
+    state->device_context->IASetPrimitiveTopology(drawable.GetPrimitiveTopology());
 
-    state->device_context->IASetInputLayout(scene.vertex_layout.Get());
+    state->device_context->IASetInputLayout(drawable.GetVertexLayout());
 
-    state->device_context->DrawIndexed(mesh.IndexCount, 0, 0);
+    state->device_context->DrawIndexed(drawable.GetIndexCount(), 0, 0);
   }
-  */
 }
 
 int main(int /* argc */, char** /* argv */) {
@@ -312,7 +313,7 @@ int main(int /* argc */, char** /* argv */) {
     float bgColor[4] = { 0.0f, 0.0f, 0.0f, 0.0f };
     state.device_context->ClearRenderTargetView(state.render_target_view.Get(), bgColor);
 
-    Render(scene, constant_buffer.Get(), &state);
+    Render(&scene, constant_buffer.Get(), &state);
 
     state.swap_chain->Present(0, 0);
 

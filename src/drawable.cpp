@@ -85,7 +85,7 @@ bool CreateDrawable(const GpuMesh& mesh, const Material& material, ID3D11Device*
       return false;
     }
 
-    drawable->SetVertexBuffer(slot_index, mesh.VertexBuffers[input_index].Get());
+    drawable->SetVertexBuffer(slot_index, mesh.VertexBuffers[input_index].Get(), mesh.VertexBufferStrides[input_index]);
 
     input_layout_desc.emplace_back();
     auto& input_layout_desc_entry = input_layout_desc.back();
@@ -104,7 +104,7 @@ bool CreateDrawable(const GpuMesh& mesh, const Material& material, ID3D11Device*
     return false;
   }
 
-  bool index_data_ok = drawable->SetIndexData(mesh.IndexBuffer, mesh.IndexCount, mesh.PrimitiveTopology);
+  bool index_data_ok = drawable->SetIndexData(mesh.IndexBuffer, DXGI_FORMAT_R32_UINT, mesh.IndexCount, mesh.PrimitiveTopology);  // TODO: Vary this based on loaded mesh
   if (!index_data_ok) {
     return false;
   }
