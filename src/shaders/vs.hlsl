@@ -5,13 +5,13 @@ cbuffer PerFrameConstants  : register(PER_FRAME_CB_REGISTER) {
 };
 
 struct VertexShaderInput {
-  float4 Position : SV_Position;
+  float4 Position : POSITION;
   float4 Normal : NORMAL;
   float4 TexCoord : TEXCOORD0;
 };
 
 struct VertexShaderOutput {
-  float4 Position : SV_POSITION;
+  float4 Position : POSITION;
   float4 Color : COLOR;
 };
 

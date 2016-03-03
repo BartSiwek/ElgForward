@@ -23,6 +23,7 @@
 #include "gpu_mesh_factory.h"
 #include "vertex_layout_factory.h"
 #include "material.h"
+#include "drawable.h"
 #include "shaders/hlsl_definitions.h"
 
 struct DirectXState {
@@ -38,6 +39,7 @@ struct PerFrameConstantBuffer {
 
 struct Scene {
   std::vector<GpuMesh> meshes;
+  std::vector<Drawable> drawables;
   Material material;
   Microsoft::WRL::ComPtr<ID3D11InputLayout> vertex_layout;
 };
@@ -206,7 +208,7 @@ bool UpdateConstantBuffer(BufferType* data, DirectXState* state, ID3D11Buffer* c
 }
 
 bool InitializeScene(const filesystem::path& base_path, dxfwWindow* window, DirectXState* state, Scene* scene) {
-  bool vs_ok = LoadVertexShader(base_path / "vs.cso", state->device.Get(), &scene->material.VertexShader);
+  bool vs_ok = LoadVertexShader(base_path / "vs.cso", std::unordered_map<std::string, VertexDataChannel>(), state->device.Get(), &scene->material.VertexShader);
   if (!vs_ok) {
     return false;
   }
@@ -216,27 +218,21 @@ bool InitializeScene(const filesystem::path& base_path, dxfwWindow* window, Dire
     return false;
   }
 
-  std::vector<GpuMesh> meshes;
-  bool load_ok = LoadMesh(base_path / "assets/meshes/cube.obj", state->device.Get(), &meshes);
+  bool load_ok = LoadMesh(base_path / "assets/meshes/cube.obj", state->device.Get(), &scene->meshes);
   if (!load_ok) {
     return false;
   }
 
-  /*
-  scene->meshes.reserve(meshes.size());
-  for (const auto& mesh : meshes) {
-    scene->meshes.emplace_back();
-    auto& gpu_mesh = scene->meshes.back();
-    bool gpu_mesh_ok = GpuMeshFactory::CreateGpuMesh(mesh, state->device.Get(), &gpu_mesh);
-    if (!gpu_mesh_ok) {
+  scene->drawables.reserve(scene->meshes.size());
+  for (const auto& mesh : scene->meshes) {
+    scene->drawables.emplace_back();
+    auto& drawable = scene->drawables.back();
+    
+    bool drawable_ok = CreateDrawable(mesh, scene->material, state->device.Get(), &drawable);
+    if (!drawable_ok) {
       return false;
     }
   }
-  bool il_ok = VertexLayoutFactory::CreateVertexLayout(state->device.Get(), &scene->material, scene->vertex_layout.GetAddressOf());
-  if (!il_ok) {
-    return false;
-  }
-  */
 
   D3D11_VIEWPORT viewport;
   CreateViewport(window, &viewport);

@@ -9,12 +9,7 @@
 #include "mesh.h"
 
 struct GpuMesh {
-  static constexpr D3D_PRIMITIVE_TOPOLOGY PrimitiveTopology = Mesh::PrimitiveTopology;
-
-  GpuMesh() : VertexBuffers(), VertexBufferFormats(), VertexBufferStrides(), ChannelsMask(0), IndexBuffer(), IndexCount(0) {
-  }
-
-  ~GpuMesh() = default;
+  GpuMesh() = default;
 
   GpuMesh(const GpuMesh&) = delete;
   GpuMesh& operator=(const GpuMesh&) = delete;
@@ -22,11 +17,14 @@ struct GpuMesh {
   GpuMesh(GpuMesh&&) = default;
   GpuMesh& operator=(GpuMesh&&) = default;
 
-  std::vector<Microsoft::WRL::ComPtr<ID3D11Buffer>> VertexBuffers;
-  std::vector<DXGI_FORMAT> VertexBufferFormats;
-  std::vector<uint32_t> VertexBufferStrides;
-  VertexDataChannelsMask ChannelsMask;
+  std::vector<Microsoft::WRL::ComPtr<ID3D11Buffer>> VertexBuffers = {};
+  std::vector<DXGI_FORMAT> VertexBufferFormats = {};
+  std::vector<uint32_t> VertexBufferStrides = {};
+  std::vector<VertexDataChannel> VertexDataChannels = {};
 
-  Microsoft::WRL::ComPtr<ID3D11Buffer> IndexBuffer;
-  uint32_t IndexCount;
+  D3D_PRIMITIVE_TOPOLOGY PrimitiveTopology = D3D_PRIMITIVE_TOPOLOGY_UNDEFINED;
+
+  Microsoft::WRL::ComPtr<ID3D11Buffer> IndexBuffer = nullptr;
+  uint32_t IndexCount = 0;
 };
+

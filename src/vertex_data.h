@@ -5,13 +5,14 @@
 #include <DirectXMath.h>
 #include <d3d11.h>
 
-using VertexDataChannelsMask = uint32_t;
+using VertexDataChannelsType = uint32_t;
 
 const size_t MAX_TEXCOORDS = 8;
 
 const size_t MAX_COLORS = 8;
 
-enum class VertexDataChannel : VertexDataChannelsMask {
+enum class VertexDataChannel : VertexDataChannelsType {
+  UNKNOWN = 0x0,
   POSITIONS = 0x1,
   NORMALS = 0x2,
   TANGENTS = 0x4,
@@ -34,17 +35,12 @@ enum class VertexDataChannel : VertexDataChannelsMask {
   COLORS7 = 0x80000,
 };
 
-inline VertexDataChannelsMask& operator|=(VertexDataChannelsMask& lhs, VertexDataChannel rhs) {
-  lhs = lhs | static_cast<VertexDataChannelsMask>(rhs);
-  return lhs;
-}
-
 inline constexpr VertexDataChannel GetTexCoordsChannel(size_t index) {
-  return static_cast<VertexDataChannel>(static_cast<VertexDataChannelsMask>(VertexDataChannel::TEXCOORDS0) << index);
+  return static_cast<VertexDataChannel>(static_cast<VertexDataChannelsType>(VertexDataChannel::TEXCOORDS0) << index);
 }
 
 inline constexpr VertexDataChannel GetColorsChannel(size_t index) {
-  return static_cast<VertexDataChannel>(static_cast<VertexDataChannelsMask>(VertexDataChannel::COLORS0) << index);
+  return static_cast<VertexDataChannel>(static_cast<VertexDataChannelsType>(VertexDataChannel::COLORS0) << index);
 }
 
 template<uint32_t InputSlot>
