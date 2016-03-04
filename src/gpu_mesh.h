@@ -25,6 +25,7 @@ struct GpuMesh {
   D3D_PRIMITIVE_TOPOLOGY PrimitiveTopology = D3D_PRIMITIVE_TOPOLOGY_UNDEFINED;
 
   Microsoft::WRL::ComPtr<ID3D11Buffer> IndexBuffer = nullptr;
+  DXGI_FORMAT IndexBufferFormat = DXGI_FORMAT_UNKNOWN;
   uint32_t IndexCount = 0;
 };
 

@@ -104,7 +104,7 @@ bool CreateDrawable(const GpuMesh& mesh, const Material& material, ID3D11Device*
     return false;
   }
 
-  bool index_data_ok = drawable->SetIndexData(mesh.IndexBuffer, DXGI_FORMAT_R32_UINT, mesh.IndexCount, mesh.PrimitiveTopology);  // TODO: Vary this based on loaded mesh
+  bool index_data_ok = drawable->SetIndexData(mesh.IndexBuffer, DXGI_FORMAT_R32_UINT, mesh.IndexCount, mesh.PrimitiveTopology);
   if (!index_data_ok) {
     return false;
   }

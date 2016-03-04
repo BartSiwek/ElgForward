@@ -72,6 +72,31 @@ bool CreateVertexBuffer(const std::vector<EntryType>& data, ID3D11Device* device
   return true;
 }
 
+template<typename IndexType>
+bool CreateIndexBuffer(const std::vector<IndexType>& data, ID3D11Device* device, ID3D11Buffer** buffer) {
+  D3D11_BUFFER_DESC bufferDesc;
+  ZeroMemory(&bufferDesc, sizeof(bufferDesc));
+
+  bufferDesc.Usage = D3D11_USAGE_DEFAULT;
+  bufferDesc.ByteWidth = data.size() * sizeof(IndexType);
+  bufferDesc.BindFlags = D3D11_BIND_INDEX_BUFFER;
+  bufferDesc.CPUAccessFlags = 0;
+  bufferDesc.MiscFlags = 0;
+
+  D3D11_SUBRESOURCE_DATA bufferData;
+  ZeroMemory(&bufferData, sizeof(bufferData));
+  bufferData.pSysMem = &data[0];
+
+  HRESULT create_buffer_result = device->CreateBuffer(&bufferDesc, &bufferData, buffer);
+
+  if (FAILED(create_buffer_result)) {
+    DXFW_DIRECTX_TRACE(__FILE__, __LINE__, create_buffer_result, true);
+    return false;
+  }
+
+  return true;
+}
+
 template<typename T>
 bool AddVertexBufferToGpuMesh(const std::vector<T>& data, DXGI_FORMAT format, VertexDataChannel channel, ID3D11Device* device, GpuMesh* mesh) {
   Microsoft::WRL::ComPtr<ID3D11Buffer> vb;
@@ -146,9 +171,61 @@ bool PrepareFloat4VertexBuffer(const aiColor4D* input, uint32_t vertex_count, Ve
   return true;
 }
 
-bool LoadMesh(const filesystem::path& path, ID3D11Device* device, std::vector<GpuMesh>* meshes) {
+bool ValidateOptions(const MeshLoaderOptions& options) {
+  if (options.IndexBufferFormat != DXGI_FORMAT_R32_UINT && options.IndexBufferFormat != DXGI_FORMAT_R16_UINT) {
+    return false;
+  }
+
+  return true;
+}
+
+bool LoadIndexBuffer32UInt(const aiMesh& imported_mesh, ID3D11Device* device, GpuMesh* mesh) {
+  std::vector<uint32_t> indices;
+  for (size_t face_index = 0; face_index < imported_mesh.mNumFaces; ++face_index) {
+    for (size_t index_index = 0; index_index < imported_mesh.mFaces[face_index].mNumIndices; ++index_index) {
+      indices.emplace_back(imported_mesh.mFaces[face_index].mIndices[index_index]);
+    }
+  }
+
+  bool index_buffer_ok = CreateIndexBuffer(indices, device, mesh->IndexBuffer.GetAddressOf());
+  if (!index_buffer_ok) {
+    return false;
+  }
+
+  mesh->IndexBufferFormat = DXGI_FORMAT_R32_UINT;
+  mesh->IndexCount = (uint32_t)indices.size();
+
+  return true;
+}
+
+bool LoadIndexBuffer16UInt(const aiMesh& imported_mesh, ID3D11Device* device, GpuMesh* mesh) {
+  std::vector<uint16_t> indices;
+  for (size_t face_index = 0; face_index < imported_mesh.mNumFaces; ++face_index) {
+    for (size_t index_index = 0; index_index < imported_mesh.mFaces[face_index].mNumIndices; ++index_index) {
+      indices.emplace_back(static_cast<uint16_t>(imported_mesh.mFaces[face_index].mIndices[index_index]));
+    }
+  }
+
+  bool index_buffer_ok = CreateIndexBuffer(indices, device, mesh->IndexBuffer.GetAddressOf());
+  if (!index_buffer_ok) {
+    return false;
+  }
+
+  mesh->IndexBufferFormat = DXGI_FORMAT_R16_UINT;
+  mesh->IndexCount = (uint32_t)indices.size();
+
+  return true;
+}
+
+bool LoadMesh(const filesystem::path& path, const MeshLoaderOptions& options, ID3D11Device* device, std::vector<GpuMesh>* meshes) {
   if (meshes == nullptr) {
     DXFW_TRACE(__FILE__, __LINE__, "Got a null mesh vector pointer", true);
+    return false;
+  }
+
+  bool validate_ok = ValidateOptions(options);
+  if (!validate_ok) {
+    DXFW_TRACE(__FILE__, __LINE__, "Invalid mesh loading options", true);
     return false;
   }
 
@@ -167,11 +244,11 @@ bool LoadMesh(const filesystem::path& path, ID3D11Device* device, std::vector<Gp
     auto imported_mesh = scene->mMeshes[i];
 
     if (imported_mesh->mPrimitiveTypes != aiPrimitiveType_TRIANGLE) {
+      DXFW_TRACE(__FILE__, __LINE__, "Only triangular meshes are supported for loading", true);
       return false;
     }
 
     auto& mesh = meshes->back();
-    mesh.PrimitiveTopology = D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST;
 
     uint32_t vertex_count = imported_mesh->mNumVertices;
 
@@ -221,6 +298,22 @@ bool LoadMesh(const filesystem::path& path, ID3D11Device* device, std::vector<Gp
           return false;
         }
       }
+    }
+
+    mesh.PrimitiveTopology = D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST;
+
+    if (options.IndexBufferFormat == DXGI_FORMAT_R32_UINT) {
+      bool indices_ok = LoadIndexBuffer32UInt(*imported_mesh, device, &mesh);
+      if (!indices_ok) {
+        return false;
+      }
+    } else if (options.IndexBufferFormat == DXGI_FORMAT_R16_UINT) {
+      bool indices_ok = LoadIndexBuffer16UInt(*imported_mesh, device, &mesh);
+      if (!indices_ok) {
+        return false;
+      }
+    } else {
+      return false;
     }
   }
 
