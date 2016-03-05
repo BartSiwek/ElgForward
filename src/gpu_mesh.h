@@ -1,30 +1,16 @@
 #pragma once
 
 #include <array>
+#include <vector>
 
 #include <d3d11.h>
 #include <wrl.h>
 
 #include "com_helpers.h"
-#include "mesh.h"
+#include "vertex_data.h"
 
 struct GpuMesh {
-  static constexpr size_t VertexBufferCount = 3;
-
-  static constexpr D3D_PRIMITIVE_TOPOLOGY PrimitiveTopology = Mesh::PrimitiveTopology;
-
-  GpuMesh() : IndexBuffer(nullptr) {
-    for (size_t i = 0; i < VertexBufferCount; ++i) {
-      VertexBuffers[i] = nullptr;
-      VertexBufferStrides[i] = 0;
-    }
-  }
-
-  ~GpuMesh() {
-    for (size_t i = 0; i < VertexBufferCount; ++i) {
-      SAFE_RELEASE(VertexBuffers[i]);
-    }
-  }
+  GpuMesh() = default;
 
   GpuMesh(const GpuMesh&) = delete;
   GpuMesh& operator=(const GpuMesh&) = delete;
@@ -32,9 +18,15 @@ struct GpuMesh {
   GpuMesh(GpuMesh&&) = default;
   GpuMesh& operator=(GpuMesh&&) = default;
 
-  std::array<ID3D11Buffer*, VertexBufferCount> VertexBuffers;
-  std::array<uint32_t, VertexBufferCount> VertexBufferStrides;
+  std::vector<Microsoft::WRL::ComPtr<ID3D11Buffer>> VertexBuffers = {};
+  std::vector<DXGI_FORMAT> VertexBufferFormats = {};
+  std::vector<uint32_t> VertexBufferStrides = {};
+  std::vector<VertexDataChannel> VertexDataChannels = {};
 
-  Microsoft::WRL::ComPtr<ID3D11Buffer> IndexBuffer;
-  uint32_t IndexCount;
+  D3D_PRIMITIVE_TOPOLOGY PrimitiveTopology = D3D_PRIMITIVE_TOPOLOGY_UNDEFINED;
+
+  Microsoft::WRL::ComPtr<ID3D11Buffer> IndexBuffer = nullptr;
+  DXGI_FORMAT IndexBufferFormat = DXGI_FORMAT_UNKNOWN;
+  uint32_t IndexCount = 0;
 };
+
