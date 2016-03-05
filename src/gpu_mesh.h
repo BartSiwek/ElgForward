@@ -1,12 +1,13 @@
 #pragma once
 
 #include <array>
+#include <vector>
 
 #include <d3d11.h>
 #include <wrl.h>
 
 #include "com_helpers.h"
-#include "mesh.h"
+#include "vertex_data.h"
 
 struct GpuMesh {
   GpuMesh() = default;

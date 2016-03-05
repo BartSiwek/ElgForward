@@ -7,7 +7,6 @@
 
 #include <dxfw/dxfw.h>
 
-#include "gpu_mesh_factory.h"
 #include "shader.h"
 
 inline bool CreateVertexLayout(const std::vector<D3D11_INPUT_ELEMENT_DESC>& input_layout, ID3DBlob* shader_blob, ID3D11Device* device, ID3D11InputLayout** vertex_layout) {

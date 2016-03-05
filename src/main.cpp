@@ -17,10 +17,9 @@
 
 #include "filesystem.h"
 #include "dxfw_helpers.h"
-#include "mesh.h"
+#include "buffer.h"
 #include "mesh_loader.h"
 #include "gpu_mesh.h"
-#include "gpu_mesh_factory.h"
 #include "vertex_layout_factory.h"
 #include "material.h"
 #include "drawable.h"
@@ -163,53 +162,6 @@ void CreateViewport(dxfwWindow* window, D3D11_VIEWPORT* viewport) {
   viewport->Height = static_cast<float>(height);
 }
 
-template<typename BufferType>
-bool CrateConstantBuffer(BufferType* initial, DirectXState* state, ID3D11Buffer** constant_buffer) {
-  D3D11_BUFFER_DESC desc;
-  desc.ByteWidth = sizeof(BufferType);
-  desc.Usage = D3D11_USAGE_DYNAMIC;
-  desc.BindFlags = D3D11_BIND_CONSTANT_BUFFER;
-  desc.CPUAccessFlags = D3D11_CPU_ACCESS_WRITE;
-  desc.MiscFlags = 0;
-  desc.StructureByteStride = 0;
-
-  HRESULT cb_result;
-  if (initial != nullptr) {
-    D3D11_SUBRESOURCE_DATA data;
-    data.pSysMem = initial;
-    data.SysMemPitch = 0;
-    data.SysMemSlicePitch = 0;
-
-    cb_result = state->device->CreateBuffer(&desc, &data, constant_buffer);
-  } else {
-    cb_result = state->device->CreateBuffer(&desc, nullptr, constant_buffer);
-  }
-
-  if (FAILED(cb_result)) {
-    DXFW_DIRECTX_TRACE(__FILE__, __LINE__, cb_result, true);
-    return false;
-  }
-
-  return true;
-}
-
-template<typename BufferType>
-bool UpdateConstantBuffer(BufferType* data, DirectXState* state, ID3D11Buffer* constant_buffer) {
-  D3D11_MAPPED_SUBRESOURCE mapped_subresource;
-
-  auto map_result = state->device_context->Map(constant_buffer, 0, D3D11_MAP::D3D11_MAP_WRITE_DISCARD, 0, &mapped_subresource);
-  if (FAILED(map_result)) {
-    DXFW_DIRECTX_TRACE(__FILE__, __LINE__, map_result, true);
-    return false;
-  }
-
-  memcpy(mapped_subresource.pData, data, sizeof(BufferType));
-
-  state->device_context->Unmap(constant_buffer, 0);
-
-  return true;
-}
-
 bool InitializeScene(const filesystem::path& base_path, dxfwWindow* window, DirectXState* state, Scene* scene) {
   bool vs_ok = LoadVertexShader(base_path / "vs.cso", std::unordered_map<std::string, VertexDataChannel>(), state->device.Get(), &scene->material.VertexShader);
   if (!vs_ok) {
@@ -296,7 +248,7 @@ int main(int /* argc */, char** /* argv */) {
   }
 
   Microsoft::WRL::ComPtr<ID3D11Buffer> constant_buffer;
-  bool cb_ok = CrateConstantBuffer<PerFrameConstantBuffer>(nullptr, &state, constant_buffer.GetAddressOf());
+  bool cb_ok = CrateConstantBuffer<PerFrameConstantBuffer>(nullptr, state.device.Get(), constant_buffer.GetAddressOf());
   if (!cb_ok) {
     return -1;
   }
@@ -318,7 +270,7 @@ int main(int /* argc */, char** /* argv */) {
     perFrameConstaneBuffer.NormalMatrix = SInv * R * DirectX::XMMatrixTranspose(TInv);
 
     // Update constant buffer
-    bool update_ok = UpdateConstantBuffer(&perFrameConstaneBuffer, &state, constant_buffer.Get());
+    bool update_ok = UpdateConstantBuffer(&perFrameConstaneBuffer, state.device_context.Get(), constant_buffer.Get());
     if (!update_ok) {
       return -1;
     }

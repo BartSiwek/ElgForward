@@ -34,9 +34,8 @@ file(GLOB_RECURSE PROJECT_ASSETS ${PROJECT_ASSETS_DIR}/*)
 
 set(PROJECT_SRCS
   ${PROJECT_SOURCE_DIR}/main.cpp
-
   ${PROJECT_SOURCE_DIR}/shaders/hlsl_definitions.h
-
+  ${PROJECT_SOURCE_DIR}/buffer.h
   ${PROJECT_SOURCE_DIR}/com_helpers.h
   ${PROJECT_SOURCE_DIR}/drawable.h
   ${PROJECT_SOURCE_DIR}/drawable.cpp
@@ -44,12 +43,8 @@ set(PROJECT_SRCS
   ${PROJECT_SOURCE_DIR}/filesystem.h
   ${PROJECT_SOURCE_DIR}/filesystem.cpp
   ${PROJECT_SOURCE_DIR}/material.h
-  ${PROJECT_SOURCE_DIR}/mesh.h
-  ${PROJECT_SOURCE_DIR}/mesh.cpp
   ${PROJECT_SOURCE_DIR}/gpu_mesh.h
   ${PROJECT_SOURCE_DIR}/gpu_mesh.cpp
-  ${PROJECT_SOURCE_DIR}/gpu_mesh_factory.h
-  ${PROJECT_SOURCE_DIR}/gpu_mesh_factory.cpp
   ${PROJECT_SOURCE_DIR}/mesh_loader.h
   ${PROJECT_SOURCE_DIR}/mesh_loader.cpp
   ${PROJECT_SOURCE_DIR}/shader.h
