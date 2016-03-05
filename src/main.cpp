@@ -34,7 +34,10 @@ struct DirectXState {
 };
 
 struct PerFrameConstantBuffer {
+  DirectX::XMMATRIX ModelMatrix;
+  DirectX::XMMATRIX ViewMatrix;
   DirectX::XMMATRIX ModelViewMatrix;
+  DirectX::XMMATRIX NormalMatrix;
 };
 
 struct Scene {
@@ -302,8 +305,19 @@ int main(int /* argc */, char** /* argv */) {
   DirectX::XMVECTOR axis = { 1, 1, 1, 0 };
   while (!dxfwShouldWindowClose(window.get())) {
     // Update constant buffers contents
-    float t = (float)fmod(dxfwGetTime(), 2.0);
-    perFrameConstaneBuffer.ModelViewMatrix = DirectX::XMMatrixRotationAxis(axis, t * DirectX::XM_PI);
+    // float t = (float)fmod(dxfwGetTime(), 10.0) / 10.0f;
+    auto t = 0.8f;
+    // auto t = 0.0f;
+    auto R = DirectX::XMMatrixRotationAxis(axis, t * DirectX::XM_2PI);
+    auto S = DirectX::XMMatrixScaling(0.5f, 0.5f, 0.5f);
+    auto SInv = DirectX::XMMatrixScaling(2.0f, 2.0f, 2.0f);
+    auto T = DirectX::XMMatrixTranslation(0.0f, 0.0f, 0.5f);
+    auto TInv = DirectX::XMMatrixTranslation(0.0f, 0.0f, -0.5f);
+
+    perFrameConstaneBuffer.ModelMatrix = S * R;
+    perFrameConstaneBuffer.ViewMatrix = T;
+    perFrameConstaneBuffer.ModelViewMatrix = perFrameConstaneBuffer.ModelMatrix * perFrameConstaneBuffer.ViewMatrix;
+    perFrameConstaneBuffer.NormalMatrix = SInv * R * DirectX::XMMatrixTranspose(TInv);
 
     // Update constant buffer
     bool update_ok = UpdateConstantBuffer(&perFrameConstaneBuffer, &state, constant_buffer.Get());
