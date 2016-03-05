@@ -1,3 +1,5 @@
+#pragma pack_matrix(row_major)
+
 #include "hlsl_definitions.h"
 
 cbuffer PerFrameConstants  : register(PER_FRAME_CB_REGISTER) {
@@ -7,7 +9,7 @@ cbuffer PerFrameConstants  : register(PER_FRAME_CB_REGISTER) {
   float4x4 NormalMatrix;
 };
 
-static float4 LightPositionWs = float4(0, 0, 0, -0.5);
+static float4 LightPositionWs = float4(0, 0, -5, 1);
 
 static float4 LightDiffuseColor = float4(0.8, 0.8, 0.8, 1);
 static float4 MaterialDiffuseColor = float4(0.2, 0.4, 0.8, 1);
@@ -27,16 +29,19 @@ VertexShaderOutput main(VertexShaderInput input) {
   VertexShaderOutput output;
 
   float4 positionMs = float4(input.PositionMs, 1.0);
-  output.PositionVs = mul(ModelViewMatrix, positionMs);
+  output.PositionVs = mul(positionMs, ModelViewMatrix);
 
-  float4 lightPositionVs = mul(ViewMatrix, LightPositionWs);
+  float4 lightPositionVs = mul(LightPositionWs, ViewMatrix);
 
-  float3 lu = lightPositionVs - output.PositionVs;
+  float3 lu = (lightPositionVs - output.PositionVs).xyz;
   float3 l = normalize(lu);
 
-  float3 n = normalize(mul((float3x3)NormalMatrix, input.NormalMs));
+  float3 nu = mul(input.NormalMs, (float3x3)NormalMatrix);
+  float3 n = normalize(nu);
 
-  output.Color = LightDiffuseColor * MaterialDiffuseColor * max(dot(n, l), 0);
+  float nDotL = dot(l, n);
+
+  output.Color = LightDiffuseColor * MaterialDiffuseColor * max(nDotL, 0);
 
   return output;
 }

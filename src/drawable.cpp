@@ -97,6 +97,8 @@ bool CreateDrawable(const GpuMesh& mesh, const Material& material, ID3D11Device*
     input_layout_desc_entry.AlignedByteOffset = D3D11_APPEND_ALIGNED_ELEMENT;
     input_layout_desc_entry.InputSlotClass = D3D11_INPUT_PER_VERTEX_DATA;
     input_layout_desc_entry.InstanceDataStepRate = 0;
+
+    ++slot_index;
   }
 
   bool vertex_layout_ok = drawable->SetVertexLayout(input_layout_desc, material.VertexShader.Buffer.Get(), device);

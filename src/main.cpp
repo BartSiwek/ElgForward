@@ -305,9 +305,7 @@ int main(int /* argc */, char** /* argv */) {
   DirectX::XMVECTOR axis = { 1, 1, 1, 0 };
   while (!dxfwShouldWindowClose(window.get())) {
     // Update constant buffers contents
-    // float t = (float)fmod(dxfwGetTime(), 10.0) / 10.0f;
-    auto t = 0.8f;
-    // auto t = 0.0f;
+    float t = (float)fmod(dxfwGetTime(), 10.0) / 10.0f;
     auto R = DirectX::XMMatrixRotationAxis(axis, t * DirectX::XM_2PI);
     auto S = DirectX::XMMatrixScaling(0.5f, 0.5f, 0.5f);
     auto SInv = DirectX::XMMatrixScaling(2.0f, 2.0f, 2.0f);
