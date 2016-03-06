@@ -23,4 +23,7 @@ Current agenda:
   - ~~Shader reflection~~
   - ~~Move to using fcx to compile shaders~~
   - ~~Move to using AssImp for loading to support wider range of mesh data~~
+- Move to using handles for shaders, meshes, inputlayouts etc. and managers to enable caching
+  - Add a drawable manager and drawable handle
+  - ...
 - ...
