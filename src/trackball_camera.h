@@ -45,5 +45,102 @@ Pan:
 
 Zoom:
 - Keep the zoom factor - default = 1.0
+- Map the difference between starting and current point on the screen to [-1, 1] according to the vertical axis
+- Map [-1, 1] to some reasonable range [0.5, 2] for example
+- 
 
 */
+
+#include <DirectXMath.h>
+
+class TrackballCamera {
+public:
+  TrackballCamera(uint32_t width, uint32_t height, float near, float far, float fovy)
+      : m_center_(0, 0, 0),
+        m_rotation_quaterion_(DirectX::XMQuaternionIdentity()),
+        m_zoom_factor_(1.0f),
+        m_view_matrix_(DirectX::XMMatrixIdentity()),
+        m_proj_matrix_(DirectX::XMMatrixIdentity()),
+        m_width_(width),
+        m_height_(height),
+        m_near_(near),
+        m_far_(far),
+        m_fov_(fovy) {
+  }
+
+  ~TrackballCamera() = default;
+
+  TrackballCamera(const TrackballCamera&) = delete;
+  TrackballCamera& operator=(const TrackballCamera&) = delete;
+
+  TrackballCamera(TrackballCamera&&) = default;
+  TrackballCamera& operator=(TrackballCamera&&) = default;
+
+  void SetViewportSize(uint32_t width, uint32_t height) {
+    m_width_ = width;
+    m_height_ = height;
+  }
+
+  void StartPan(uint32_t x, uint32_t y) {
+
+  }
+
+  void EndPan() {
+
+  }
+
+  void StartRotation(uint32_t x, uint32_t y) {
+
+  }
+
+  void EndRotation() {
+
+  }
+
+  void StartZoom(uint32_t x, uint32_t y) {
+
+  }
+
+  void EndZoom() {
+
+  }
+
+  void UpdatePosition(uint32_t x, uint32_t y) {
+
+  }
+
+  void UpdateMatrices() {
+    UpdateViewMatrix();
+    UpdateProjMatrix();
+  }
+
+  const DirectX::XMMATRIX& GetViewMatrix() const {
+    return m_view_matrix_;
+  }
+
+  const DirectX::XMMATRIX& GetProjectionMatrix() const {
+    return m_proj_matrix_;
+  }
+
+private:
+  void UpdateViewMatrix() {
+
+  }
+
+  void UpdateProjMatrix() {
+
+  }
+
+  DirectX::XMFLOAT3 m_center_;
+  DirectX::XMVECTOR m_rotation_quaterion_;
+  float m_zoom_factor_;
+
+  DirectX::XMMATRIX m_view_matrix_;
+  DirectX::XMMATRIX m_proj_matrix_;
+
+  uint32_t m_width_;
+  uint32_t m_height_;
+  float m_near_;
+  float m_far_;
+  float m_fov_;
+};
