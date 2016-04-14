@@ -67,7 +67,7 @@ bool InitializeDeviceAndSwapChain(dxfwWindow* window, DirectXState* state) {
   UINT num_feature_levels = 1;
 
   // SwapChain settings
-  DXGI_SWAP_CHAIN_DESC swap_chain_desc;
+  DXGI_SWAP_CHAIN_DESC swap_chain_desc; 
   ZeroMemory(&swap_chain_desc, sizeof(swap_chain_desc));
 
   HWND window_handle = Dxfw::GetWindowHandle(window);
@@ -95,10 +95,10 @@ bool InitializeDeviceAndSwapChain(dxfwWindow* window, DirectXState* state) {
   for (decltype(num_driver_types) driver_type_index = 0; driver_type_index < num_driver_types; driver_type_index++) {
     D3D_DRIVER_TYPE driver_type = driver_types[driver_type_index];
     D3D_FEATURE_LEVEL result_feature_level;
-    hr = D3D11CreateDeviceAndSwapChain(NULL, driver_type, NULL, create_device_flags, feature_levels,
-      num_feature_levels, D3D11_SDK_VERSION, &swap_chain_desc,
-      state->swap_chain.GetAddressOf(), state->device.GetAddressOf(),
-      &result_feature_level, state->device_context.GetAddressOf());
+    hr = D3D11CreateDeviceAndSwapChain(nullptr, driver_type, nullptr, create_device_flags, feature_levels,
+                                       num_feature_levels, D3D11_SDK_VERSION, &swap_chain_desc,
+                                       state->swap_chain.GetAddressOf(), state->device.GetAddressOf(),
+                                       &result_feature_level, state->device_context.GetAddressOf());
 
     if (SUCCEEDED(hr)) {
       break;
@@ -282,7 +282,7 @@ int main(int /* argc */, char** /* argv */) {
 
   auto base_path = GetBasePath();
 
-  dxfwWindowUniquePtr window(Dxfw::CreateNewWindow(1600, 1200, "Hello DirectX"));
+  dxfwWindowUniquePtr window(Dxfw::CreateNewWindow(800, 600, "Hello DirectX"));
   if (!window) {
     return -1;
   }

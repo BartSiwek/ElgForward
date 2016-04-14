@@ -133,7 +133,9 @@ public:
 
   void EndRotation() {
     if (m_current_state_ == State::Rotating) {
-      // TODO: commit changes
+      auto q = DirectX::XMLoadFloat4(&m_rotation_quaterion_);
+      q = DirectX::XMQuaternionMultiply(q, GetRotationQuaternion());
+      DirectX::XMStoreFloat4(&m_rotation_quaterion_, q);
       EndOperation();
     }
   }
@@ -254,17 +256,21 @@ private:
     auto s = DirectX::XMLoadFloat2(&m_start_point_);
     s = GetPointOnUnitSphere(s);
 
-    auto s_len = DirectX::XMVectorGetX(DirectX::XMVector3Length(s));
-    DXFW_TRACE(__FILE__, __LINE__, false, "s norm: %f", s_len);
+    auto s_len = DirectX::XMVector3Length(s);
+    DXFW_TRACE(__FILE__, __LINE__, false, "s length: %f", DirectX::XMVectorGetX(s_len));
 
     auto e = DirectX::XMLoadFloat2(&m_end_point_);
     e = GetPointOnUnitSphere(e);
 
-    auto e_len = DirectX::XMVectorGetX(DirectX::XMVector3Length(e));
-    DXFW_TRACE(__FILE__, __LINE__, false, "e norm: %f", e_len);
+    auto e_len = DirectX::XMVector3Length(s);
+    DXFW_TRACE(__FILE__, __LINE__, false, "e length: %f", DirectX::XMVectorGetX(e_len));
 
-    auto axis = DirectX::XMVector3Cross(s, e);
-    auto angle = DirectX::XMVectorGetX(DirectX::XMVector3Dot(s, e));  // TODO: Bad angle calculation
+    auto axis = DirectX::XMVector3Cross(e, s);
+
+    auto axis_len = DirectX::XMVector3Length(s);
+    DXFW_TRACE(__FILE__, __LINE__, false, "axis length: %f", DirectX::XMVectorGetX(axis_len));
+
+    auto angle = DirectX::XMScalarACos(DirectX::XMVectorGetX(DirectX::XMVector3Dot(e, s)));
 
     return DirectX::XMQuaternionRotationNormal(axis, angle);
   }
