@@ -1,11 +1,20 @@
 #pragma once
 
-#include <dxfw/dxfw.h>
+#include <memory>
+
+#include "dxfw_wrapper.h"
 
 class DxfwGuard {
 public:
-  DxfwGuard() : m_is_initialized_(false) {
-    m_is_initialized_ = dxfwInitialize();
+  DxfwGuard() {
+    if (s_initialization_counter_ == 0) {
+      bool init_ok = Dxfw::Initialize();
+      if (init_ok) {
+        ++s_initialization_counter_;
+      }
+    } else {
+      ++s_initialization_counter_;
+    }
   }
 
   DxfwGuard(const DxfwGuard&) = delete;
@@ -14,22 +23,27 @@ public:
   DxfwGuard& operator=(DxfwGuard&&) = delete;
 
   ~DxfwGuard() {
-    if (m_is_initialized_) {
-      dxfwTerminate();
+    if (s_initialization_counter_ > 0) {
+      --s_initialization_counter_;
+      if (s_initialization_counter_ == 0) {
+        Dxfw::Terminate();
+      }
     }
   }
 
   bool IsInitialized() {
-    return m_is_initialized_;
+    return (s_initialization_counter_ != 0);
   }
 
 private:
-  bool m_is_initialized_;
+  static uint32_t s_initialization_counter_;
 };
 
 class DxfwWindowDeleter {
 public:
   void operator()(dxfwWindow* window) const {
-    dxfwDestroyWindow(window);
+    Dxfw::DestroyWindow(window);
   }
 };
+
+using dxfwWindowUniquePtr = std::unique_ptr<dxfwWindow, DxfwWindowDeleter>;

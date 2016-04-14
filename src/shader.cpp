@@ -72,14 +72,14 @@ bool ReflectShader(VertexShader* shader, const std::unordered_map<std::string, V
   Microsoft::WRL::ComPtr<ID3D11ShaderReflection> reflector;
   HRESULT reflector_creation_result = D3DReflect(shader->Buffer->GetBufferPointer(), shader->Buffer->GetBufferSize(), IID_ID3D11ShaderReflection, (void**)reflector.GetAddressOf());
   if (FAILED(reflector_creation_result)) {
-    DXFW_DIRECTX_TRACE(__FILE__, __LINE__, reflector_creation_result, true);
+    DXFW_DIRECTX_TRACE(__FILE__, __LINE__, true, reflector_creation_result);
     return false;
   }
 
   D3D11_SHADER_DESC shader_desc;
   HRESULT get_desc_result = reflector->GetDesc(&shader_desc);
   if (FAILED(get_desc_result)) {
-    DXFW_DIRECTX_TRACE(__FILE__, __LINE__, get_desc_result, true);
+    DXFW_DIRECTX_TRACE(__FILE__, __LINE__, true, get_desc_result);
     return false;
   }
 
@@ -103,7 +103,7 @@ bool ReflectShader(VertexShader* shader, const std::unordered_map<std::string, V
 bool LoadVertexShader(const filesystem::path& path, const std::unordered_map<std::string, VertexDataChannel>& custom_channel_map, ID3D11Device* device, VertexShader* vertex_shader) {
   HRESULT load_result = D3DReadFileToBlob(path.c_str(), vertex_shader->Buffer.GetAddressOf());
   if (FAILED(load_result)) {
-    DXFW_DIRECTX_TRACE(__FILE__, __LINE__, load_result, true);
+    DXFW_DIRECTX_TRACE(__FILE__, __LINE__, true, load_result);
     return false;
   }
 
@@ -113,7 +113,7 @@ bool LoadVertexShader(const filesystem::path& path, const std::unordered_map<std
                                                               vertex_shader->Shader.GetAddressOf());
   
   if (FAILED(shader_creation_result)) {
-    DXFW_DIRECTX_TRACE(__FILE__, __LINE__, shader_creation_result, true);
+    DXFW_DIRECTX_TRACE(__FILE__, __LINE__, true, shader_creation_result);
     return false;
   }
 
@@ -128,7 +128,7 @@ bool LoadVertexShader(const filesystem::path& path, const std::unordered_map<std
 bool LoadPixelShader(const filesystem::path& path, ID3D11Device* device, PixelShader* pixel_shader) {
   HRESULT load_result = D3DReadFileToBlob(path.c_str(), pixel_shader->Buffer.GetAddressOf());
   if (FAILED(load_result)) {
-    DXFW_DIRECTX_TRACE(__FILE__, __LINE__, load_result, true);
+    DXFW_DIRECTX_TRACE(__FILE__, __LINE__, true, load_result);
     return false;
   }
 
@@ -138,7 +138,7 @@ bool LoadPixelShader(const filesystem::path& path, ID3D11Device* device, PixelSh
                                                              pixel_shader->Shader.GetAddressOf());
 
   if (FAILED(shader_creation_result)) {
-    DXFW_DIRECTX_TRACE(__FILE__, __LINE__, shader_creation_result, true);
+    DXFW_DIRECTX_TRACE(__FILE__, __LINE__, true, shader_creation_result);
     return false;
   }
 

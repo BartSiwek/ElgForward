@@ -10,5 +10,3 @@
    }
 
 #endif  // SAFE_RELEASE
-
-

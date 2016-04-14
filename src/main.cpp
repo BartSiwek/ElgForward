@@ -13,9 +13,8 @@
 #include <wrl.h>
 #endif
 
-#include <dxfw/dxfw.h>
-
 #include "filesystem.h"
+#include "dxfw_wrapper.h"
 #include "dxfw_helpers.h"
 #include "buffer.h"
 #include "mesh_loader.h"
@@ -24,6 +23,7 @@
 #include "material.h"
 #include "drawable.h"
 #include "shaders/hlsl_definitions.h"
+#include "trackball_camera.h"
 
 struct DirectXState {
   Microsoft::WRL::ComPtr<ID3D11Device> device;
@@ -35,8 +35,10 @@ struct DirectXState {
 struct PerFrameConstantBuffer {
   DirectX::XMMATRIX ModelMatrix;
   DirectX::XMMATRIX ViewMatrix;
-  DirectX::XMMATRIX ModelViewMatrix;
+  DirectX::XMMATRIX ProjectionMatrix;
   DirectX::XMMATRIX NormalMatrix;
+  DirectX::XMMATRIX ModelViewMatrix;
+  DirectX::XMMATRIX ModelViewProjectionMatrix;
 };
 
 struct Scene {
@@ -44,11 +46,8 @@ struct Scene {
   std::vector<Drawable> drawables;
   Material material;
   Microsoft::WRL::ComPtr<ID3D11InputLayout> vertex_layout;
+  TrackballCamera camera;
 };
-
-void ErrorCallback(dxfwError error) {
-  DXFW_ERROR_TRACE(__FILE__, __LINE__, error, true);
-}
 
 bool InitializeDeviceAndSwapChain(dxfwWindow* window, DirectXState* state) {
   // Device settings
@@ -71,10 +70,10 @@ bool InitializeDeviceAndSwapChain(dxfwWindow* window, DirectXState* state) {
   DXGI_SWAP_CHAIN_DESC swap_chain_desc;
   ZeroMemory(&swap_chain_desc, sizeof(swap_chain_desc));
 
-  HWND window_handle = dxfwGetHandle(window);
+  HWND window_handle = Dxfw::GetWindowHandle(window);
   uint32_t width;
   uint32_t height;
-  dxfwGetWindowSize(window, &width, &height);
+  Dxfw::GetWindowSize(window, &width, &height);
 
   swap_chain_desc.BufferCount = 1;
   swap_chain_desc.BufferDesc.Width = width;
@@ -106,12 +105,12 @@ bool InitializeDeviceAndSwapChain(dxfwWindow* window, DirectXState* state) {
     }
 
     if (FAILED(hr)) {
-      DXFW_DIRECTX_TRACE(__FILE__, __LINE__, hr, false);
+      DXFW_DIRECTX_TRACE(__FILE__, __LINE__, false, hr);
     }
   }
 
   if (FAILED(hr)) {
-    DXFW_DIRECTX_TRACE(__FILE__, __LINE__, hr, true);
+    DXFW_DIRECTX_TRACE(__FILE__, __LINE__, true, hr);
     return false;
   }
 
@@ -129,14 +128,14 @@ bool InitializeDirect3d11(dxfwWindow* window, DirectXState* state) {
   ID3D11Texture2D* back_buffer;
   auto back_buffer_result = state->swap_chain->GetBuffer(0, __uuidof(ID3D11Texture2D), reinterpret_cast<void**>(&back_buffer));
   if (FAILED(back_buffer_result)) {
-    DXFW_DIRECTX_TRACE(__FILE__, __LINE__, back_buffer_result, true);
+    DXFW_DIRECTX_TRACE(__FILE__, __LINE__, true, back_buffer_result);
     return false;
   }
 
   // Create our Render Target
   auto rtv_result = state->device->CreateRenderTargetView(back_buffer, NULL, state->render_target_view.GetAddressOf());
   if (FAILED(rtv_result)) {
-    DXFW_DIRECTX_TRACE(__FILE__, __LINE__, rtv_result, true);
+    DXFW_DIRECTX_TRACE(__FILE__, __LINE__, true, rtv_result);
     return false;
   }
 
@@ -147,19 +146,6 @@ bool InitializeDirect3d11(dxfwWindow* window, DirectXState* state) {
   state->device_context->OMSetRenderTargets(1, state->render_target_view.GetAddressOf(), NULL);
 
   return true;
-}
-
-void CreateViewport(dxfwWindow* window, D3D11_VIEWPORT* viewport) {
-  ZeroMemory(viewport, sizeof(D3D11_VIEWPORT));
-
-  uint32_t width;
-  uint32_t height;
-  dxfwGetWindowSize(window, &width, &height);
-
-  viewport->TopLeftX = 0;
-  viewport->TopLeftY = 0;
-  viewport->Width = static_cast<float>(width);
-  viewport->Height = static_cast<float>(height);
 }
 
 bool InitializeScene(const filesystem::path& base_path, dxfwWindow* window, DirectXState* state, Scene* scene) {
@@ -191,19 +177,87 @@ bool InitializeScene(const filesystem::path& base_path, dxfwWindow* window, Dire
     }
   }
 
-  D3D11_VIEWPORT viewport;
-  CreateViewport(window, &viewport);
-  state->device_context->RSSetViewports(1, &viewport);
+  uint32_t width;
+  uint32_t height;
+  Dxfw::GetWindowSize(window, &width, &height);
+  scene->camera.SetViewportSize(width, height);
+  scene->camera.SetFrustum(1, 3, static_cast<float>(width) / static_cast<float>(height), DirectX::XM_PIDIV2);
+  scene->camera.SetLocation(0, 0, -2);
+
+  Dxfw::RegisterWindowResizeCallback(window, [state, scene](dxfwWindow* window, uint32_t width, uint32_t height){
+    state->device_context->OMSetRenderTargets(0, 0, 0);
+
+    // Release all outstanding references to the swap chain's buffers.
+    state->render_target_view.Reset();
+
+    // Preserve the existing buffer count and format and automatically choose the width and height to match the client rect for HWNDs.
+    auto resize_buffers_result = state->swap_chain->ResizeBuffers(0, 0, 0, DXGI_FORMAT_UNKNOWN, 0);
+
+    if (FAILED(resize_buffers_result)) {
+      DXFW_DIRECTX_TRACE(__FILE__, __LINE__, true, resize_buffers_result);
+      return;
+    }
+
+    // Create our BackBuffer
+    ID3D11Texture2D* back_buffer;
+    auto back_buffer_result = state->swap_chain->GetBuffer(0, __uuidof(ID3D11Texture2D), reinterpret_cast<void**>(&back_buffer));
+    if (FAILED(back_buffer_result)) {
+      DXFW_DIRECTX_TRACE(__FILE__, __LINE__, true, back_buffer_result);
+      return;
+    }
+
+    // Create our Render Target
+    auto rtv_result = state->device->CreateRenderTargetView(back_buffer, NULL, state->render_target_view.GetAddressOf());
+    if (FAILED(rtv_result)) {
+      DXFW_DIRECTX_TRACE(__FILE__, __LINE__, true, rtv_result);
+      return;
+    }
+
+    // Back buffer is held by RTV, so we can release it here
+    back_buffer->Release();
+
+    // Set our Render Target
+    state->device_context->OMSetRenderTargets(1, state->render_target_view.GetAddressOf(), NULL);
+
+    // Set viewport data
+    uint32_t test_width;
+    uint32_t test_height;
+    Dxfw::GetWindowSize(window, &test_width, &test_height);
+
+    if (test_width != width || test_height != height) {
+      DXFW_TRACE(__FILE__, __LINE__, true, "Bad size");
+      return;
+    }
+
+    scene->camera.SetViewportSize(width, height);
+  });
+
+  Dxfw::RegisterMouseButtonCallback(window, [scene](dxfwWindow*, dxfwMouseButton button, dxfwMouseButtonAction action, int16_t x, int16_t y) {
+    if (button == DXFW_RIGHT_MOUSE_BUTTON && action == DXFW_MOUSE_BUTTON_DOWN) {
+      scene->camera.StartPan(x, y);
+    } else if (button == DXFW_RIGHT_MOUSE_BUTTON && action == DXFW_MOUSE_BUTTON_UP) {
+      scene->camera.EndPan();
+    } else if (button == DXFW_LEFT_MOUSE_BUTTON && action == DXFW_MOUSE_BUTTON_DOWN) {
+      scene->camera.StartRotation(x, y);
+    } else if (button == DXFW_LEFT_MOUSE_BUTTON && action == DXFW_MOUSE_BUTTON_UP) {
+      scene->camera.EndRotation();
+    }
+  });
+
+  Dxfw::RegisterMouseMoveCallback(window, [scene](dxfwWindow*, int16_t x, int16_t y){
+    scene->camera.UpdatePosition(x, y);
+  });
 
   return true;
 }
 
 void Render(Scene* scene, ID3D11Buffer* perFrameConstantBuffer, DirectXState* state) {
+  state->device_context->RSSetViewports(1, &scene->camera.GetViewport());
+  state->device_context->VSSetConstantBuffers(PER_FRAME_CB_INDEX, 1, &perFrameConstantBuffer);
+
   for (auto& drawable : scene->drawables) {
     state->device_context->VSSetShader(drawable.GetVertexShader(), 0, 0);
     state->device_context->PSSetShader(drawable.GetPixelShader(), 0, 0);
-
-    state->device_context->VSSetConstantBuffers(PER_FRAME_CB_INDEX, 1, &perFrameConstantBuffer);
 
     state->device_context->IASetVertexBuffers(0,
                                               D3D11_IA_VERTEX_INPUT_RESOURCE_SLOT_COUNT,
@@ -228,9 +282,7 @@ int main(int /* argc */, char** /* argv */) {
 
   auto base_path = GetBasePath();
 
-  dxfwSetErrorCallback(ErrorCallback);
-
-  std::unique_ptr<dxfwWindow, DxfwWindowDeleter> window(dxfwCreateWindow(600, 600, "Hello DirectX"));
+  dxfwWindowUniquePtr window(Dxfw::CreateNewWindow(1600, 1200, "Hello DirectX"));
   if (!window) {
     return -1;
   }
@@ -255,18 +307,21 @@ int main(int /* argc */, char** /* argv */) {
 
   PerFrameConstantBuffer perFrameConstaneBuffer;
   DirectX::XMVECTOR axis = { 1, 1, 1, 0 };
-  while (!dxfwShouldWindowClose(window.get())) {
+  while (!Dxfw::ShouldWindowClose(window.get())) {
+    // Update the scene
+    scene.camera.UpdateMatricesAndViewport();
+
     // Update constant buffers contents
     auto R = DirectX::XMMatrixRotationAxis(axis, DirectX::XM_PIDIV2);
     auto S = DirectX::XMMatrixScaling(0.5f, 0.5f, 0.5f);
     auto SInv = DirectX::XMMatrixScaling(2.0f, 2.0f, 2.0f);
-    auto T = DirectX::XMMatrixTranslation(0.0f, 0.0f, 0.5f);
-    auto TInv = DirectX::XMMatrixTranslation(0.0f, 0.0f, -0.5f);
 
     perFrameConstaneBuffer.ModelMatrix = S * R;
-    perFrameConstaneBuffer.ViewMatrix = T;
+    perFrameConstaneBuffer.ViewMatrix = scene.camera.GetViewMatrix();
+    perFrameConstaneBuffer.ProjectionMatrix = scene.camera.GetProjectionMatrix();
+    perFrameConstaneBuffer.NormalMatrix = SInv * R * DirectX::XMMatrixTranspose(scene.camera.GetViewMatrixInverse());
     perFrameConstaneBuffer.ModelViewMatrix = perFrameConstaneBuffer.ModelMatrix * perFrameConstaneBuffer.ViewMatrix;
-    perFrameConstaneBuffer.NormalMatrix = SInv * R * DirectX::XMMatrixTranspose(TInv);
+    perFrameConstaneBuffer.ModelViewProjectionMatrix = perFrameConstaneBuffer.ModelViewMatrix * perFrameConstaneBuffer.ProjectionMatrix;
 
     // Update constant buffer
     bool update_ok = UpdateConstantBuffer(&perFrameConstaneBuffer, state.device_context.Get(), constant_buffer.Get());
@@ -282,7 +337,7 @@ int main(int /* argc */, char** /* argv */) {
 
     state.swap_chain->Present(0, 0);
 
-    dxfwPollOsEvents();
+    Dxfw::PollOsEvents();
   }
 
   state.device_context->ClearState();
