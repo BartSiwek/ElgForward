@@ -256,23 +256,16 @@ private:
     auto s = DirectX::XMLoadFloat2(&m_start_point_);
     s = GetPointOnUnitSphere(s);
 
-    auto s_len = DirectX::XMVector3Length(s);
-    DXFW_TRACE(__FILE__, __LINE__, false, "s length: %f", DirectX::XMVectorGetX(s_len));
-
     auto e = DirectX::XMLoadFloat2(&m_end_point_);
     e = GetPointOnUnitSphere(e);
 
-    auto e_len = DirectX::XMVector3Length(s);
-    DXFW_TRACE(__FILE__, __LINE__, false, "e length: %f", DirectX::XMVectorGetX(e_len));
+    auto axis = DirectX::XMVector3Cross(s, e);
+    if (DirectX::XMVector3Equal(axis, DirectX::XMVectorZero())) {
+      return DirectX::XMQuaternionIdentity();
+    }
 
-    auto axis = DirectX::XMVector3Cross(e, s);
-
-    auto axis_len = DirectX::XMVector3Length(s);
-    DXFW_TRACE(__FILE__, __LINE__, false, "axis length: %f", DirectX::XMVectorGetX(axis_len));
-
-    auto angle = DirectX::XMScalarACos(DirectX::XMVectorGetX(DirectX::XMVector3Dot(e, s)));
-
-    return DirectX::XMQuaternionRotationNormal(axis, angle);
+    auto angle = DirectX::XMScalarACos(DirectX::XMVectorGetX(DirectX::XMVector3Dot(s, e)));
+    return DirectX::XMQuaternionRotationAxis(axis, angle);
   }
 
   void UpdateViewMatrix(const DirectX::XMVECTOR& c, const DirectX::XMVECTOR& q, const DirectX::XMFLOAT2& frustum_size) {
