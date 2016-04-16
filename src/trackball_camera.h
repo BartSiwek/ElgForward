@@ -114,7 +114,7 @@ public:
 
   void EndPan() {
     if (m_current_state_ == State::Panning) {
-      auto frustum_size = GetFrustumSize();
+      auto frustum_size = GetFrustumSize(m_zoom_factor_);
       auto center = DirectX::XMLoadFloat3(&m_center_);
       auto q = DirectX::XMLoadFloat4(&m_rotation_quaterion_);
 
@@ -146,7 +146,7 @@ public:
 
   void EndZoom() {
     if (m_current_state_ == State::Zooming) {
-      // TODO: commit changes
+      m_zoom_factor_ = GetZoomFactor();
       EndOperation();
     }
   }
@@ -158,7 +158,8 @@ public:
   }
 
   void UpdateMatricesAndViewport() {
-    auto frustum_size = GetFrustumSize();
+    auto zoom_factor = GetZoomFactor();
+    auto frustum_size = GetFrustumSize(zoom_factor);
     auto center = DirectX::XMLoadFloat3(&m_center_);
     auto q = DirectX::XMLoadFloat4(&m_rotation_quaterion_);
 
@@ -213,15 +214,29 @@ private:
     
   }
 
-  DirectX::XMFLOAT2 GetFrustumSize() {
+  float GetZoomFactor() {
+    if (m_current_state_ != State::Zooming) {
+      return m_zoom_factor_;
+    }
+
+    auto d = m_end_point_.y - m_start_point_.y;
+    auto extra_factor = d / 16.0f + 3.0f * d / 8.0f + 1.0f;
+
+    DXFW_TRACE(__FILE__, __LINE__, false, "Zoom %f", extra_factor);
+
+    return extra_factor * m_zoom_factor_;
+  }
+
+  DirectX::XMFLOAT2 GetFrustumSize(float zoom_factor) {
+    float inv_zoom_factor = 1.0f / zoom_factor;
     if (m_width_ >= m_height_) {
       auto aspect_ratio = static_cast<float>(m_width_) / static_cast<float>(m_height_);
-      auto frustum_height = 2.0f * m_near_ * m_tg_half_vertical_fov_;
+      auto frustum_height = inv_zoom_factor * 2.0f * m_near_ * m_tg_half_vertical_fov_;
       auto frustum_width = aspect_ratio * frustum_height;
       return DirectX::XMFLOAT2(frustum_width, frustum_height);
     } else {
       auto aspect_ratio_inv = static_cast<float>(m_height_) / static_cast<float>(m_width_);
-      auto frustum_width = 2.0f * m_near_ * m_tg_half_horizontal_fov_;
+      auto frustum_width = inv_zoom_factor * 2.0f * m_near_ * m_tg_half_horizontal_fov_;
       auto frustum_height = aspect_ratio_inv * frustum_width;
       return DirectX::XMFLOAT2(frustum_width, frustum_height);
     }
@@ -234,7 +249,7 @@ private:
 
     auto f = DirectX::XMVectorScale(DirectX::XMLoadFloat2(&frustum_size), 0.5f);
 
-    auto t = DirectX::XMVector3Rotate(DirectX::XMVectorMultiply(v, f), q);
+    auto t = DirectX::XMVector3Rotate(DirectX::XMVectorMultiply(v, f), DirectX::XMQuaternionInverse(q));
 
     return t;
   }
@@ -248,7 +263,7 @@ private:
       auto mask = DirectX::XMVectorSelectControl(0, 0, 1, 0);
       return DirectX::XMVectorSelect(v, diff, mask);
     } else {
-      return DirectX::XMVectorDivide(v, l);
+      return DirectX::XMVectorDivide(v, DirectX::XMVectorSqrt(l));
     }
   }
 
@@ -259,21 +274,17 @@ private:
     auto e = DirectX::XMLoadFloat2(&m_end_point_);
     e = GetPointOnUnitSphere(e);
 
-    auto axis = DirectX::XMVector3Cross(s, e);
+    auto axis = DirectX::XMVector3Cross(e, s);
+    DXFW_TRACE(__FILE__, __LINE__, false, "Axis %f %f %f -> %f", DirectX::XMVectorGetX(axis), DirectX::XMVectorGetY(axis), DirectX::XMVectorGetZ(axis), DirectX::XMVectorGetX(DirectX::XMVector3Length(axis)));
     if (DirectX::XMVector3Equal(axis, DirectX::XMVectorZero())) {
       return DirectX::XMQuaternionIdentity();
     }
 
-    auto angle = DirectX::XMScalarACos(DirectX::XMVectorGetX(DirectX::XMVector3Dot(s, e)));
+    auto angle = DirectX::XMScalarACos(DirectX::XMVectorGetX(DirectX::XMVector3Dot(e, s)));
     return DirectX::XMQuaternionRotationAxis(axis, angle);
   }
 
   void UpdateViewMatrix(const DirectX::XMVECTOR& c, const DirectX::XMVECTOR& q, const DirectX::XMFLOAT2& frustum_size) {
-    // TODO
-    // No scaling
-    // Rotation first
-    // Translation second
-
     auto center = c;
     auto quaterion = q;
 
@@ -296,7 +307,6 @@ private:
   }
 
   void UpdateProjMatrix(DirectX::XMFLOAT2* frustum_size) {
-    // TODO: Use the zoom factor
     m_proj_matrix_ = DirectX::XMMatrixPerspectiveLH(frustum_size->x, frustum_size->y, m_near_, m_far_);
   }
 

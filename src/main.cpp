@@ -241,6 +241,10 @@ bool InitializeScene(const filesystem::path& base_path, dxfwWindow* window, Dire
       scene->camera.StartRotation(x, y);
     } else if (button == DXFW_LEFT_MOUSE_BUTTON && action == DXFW_MOUSE_BUTTON_UP) {
       scene->camera.EndRotation();
+    } else if (button == DXFW_MIDDLE_MOUSE_BUTTON && action == DXFW_MOUSE_BUTTON_DOWN) {
+      scene->camera.StartZoom(x, y);
+    } else if (button == DXFW_MIDDLE_MOUSE_BUTTON && action == DXFW_MOUSE_BUTTON_UP) {
+      scene->camera.EndZoom();
     }
   });
 
