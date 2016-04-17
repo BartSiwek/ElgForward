@@ -115,10 +115,9 @@ public:
   void EndPan() {
     if (m_current_state_ == State::Panning) {
       auto frustum_size = GetFrustumSize(m_zoom_factor_);
-      auto center = DirectX::XMLoadFloat3(&m_center_);
-      auto q = DirectX::XMLoadFloat4(&m_rotation_quaterion_);
+      auto t = GetCurrentTranslationVector(frustum_size);
 
-      auto t = GetCurrentTranslationVector(q, frustum_size);
+      auto center = DirectX::XMLoadFloat3(&m_center_);
       auto new_center = DirectX::XMVectorSubtract(center, t);
 
       DirectX::XMStoreFloat3(&m_center_, new_center);
@@ -242,14 +241,14 @@ private:
     }
   }
 
-  DirectX::XMVECTOR GetCurrentTranslationVector(const DirectX::XMVECTOR& q, const DirectX::XMFLOAT2& frustum_size) {
+  DirectX::XMVECTOR GetCurrentTranslationVector(const DirectX::XMFLOAT2& frustum_size) {
     auto e = DirectX::XMLoadFloat2(&m_end_point_);
     auto s = DirectX::XMLoadFloat2(&m_start_point_);
     auto v = DirectX::XMVectorSubtract(e, s);
 
     auto f = DirectX::XMVectorScale(DirectX::XMLoadFloat2(&frustum_size), 0.5f);
 
-    auto t = DirectX::XMVector3Rotate(DirectX::XMVectorMultiply(v, f), DirectX::XMQuaternionInverse(q));
+    auto t = DirectX::XMVectorMultiply(v, f);
 
     return t;
   }
@@ -289,7 +288,7 @@ private:
     auto quaterion = q;
 
     if (m_current_state_ == State::Panning) {
-      auto t_vector = GetCurrentTranslationVector(q, frustum_size);
+      auto t_vector = GetCurrentTranslationVector(frustum_size);
       center = DirectX::XMVectorSubtract(center, t_vector);
     } else if (m_current_state_ == State::Rotating) {
       auto r = GetRotationQuaternion();
