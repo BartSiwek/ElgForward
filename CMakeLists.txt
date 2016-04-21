@@ -51,6 +51,8 @@ set(PROJECT_SRCS
   ${PROJECT_SOURCE_DIR}/handle.h
   ${PROJECT_SOURCE_DIR}/mesh_loader.h
   ${PROJECT_SOURCE_DIR}/mesh_loader.cpp
+  ${PROJECT_SOURCE_DIR}/perspective_lens.h
+  ${PROJECT_SOURCE_DIR}/perspective_lens.cpp
   ${PROJECT_SOURCE_DIR}/shader.h
   ${PROJECT_SOURCE_DIR}/shader.cpp
   ${PROJECT_SOURCE_DIR}/trackball_camera.h

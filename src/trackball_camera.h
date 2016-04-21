@@ -73,9 +73,7 @@ public:
         m_tg_half_horizontal_fov_(1.0f),
         m_tg_half_vertical_fov_(1.0f),
         m_view_matrix_(DirectX::XMMatrixIdentity()),
-        m_inverse_view_matrix_(DirectX::XMMatrixIdentity()),
-        m_proj_matrix_(DirectX::XMMatrixIdentity()),
-        m_viewport_() {
+        m_inverse_view_matrix_(DirectX::XMMatrixIdentity()) {
   }
 
   ~TrackballCamera() = default;
@@ -104,8 +102,15 @@ public:
     m_center_.z = z;
   }
 
-  void LookAt(float /* x */, float /* y */, float /* z */) {
-    // TODO
+  void LookAt(float x, float y, float z) {
+    auto zAxis = DirectX::XMVectorSet(0, 0, 1, 0);
+    auto c = DirectX::XMLoadFloat3(&m_center_);
+    auto v = DirectX::XMPlaneNormalize(DirectX::XMVectorSubtract(DirectX::XMVectorSet(x, y, z, 0), c));
+
+    auto axis = DirectX::XMVector3Cross(zAxis, v);
+    auto angle = DirectX::XMScalarACos(DirectX::XMVectorGetX(DirectX::XMVector3Dot(zAxis, v)));
+
+    DirectX::XMStoreFloat4(&m_rotation_quaterion_, DirectX::XMQuaternionRotationAxis(axis, angle));
   }
 
   void StartPan(uint32_t x, uint32_t y) {
@@ -163,8 +168,6 @@ public:
     auto q = DirectX::XMLoadFloat4(&m_rotation_quaterion_);
 
     UpdateViewMatrix(center, q, frustum_size);
-    UpdateProjMatrix(&frustum_size);
-    UpdateViewport();
   }
 
   const DirectX::XMMATRIX& GetViewMatrix() const {
@@ -173,14 +176,6 @@ public:
 
   const DirectX::XMMATRIX& GetViewMatrixInverse() const {
     return m_inverse_view_matrix_;
-  }
-
-  const DirectX::XMMATRIX& GetProjectionMatrix() const {
-    return m_proj_matrix_;
-  }
-
-  const D3D11_VIEWPORT& GetViewport() const {
-    return m_viewport_;
   }
 
 private:
@@ -220,8 +215,6 @@ private:
 
     auto d = m_end_point_.y - m_start_point_.y;
     auto extra_factor = d / 16.0f + 3.0f * d / 8.0f + 1.0f;
-
-    DXFW_TRACE(__FILE__, __LINE__, false, "Zoom %f", extra_factor);
 
     return extra_factor * m_zoom_factor_;
   }
@@ -274,7 +267,6 @@ private:
     e = GetPointOnUnitSphere(e);
 
     auto axis = DirectX::XMVector3Cross(e, s);
-    DXFW_TRACE(__FILE__, __LINE__, false, "Axis %f %f %f -> %f", DirectX::XMVectorGetX(axis), DirectX::XMVectorGetY(axis), DirectX::XMVectorGetZ(axis), DirectX::XMVectorGetX(DirectX::XMVector3Length(axis)));
     if (DirectX::XMVector3Equal(axis, DirectX::XMVectorZero())) {
       return DirectX::XMQuaternionIdentity();
     }
@@ -302,26 +294,12 @@ private:
     DirectX::XMMATRIX t_inv = DirectX::XMMatrixTranslationFromVector(center);
 
     m_view_matrix_ = r * t;
-    m_inverse_view_matrix_ = r_inv * t_inv;
-  }
-
-  void UpdateProjMatrix(DirectX::XMFLOAT2* frustum_size) {
-    m_proj_matrix_ = DirectX::XMMatrixPerspectiveLH(frustum_size->x, frustum_size->y, m_near_, m_far_);
-  }
-
-  void UpdateViewport() {
-    ZeroMemory(&m_viewport_, sizeof(D3D11_VIEWPORT));
-    m_viewport_.TopLeftX = 0;
-    m_viewport_.TopLeftY = 0;
-    m_viewport_.Width = static_cast<float>(m_width_);
-    m_viewport_.Height = static_cast<float>(m_height_);
+    m_inverse_view_matrix_ = t_inv * r_inv;
   }
 
   // Finished product
   DirectX::XMMATRIX m_view_matrix_;
   DirectX::XMMATRIX m_inverse_view_matrix_;
-  DirectX::XMMATRIX m_proj_matrix_;
-  D3D11_VIEWPORT m_viewport_;
 
   // View
   DirectX::XMFLOAT3 m_center_;

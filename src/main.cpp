@@ -23,6 +23,7 @@
 #include "material.h"
 #include "drawable.h"
 #include "shaders/hlsl_definitions.h"
+#include "perspective_lens.h"
 #include "trackball_camera.h"
 
 struct DirectXState {
@@ -46,6 +47,7 @@ struct Scene {
   std::vector<Drawable> drawables;
   Material material;
   Microsoft::WRL::ComPtr<ID3D11InputLayout> vertex_layout;
+  PerspectiveLens lens;
   TrackballCamera camera;
 };
 
@@ -180,6 +182,10 @@ bool InitializeScene(const filesystem::path& base_path, dxfwWindow* window, Dire
   uint32_t width;
   uint32_t height;
   Dxfw::GetWindowSize(window, &width, &height);
+  
+  scene->lens.SetViewportSize(width, height);
+  scene->lens.SetFrustum(1, 3, static_cast<float>(width) / static_cast<float>(height), DirectX::XM_PIDIV2);
+
   scene->camera.SetViewportSize(width, height);
   scene->camera.SetFrustum(1, 3, static_cast<float>(width) / static_cast<float>(height), DirectX::XM_PIDIV2);
   scene->camera.SetLocation(0, 0, -2);
@@ -229,6 +235,8 @@ bool InitializeScene(const filesystem::path& base_path, dxfwWindow* window, Dire
       return;
     }
 
+    scene->lens.SetViewportSize(width, height);
+
     scene->camera.SetViewportSize(width, height);
   });
 
@@ -256,7 +264,7 @@ bool InitializeScene(const filesystem::path& base_path, dxfwWindow* window, Dire
 }
 
 void Render(Scene* scene, ID3D11Buffer* perFrameConstantBuffer, DirectXState* state) {
-  state->device_context->RSSetViewports(1, &scene->camera.GetViewport());
+  state->device_context->RSSetViewports(1, &scene->lens.GetViewport());
   state->device_context->VSSetConstantBuffers(PER_FRAME_CB_INDEX, 1, &perFrameConstantBuffer);
 
   for (auto& drawable : scene->drawables) {
@@ -312,6 +320,11 @@ int main(int /* argc */, char** /* argv */) {
   PerFrameConstantBuffer perFrameConstaneBuffer;
   DirectX::XMVECTOR axis = { 1, 1, 1, 0 };
   while (!Dxfw::ShouldWindowClose(window.get())) {
+    // Update the camera
+    auto t = static_cast<float>(dxfwGetTime());
+    scene.camera.SetLocation(2.0f * DirectX::XMScalarCos(t), 0.0f, 2.0f * DirectX::XMScalarSin(t));
+    scene.camera.LookAt(0, 0, 0);
+
     // Update the scene
     scene.camera.UpdateMatricesAndViewport();
 
@@ -322,7 +335,7 @@ int main(int /* argc */, char** /* argv */) {
 
     perFrameConstaneBuffer.ModelMatrix = S * R;
     perFrameConstaneBuffer.ViewMatrix = scene.camera.GetViewMatrix();
-    perFrameConstaneBuffer.ProjectionMatrix = scene.camera.GetProjectionMatrix();
+    perFrameConstaneBuffer.ProjectionMatrix = scene.lens.GetProjectionMatrix();
     perFrameConstaneBuffer.NormalMatrix = SInv * R * DirectX::XMMatrixTranspose(scene.camera.GetViewMatrixInverse());
     perFrameConstaneBuffer.ModelViewMatrix = perFrameConstaneBuffer.ModelMatrix * perFrameConstaneBuffer.ViewMatrix;
     perFrameConstaneBuffer.ModelViewProjectionMatrix = perFrameConstaneBuffer.ModelViewMatrix * perFrameConstaneBuffer.ProjectionMatrix;
