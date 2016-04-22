@@ -44,8 +44,16 @@ public:
     m_zoom_factor_ = zoom_factor;
   }
 
-  float GetZoomFactor() {
+  float GetZoomFactor() const {
     return m_zoom_factor_;
+  }
+
+  float GetFrustumWidth() const {
+    return m_frustum_width_;
+  }
+
+  float GetFrustumHeight() const {
+    return m_frustum_height_;
   }
 
   void UpdateMatricesAndViewport() {
@@ -66,14 +74,14 @@ private:
     float inv_zoom_factor = 1.0f / m_zoom_factor_;
     if (m_width_ >= m_height_) {
       auto aspect_ratio = static_cast<float>(m_width_) / static_cast<float>(m_height_);
-      auto frustum_height = inv_zoom_factor * 2.0f * m_near_ * m_tg_half_vertical_fov_;
-      auto frustum_width = aspect_ratio * frustum_height;
-      m_proj_matrix_ = DirectX::XMMatrixPerspectiveLH(frustum_width, frustum_height, m_near_, m_far_);
+      m_frustum_height_ = inv_zoom_factor * 2.0f * m_near_ * m_tg_half_vertical_fov_;
+      m_frustum_width_ = aspect_ratio * m_frustum_height_;
+      m_proj_matrix_ = DirectX::XMMatrixPerspectiveLH(m_frustum_width_, m_frustum_height_, m_near_, m_far_);
     } else {
       auto aspect_ratio_inv = static_cast<float>(m_height_) / static_cast<float>(m_width_);
-      auto frustum_width = inv_zoom_factor * 2.0f * m_near_ * m_tg_half_horizontal_fov_;
-      auto frustum_height = aspect_ratio_inv * frustum_width;
-      m_proj_matrix_ = DirectX::XMMatrixPerspectiveLH(frustum_width, frustum_height, m_near_, m_far_);
+      m_frustum_width_ = inv_zoom_factor * 2.0f * m_near_ * m_tg_half_horizontal_fov_;
+      m_frustum_height_ = aspect_ratio_inv * m_frustum_width_;
+      m_proj_matrix_ = DirectX::XMMatrixPerspectiveLH(m_frustum_width_, m_frustum_height_, m_near_, m_far_);
     }
   }
 
@@ -88,6 +96,10 @@ private:
   // Finished product
   DirectX::XMMATRIX m_proj_matrix_;
   D3D11_VIEWPORT m_viewport_;
+
+  // Frustum
+  float m_frustum_width_;
+  float m_frustum_height_;
 
   // Projection
   float m_near_;

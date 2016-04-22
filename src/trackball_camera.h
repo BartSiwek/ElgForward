@@ -1,61 +1,12 @@
 #pragma once
 
-/*
-MODES:
-- Pan
-- Rotate
-- Zoom
-
-EVENTS:
-- On client size changed - register new size
-- On mouse down - call PanStart / RotationStart / ZoomStart
-- On mouse move - call PositionUpdate
-- On mouse up - call PanEnd / RotationEnd / ZoomEnd
-
-Functions:
-- Get model matrix
-- Get projection matrix
-
-Possible members:
-- Mode = enum { PAN, ROTATE, ZOOM }
-- Current view matrix
-- Current projection matrix
-- Start point (of any operation)
-- Current point (of any operation)
-- Additional view matrix (to handle pan and rotate between Start and End)
-- Additional projection matrix (to handle zoom between Start and End)
-
-Rotation:
-- Remember the start point on unit sphere 
-- On move compute the new point on unit sphere
-- Calculate the rotation axis and angle
-  - Axis = cross product of the two points - its unit since the points are on unit sphere
-  - Angle - take dot product
-- Convert axis and angle to quaternion
-- Update the current rotation quaternion with this info
-
-Pan:
-- Keep the current center point
-- With mouse down remember the current start point in screen coords
-- With mouse move:
-  - Take the new pos in screen coord
-  - Subrstract it from start pos to get the vector
-  - Translate vector to a [0,1]x[0,1] space
-  - Multiply this by width & height of the near plane to get the vector in world coords
-
-Zoom:
-- Keep the zoom factor - default = 1.0
-- Map the difference between starting and current point on the screen to [-1, 1] according to the vertical axis
-- Map [-1, 1] to some reasonable range [0.5, 2] for example
-- 
-
-*/
-
 #include <cmath>
 
 #include <d3d11.h>
 
 #include <DirectXMath.h>
+
+#include <dxfw/dxfw.h>
 
 class TrackballCamera {
 public:
@@ -65,13 +16,11 @@ public:
         m_end_point_(0.0f, 0.0f),
         m_width_(1),
         m_height_(1),
+        m_frustum_width_(1.0f),
+        m_frustum_height_(1.0f),
         m_center_(0.0f, 0.0f, 0.0f),
         m_rotation_quaterion_(0.0f, 0.0f, 0.0f, 1.0f),  // Quaternion identity
-        m_zoom_factor_(1.0f),
-        m_near_(1.0f),
-        m_far_(2.0f),
-        m_tg_half_horizontal_fov_(1.0f),
-        m_tg_half_vertical_fov_(1.0f),
+        m_radius_(1.0f),
         m_view_matrix_(DirectX::XMMatrixIdentity()),
         m_inverse_view_matrix_(DirectX::XMMatrixIdentity()) {
   }
@@ -89,17 +38,19 @@ public:
     m_height_ = height;
   }
 
-  void SetFrustum(float near_plane, float far_plane, float aspect_ratio, float horizontal_fov) {
-    m_near_ = near_plane;
-    m_far_ = far_plane;
-    m_tg_half_horizontal_fov_ = std::tan(horizontal_fov / 2.0f);
-    m_tg_half_vertical_fov_ = m_tg_half_horizontal_fov_ / aspect_ratio;
+  void SetFrustumSize(float width, float height) {
+    m_frustum_width_ = width;
+    m_frustum_height_ = height;
   }
 
   void SetLocation(float x, float y, float z) {
     m_center_.x = x;
     m_center_.y = y;
     m_center_.z = z;
+  }
+
+  void SetRadius(float r) {
+    m_radius_ = r;
   }
 
   void LookAt(float x, float y, float z) {
@@ -119,8 +70,9 @@ public:
 
   void EndPan() {
     if (m_current_state_ == State::Panning) {
-      auto frustum_size = GetFrustumSize(m_zoom_factor_);
-      auto t = GetCurrentTranslationVector(frustum_size);
+      auto frustum_size = DirectX::XMVectorSet(m_frustum_width_, m_frustum_height_, 0.0f, 0.0f);
+      auto q = DirectX::XMLoadFloat4(&m_rotation_quaterion_);
+      auto t = GetCurrentTranslationVector(q, frustum_size);
 
       auto center = DirectX::XMLoadFloat3(&m_center_);
       auto new_center = DirectX::XMVectorSubtract(center, t);
@@ -148,22 +100,14 @@ public:
     StartOperation(State::Zooming, x, y);
   }
 
-  void EndZoom() {
-    if (m_current_state_ == State::Zooming) {
-      m_zoom_factor_ = GetZoomFactor();
-      EndOperation();
-    }
-  }
-
   void UpdatePosition(uint32_t x, uint32_t y) {
     if (m_current_state_ != State::None) {
       m_end_point_ = GetNormalizedScreenCoordinates(x, y);
     }
   }
 
-  void UpdateMatricesAndViewport() {
-    auto zoom_factor = GetZoomFactor();
-    auto frustum_size = GetFrustumSize(zoom_factor);
+  void UpdateMatrices() {
+    auto frustum_size = DirectX::XMVectorSet(m_frustum_width_, m_frustum_height_, 0.0f, 0.0f);
     auto center = DirectX::XMLoadFloat3(&m_center_);
     auto q = DirectX::XMLoadFloat4(&m_rotation_quaterion_);
 
@@ -208,40 +152,16 @@ private:
     
   }
 
-  float GetZoomFactor() {
-    if (m_current_state_ != State::Zooming) {
-      return m_zoom_factor_;
-    }
-
-    auto d = m_end_point_.y - m_start_point_.y;
-    auto extra_factor = d / 16.0f + 3.0f * d / 8.0f + 1.0f;
-
-    return extra_factor * m_zoom_factor_;
-  }
-
-  DirectX::XMFLOAT2 GetFrustumSize(float zoom_factor) {
-    float inv_zoom_factor = 1.0f / zoom_factor;
-    if (m_width_ >= m_height_) {
-      auto aspect_ratio = static_cast<float>(m_width_) / static_cast<float>(m_height_);
-      auto frustum_height = inv_zoom_factor * 2.0f * m_near_ * m_tg_half_vertical_fov_;
-      auto frustum_width = aspect_ratio * frustum_height;
-      return DirectX::XMFLOAT2(frustum_width, frustum_height);
-    } else {
-      auto aspect_ratio_inv = static_cast<float>(m_height_) / static_cast<float>(m_width_);
-      auto frustum_width = inv_zoom_factor * 2.0f * m_near_ * m_tg_half_horizontal_fov_;
-      auto frustum_height = aspect_ratio_inv * frustum_width;
-      return DirectX::XMFLOAT2(frustum_width, frustum_height);
-    }
-  }
-
-  DirectX::XMVECTOR GetCurrentTranslationVector(const DirectX::XMFLOAT2& frustum_size) {
+  DirectX::XMVECTOR GetCurrentTranslationVector(const DirectX::XMVECTOR& q, const DirectX::XMVECTOR& frustum_size) {
     auto e = DirectX::XMLoadFloat2(&m_end_point_);
     auto s = DirectX::XMLoadFloat2(&m_start_point_);
     auto v = DirectX::XMVectorSubtract(e, s);
 
-    auto f = DirectX::XMVectorScale(DirectX::XMLoadFloat2(&frustum_size), 0.5f);
+    auto f = DirectX::XMVectorScale(frustum_size, 0.5f);
 
     auto t = DirectX::XMVectorMultiply(v, f);
+    
+    t = DirectX::XMVector3Rotate(t, DirectX::XMQuaternionInverse(q));
 
     return t;
   }
@@ -275,26 +195,29 @@ private:
     return DirectX::XMQuaternionRotationAxis(axis, angle);
   }
 
-  void UpdateViewMatrix(const DirectX::XMVECTOR& c, const DirectX::XMVECTOR& q, const DirectX::XMFLOAT2& frustum_size) {
+  void UpdateViewMatrix(const DirectX::XMVECTOR& c, const DirectX::XMVECTOR& q, const DirectX::XMVECTOR& frustum_size) {
     auto center = c;
     auto quaterion = q;
 
     if (m_current_state_ == State::Panning) {
-      auto t_vector = GetCurrentTranslationVector(frustum_size);
+      auto t_vector = GetCurrentTranslationVector(quaterion, frustum_size);
       center = DirectX::XMVectorSubtract(center, t_vector);
     } else if (m_current_state_ == State::Rotating) {
       auto r = GetRotationQuaternion();
       quaterion = DirectX::XMQuaternionMultiply(quaterion, r);
     }
 
+    DirectX::XMMATRIX t = DirectX::XMMatrixTranslation(0, 0, m_radius_);
+    DirectX::XMMATRIX t_inv = DirectX::XMMatrixTranslation(0, 0, -m_radius_);
+
     DirectX::XMMATRIX r = DirectX::XMMatrixRotationQuaternion(quaterion);
     DirectX::XMMATRIX r_inv = DirectX::XMMatrixRotationQuaternion(DirectX::XMQuaternionInverse(quaterion));
 
-    DirectX::XMMATRIX t = DirectX::XMMatrixTranslationFromVector(DirectX::XMVectorNegate(center));
-    DirectX::XMMATRIX t_inv = DirectX::XMMatrixTranslationFromVector(center);
+    DirectX::XMMATRIX c_t = DirectX::XMMatrixTranslationFromVector(DirectX::XMVectorNegate(center));
+    DirectX::XMMATRIX c_t_inv = DirectX::XMMatrixTranslationFromVector(center);
 
-    m_view_matrix_ = r * t;
-    m_inverse_view_matrix_ = t_inv * r_inv;
+    m_view_matrix_ = c_t * r * t;
+    m_inverse_view_matrix_ = t_inv * r_inv * c_t_inv;
   }
 
   // Finished product
@@ -304,17 +227,13 @@ private:
   // View
   DirectX::XMFLOAT3 m_center_;
   DirectX::XMFLOAT4 m_rotation_quaterion_;
-
-  // Projection
-  float m_zoom_factor_;
-  float m_near_;
-  float m_far_;
-  float m_tg_half_horizontal_fov_;
-  float m_tg_half_vertical_fov_;
+  float m_radius_;
 
   // Viewport
   uint32_t m_width_;
   uint32_t m_height_;
+  float m_frustum_width_;
+  float m_frustum_height_;
 
   // State
   State m_current_state_;

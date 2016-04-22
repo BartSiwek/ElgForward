@@ -119,13 +119,7 @@ bool InitializeDeviceAndSwapChain(dxfwWindow* window, DirectXState* state) {
   return true;
 }
 
-bool InitializeDirect3d11(dxfwWindow* window, DirectXState* state) {
-  // Create device
-  bool device_ok = InitializeDeviceAndSwapChain(window, state);
-  if (!device_ok) {
-    return false;
-  }
-
+bool InitializeRenderTarget(DirectXState* state) {
   // Create our BackBuffer
   ID3D11Texture2D* back_buffer;
   auto back_buffer_result = state->swap_chain->GetBuffer(0, __uuidof(ID3D11Texture2D), reinterpret_cast<void**>(&back_buffer));
@@ -146,6 +140,21 @@ bool InitializeDirect3d11(dxfwWindow* window, DirectXState* state) {
 
   // Set our Render Target
   state->device_context->OMSetRenderTargets(1, state->render_target_view.GetAddressOf(), NULL);
+
+  return true;
+}
+
+bool InitializeDirect3d11(dxfwWindow* window, DirectXState* state) {
+  // Create device
+  bool device_ok = InitializeDeviceAndSwapChain(window, state);
+  if (!device_ok) {
+    return false;
+  }
+
+  bool rt_ok = InitializeRenderTarget(state);
+  if (!rt_ok) {
+    return false;
+  }
 
   return true;
 }
@@ -187,8 +196,8 @@ bool InitializeScene(const filesystem::path& base_path, dxfwWindow* window, Dire
   scene->lens.SetFrustum(1, 3, static_cast<float>(width) / static_cast<float>(height), DirectX::XM_PIDIV2);
 
   scene->camera.SetViewportSize(width, height);
-  scene->camera.SetFrustum(1, 3, static_cast<float>(width) / static_cast<float>(height), DirectX::XM_PIDIV2);
-  scene->camera.SetLocation(0, 0, -2);
+  scene->camera.SetRadius(2.0f);
+  scene->camera.SetLocation(0, 0, 0);
 
   Dxfw::RegisterWindowResizeCallback(window, [state, scene](dxfwWindow* window, uint32_t width, uint32_t height){
     state->device_context->OMSetRenderTargets(0, 0, 0);
@@ -204,26 +213,10 @@ bool InitializeScene(const filesystem::path& base_path, dxfwWindow* window, Dire
       return;
     }
 
-    // Create our BackBuffer
-    ID3D11Texture2D* back_buffer;
-    auto back_buffer_result = state->swap_chain->GetBuffer(0, __uuidof(ID3D11Texture2D), reinterpret_cast<void**>(&back_buffer));
-    if (FAILED(back_buffer_result)) {
-      DXFW_DIRECTX_TRACE(__FILE__, __LINE__, true, back_buffer_result);
+    bool rt_ok = InitializeRenderTarget(state);
+    if (!rt_ok) {
       return;
     }
-
-    // Create our Render Target
-    auto rtv_result = state->device->CreateRenderTargetView(back_buffer, NULL, state->render_target_view.GetAddressOf());
-    if (FAILED(rtv_result)) {
-      DXFW_DIRECTX_TRACE(__FILE__, __LINE__, true, rtv_result);
-      return;
-    }
-
-    // Back buffer is held by RTV, so we can release it here
-    back_buffer->Release();
-
-    // Set our Render Target
-    state->device_context->OMSetRenderTargets(1, state->render_target_view.GetAddressOf(), NULL);
 
     // Set viewport data
     uint32_t test_width;
@@ -249,11 +242,14 @@ bool InitializeScene(const filesystem::path& base_path, dxfwWindow* window, Dire
       scene->camera.StartRotation(x, y);
     } else if (button == DXFW_LEFT_MOUSE_BUTTON && action == DXFW_MOUSE_BUTTON_UP) {
       scene->camera.EndRotation();
-    } else if (button == DXFW_MIDDLE_MOUSE_BUTTON && action == DXFW_MOUSE_BUTTON_DOWN) {
-      scene->camera.StartZoom(x, y);
-    } else if (button == DXFW_MIDDLE_MOUSE_BUTTON && action == DXFW_MOUSE_BUTTON_UP) {
-      scene->camera.EndZoom();
     }
+    /*
+    else if (button == DXFW_MIDDLE_MOUSE_BUTTON && action == DXFW_MOUSE_BUTTON_DOWN) {
+      scene->lens.SetZoomFactor(2.0f * scene->lens.GetZoomFactor());
+    } else if (button == DXFW_MIDDLE_MOUSE_BUTTON && action == DXFW_MOUSE_BUTTON_UP) {
+      scene->lens.SetZoomFactor(0.5f * scene->lens.GetZoomFactor());
+    }
+    */
   });
 
   Dxfw::RegisterMouseMoveCallback(window, [scene](dxfwWindow*, int16_t x, int16_t y){
@@ -321,12 +317,14 @@ int main(int /* argc */, char** /* argv */) {
   DirectX::XMVECTOR axis = { 1, 1, 1, 0 };
   while (!Dxfw::ShouldWindowClose(window.get())) {
     // Update the camera
-    auto t = static_cast<float>(dxfwGetTime());
-    scene.camera.SetLocation(2.0f * DirectX::XMScalarCos(t), 0.0f, 2.0f * DirectX::XMScalarSin(t));
-    scene.camera.LookAt(0, 0, 0);
+    // auto t = static_cast<float>(dxfwGetTime());
+    // scene.camera.SetLocation(2.0f * DirectX::XMScalarCos(t), 0.0f, 2.0f * DirectX::XMScalarSin(t));
+    // scene.camera.LookAt(0, 0, 0);
 
     // Update the scene
-    scene.camera.UpdateMatricesAndViewport();
+    scene.lens.UpdateMatricesAndViewport();
+    scene.camera.SetFrustumSize(scene.lens.GetFrustumWidth(), scene.lens.GetFrustumHeight());
+    scene.camera.UpdateMatrices();
 
     // Update constant buffers contents
     auto R = DirectX::XMMatrixRotationAxis(axis, DirectX::XM_PIDIV2);
