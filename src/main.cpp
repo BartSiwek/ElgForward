@@ -47,6 +47,7 @@ struct Scene {
   std::vector<Drawable> drawables;
   Material material;
   Microsoft::WRL::ComPtr<ID3D11InputLayout> vertex_layout;
+  D3D11_VIEWPORT viewport;
   PerspectiveLens lens;
   TrackballCamera camera;
 };
@@ -159,6 +160,14 @@ bool InitializeDirect3d11(dxfwWindow* window, DirectXState* state) {
   return true;
 }
 
+void SetViewportSize(D3D11_VIEWPORT* viewport, unsigned int width, unsigned int height) {
+  ZeroMemory(viewport, sizeof(D3D11_VIEWPORT));
+  viewport->TopLeftX = 0;
+  viewport->TopLeftY = 0;
+  viewport->Width = static_cast<float>(width);
+  viewport->Height = static_cast<float>(height);
+}
+
 bool InitializeScene(const filesystem::path& base_path, dxfwWindow* window, DirectXState* state, Scene* scene) {
   bool vs_ok = LoadVertexShader(base_path / "vs.cso", std::unordered_map<std::string, VertexDataChannel>(), state->device.Get(), &scene->material.VertexShader);
   if (!vs_ok) {
@@ -192,14 +201,16 @@ bool InitializeScene(const filesystem::path& base_path, dxfwWindow* window, Dire
   uint32_t height;
   Dxfw::GetWindowSize(window, &width, &height);
   
-  scene->lens.SetViewportSize(width, height);
+  SetViewportSize(&scene->viewport, width, height);
+  state->device_context->RSSetViewports(1, &scene->viewport);
+
   scene->lens.SetFrustum(1, 3, static_cast<float>(width) / static_cast<float>(height), DirectX::XM_PIDIV2);
 
   scene->camera.SetViewportSize(width, height);
   scene->camera.SetRadius(2.0f);
   scene->camera.SetLocation(0, 0, 0);
 
-  Dxfw::RegisterWindowResizeCallback(window, [state, scene](dxfwWindow* window, uint32_t width, uint32_t height){
+  Dxfw::RegisterWindowResizeCallback(window, [state, scene](dxfwWindow* /* window */, uint32_t width, uint32_t height){
     state->device_context->OMSetRenderTargets(0, 0, 0);
 
     // Release all outstanding references to the swap chain's buffers.
@@ -219,16 +230,8 @@ bool InitializeScene(const filesystem::path& base_path, dxfwWindow* window, Dire
     }
 
     // Set viewport data
-    uint32_t test_width;
-    uint32_t test_height;
-    Dxfw::GetWindowSize(window, &test_width, &test_height);
-
-    if (test_width != width || test_height != height) {
-      DXFW_TRACE(__FILE__, __LINE__, true, "Bad size");
-      return;
-    }
-
-    scene->lens.SetViewportSize(width, height);
+    SetViewportSize(&scene->viewport, width, height);
+    state->device_context->RSSetViewports(1, &scene->viewport);
 
     scene->camera.SetViewportSize(width, height);
   });
@@ -260,7 +263,6 @@ bool InitializeScene(const filesystem::path& base_path, dxfwWindow* window, Dire
 }
 
 void Render(Scene* scene, ID3D11Buffer* perFrameConstantBuffer, DirectXState* state) {
-  state->device_context->RSSetViewports(1, &scene->lens.GetViewport());
   state->device_context->VSSetConstantBuffers(PER_FRAME_CB_INDEX, 1, &perFrameConstantBuffer);
 
   for (auto& drawable : scene->drawables) {
@@ -321,9 +323,14 @@ int main(int /* argc */, char** /* argv */) {
     // scene.camera.SetLocation(2.0f * DirectX::XMScalarCos(t), 0.0f, 2.0f * DirectX::XMScalarSin(t));
     // scene.camera.LookAt(0, 0, 0);
 
+    // Get aspect ratio
+    float aspect_ratio = static_cast<float>(scene.viewport.Width) / static_cast<float>(scene.viewport.Height);
+
     // Update the scene
-    scene.lens.UpdateMatricesAndViewport();
-    scene.camera.SetFrustumSize(scene.lens.GetFrustumWidth(), scene.lens.GetFrustumHeight());
+    float frustum_width;
+    float frustum_height;
+    scene.lens.UpdateMatrices(aspect_ratio, &frustum_width, &frustum_height);
+    scene.camera.SetFrustumSize(frustum_width, frustum_height);
     scene.camera.UpdateMatrices();
 
     // Update constant buffers contents
