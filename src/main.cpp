@@ -50,6 +50,10 @@ struct Scene {
   D3D11_VIEWPORT viewport;
   PerspectiveLens lens;
   TrackballCamera camera;
+
+  bool pan_on;
+  bool rotation_on;
+  DirectX::XMFLOAT2 p;
 };
 
 bool InitializeDeviceAndSwapChain(dxfwWindow* window, DirectXState* state) {
@@ -206,9 +210,13 @@ bool InitializeScene(const filesystem::path& base_path, dxfwWindow* window, Dire
 
   scene->lens.SetFrustum(1, 3, static_cast<float>(width) / static_cast<float>(height), DirectX::XM_PIDIV2);
 
-  scene->camera.SetViewportSize(width, height);
   scene->camera.SetRadius(2.0f);
   scene->camera.SetLocation(0, 0, 0);
+
+  scene->pan_on = false;
+  scene->rotation_on = false;
+  scene->p.x = 0.0f;
+  scene->p.y = 0.0f;
 
   Dxfw::RegisterWindowResizeCallback(window, [state, scene](dxfwWindow* /* window */, uint32_t width, uint32_t height){
     state->device_context->OMSetRenderTargets(0, 0, 0);
@@ -232,21 +240,19 @@ bool InitializeScene(const filesystem::path& base_path, dxfwWindow* window, Dire
     // Set viewport data
     SetViewportSize(&scene->viewport, width, height);
     state->device_context->RSSetViewports(1, &scene->viewport);
-
-    scene->camera.SetViewportSize(width, height);
   });
 
   Dxfw::RegisterMouseButtonCallback(window, [scene](dxfwWindow*, dxfwMouseButton button, dxfwMouseButtonAction action, int16_t x, int16_t y) {
     if (button == DXFW_RIGHT_MOUSE_BUTTON && action == DXFW_MOUSE_BUTTON_DOWN) {
-      auto p = GetNormalizedScreenCoordinates(scene->viewport.Width, scene->viewport.Height, x, y);
-      scene->camera.StartPan(p);
+      scene->p = GetNormalizedScreenCoordinates(scene->viewport.Width, scene->viewport.Height, x, y);
+      scene->pan_on = true;
     } else if (button == DXFW_RIGHT_MOUSE_BUTTON && action == DXFW_MOUSE_BUTTON_UP) {
-      scene->camera.EndPan();
+      scene->pan_on = false;
     } else if (button == DXFW_LEFT_MOUSE_BUTTON && action == DXFW_MOUSE_BUTTON_DOWN) {
-      auto p = GetNormalizedScreenCoordinates(scene->viewport.Width, scene->viewport.Height, x, y);
-      scene->camera.StartRotation(p);
+      scene->p = GetNormalizedScreenCoordinates(scene->viewport.Width, scene->viewport.Height, x, y);
+      scene->rotation_on = false;
     } else if (button == DXFW_LEFT_MOUSE_BUTTON && action == DXFW_MOUSE_BUTTON_UP) {
-      scene->camera.EndRotation();
+      scene->rotation_on = false;
     }
     /*
     else if (button == DXFW_MIDDLE_MOUSE_BUTTON && action == DXFW_MOUSE_BUTTON_DOWN) {
@@ -258,8 +264,7 @@ bool InitializeScene(const filesystem::path& base_path, dxfwWindow* window, Dire
   });
 
   Dxfw::RegisterMouseMoveCallback(window, [scene](dxfwWindow*, int16_t x, int16_t y){
-    auto p = GetNormalizedScreenCoordinates(scene->viewport.Width, scene->viewport.Height, x, y);
-    scene->camera.UpdatePosition(p);
+    scene->p = GetNormalizedScreenCoordinates(scene->viewport.Width, scene->viewport.Height, x, y);
   });
 
   return true;
@@ -334,7 +339,7 @@ int main(int /* argc */, char** /* argv */) {
     float frustum_height;
     scene.lens.UpdateMatrices(aspect_ratio, &frustum_width, &frustum_height);
     scene.camera.SetFrustumSize(frustum_width, frustum_height);
-    scene.camera.UpdateMatrices();
+    scene.camera.UpdateMatrices(scene.pan_on, scene.rotation_on, scene.p);
 
     // Update constant buffers contents
     auto R = DirectX::XMMatrixRotationAxis(axis, DirectX::XM_PIDIV2);
