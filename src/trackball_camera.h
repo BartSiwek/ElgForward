@@ -8,6 +8,11 @@
 
 #include <dxfw/dxfw.h>
 
+inline DirectX::XMFLOAT2 GetNormalizedScreenCoordinates(float width, float height, float x, float y) {
+  return DirectX::XMFLOAT2((2 * x) / width - 1.0f, 1.0f - (2 * y) / height);
+
+}
+
 class TrackballCamera {
 public:
   TrackballCamera()
@@ -64,8 +69,8 @@ public:
     DirectX::XMStoreFloat4(&m_rotation_quaterion_, DirectX::XMQuaternionRotationAxis(axis, angle));
   }
 
-  void StartPan(uint32_t x, uint32_t y) {
-    StartOperation(State::Panning, x, y);
+  void StartPan(const DirectX::XMFLOAT2& p) {
+    StartOperation(State::Panning, p);
   }
 
   void EndPan() {
@@ -83,8 +88,8 @@ public:
     }
   }
 
-  void StartRotation(uint32_t x, uint32_t y) {
-    StartOperation(State::Rotating, x, y);
+  void StartRotation(const DirectX::XMFLOAT2& p) {
+    StartOperation(State::Rotating, p);
   }
 
   void EndRotation() {
@@ -96,13 +101,13 @@ public:
     }
   }
 
-  void StartZoom(uint32_t x, uint32_t y) {
-    StartOperation(State::Zooming, x, y);
+  void StartZoom(const DirectX::XMFLOAT2& p) {
+    StartOperation(State::Zooming, p);
   }
 
-  void UpdatePosition(uint32_t x, uint32_t y) {
+  void UpdatePosition(const DirectX::XMFLOAT2& p) {
     if (m_current_state_ != State::None) {
-      m_end_point_ = GetNormalizedScreenCoordinates(x, y);
+      m_end_point_ = p;
     }
   }
 
@@ -130,10 +135,10 @@ private:
     Zooming,
   };
   
-  void StartOperation(State operation, uint32_t x, uint32_t y) {
+  void StartOperation(State operation, const DirectX::XMFLOAT2& p) {
     if (m_current_state_ == State::None) {
       m_current_state_ = operation;
-      m_start_point_ = GetNormalizedScreenCoordinates(x, y);
+      m_start_point_ = p;
       m_end_point_ = m_start_point_;
     }
   }
@@ -144,12 +149,6 @@ private:
       m_start_point_.x = m_start_point_.y = 0.0f;
       m_end_point_.x = m_end_point_.y = 0.0f;
     }
-  }
-
-  DirectX::XMFLOAT2 GetNormalizedScreenCoordinates(uint32_t x, uint32_t y) {
-    return DirectX::XMFLOAT2(static_cast<float>(2 * x) / static_cast<float>(m_width_) - 1.0f,
-                             1.0f - static_cast<float>(2 * y) / static_cast<float>(m_height_));
-    
   }
 
   DirectX::XMVECTOR GetCurrentTranslationVector(const DirectX::XMVECTOR& q, const DirectX::XMVECTOR& frustum_size) {

@@ -238,11 +238,13 @@ bool InitializeScene(const filesystem::path& base_path, dxfwWindow* window, Dire
 
   Dxfw::RegisterMouseButtonCallback(window, [scene](dxfwWindow*, dxfwMouseButton button, dxfwMouseButtonAction action, int16_t x, int16_t y) {
     if (button == DXFW_RIGHT_MOUSE_BUTTON && action == DXFW_MOUSE_BUTTON_DOWN) {
-      scene->camera.StartPan(x, y);
+      auto p = GetNormalizedScreenCoordinates(scene->viewport.Width, scene->viewport.Height, x, y);
+      scene->camera.StartPan(p);
     } else if (button == DXFW_RIGHT_MOUSE_BUTTON && action == DXFW_MOUSE_BUTTON_UP) {
       scene->camera.EndPan();
     } else if (button == DXFW_LEFT_MOUSE_BUTTON && action == DXFW_MOUSE_BUTTON_DOWN) {
-      scene->camera.StartRotation(x, y);
+      auto p = GetNormalizedScreenCoordinates(scene->viewport.Width, scene->viewport.Height, x, y);
+      scene->camera.StartRotation(p);
     } else if (button == DXFW_LEFT_MOUSE_BUTTON && action == DXFW_MOUSE_BUTTON_UP) {
       scene->camera.EndRotation();
     }
@@ -256,7 +258,8 @@ bool InitializeScene(const filesystem::path& base_path, dxfwWindow* window, Dire
   });
 
   Dxfw::RegisterMouseMoveCallback(window, [scene](dxfwWindow*, int16_t x, int16_t y){
-    scene->camera.UpdatePosition(x, y);
+    auto p = GetNormalizedScreenCoordinates(scene->viewport.Width, scene->viewport.Height, x, y);
+    scene->camera.UpdatePosition(p);
   });
 
   return true;
