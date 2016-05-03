@@ -19,8 +19,6 @@ public:
       : m_current_state_(State::None),
         m_start_point_(0.0f, 0.0f),
         m_end_point_(0.0f, 0.0f),
-        m_frustum_width_(1.0f),
-        m_frustum_height_(1.0f),
         m_center_(0.0f, 0.0f, 0.0f),
         m_rotation_quaterion_(0.0f, 0.0f, 0.0f, 1.0f),  // Quaternion identity
         m_radius_(1.0f),
@@ -35,11 +33,6 @@ public:
 
   TrackballCamera(TrackballCamera&&) = default;
   TrackballCamera& operator=(TrackballCamera&&) = default;
-
-  void SetFrustumSize(float width, float height) {
-    m_frustum_width_ = width;
-    m_frustum_height_ = height;
-  }
 
   void SetLocation(float x, float y, float z) {
     m_center_.x = x;
@@ -65,26 +58,37 @@ public:
     */
   }
 
-  void UpdateMatrices(bool pan_toggle, bool rotation_toggle, const DirectX::XMFLOAT2& p) {
+  void UpdateMatrices(bool pan_toggle, bool rotation_toggle, const DirectX::XMFLOAT2& frustum_size, const DirectX::XMFLOAT2& p) {
+    auto frustum_size_v = DirectX::XMLoadFloat2(&frustum_size);
+
     if (pan_toggle) {
-      StartPan(p);
+      if (m_current_state_ == State::None) {
+        StartPan(p);
+      } else if (m_current_state_ == State::Panning) {
+        UpdatePosition(p);
+      }
     } else {
-      EndPan();
+      if (m_current_state_ == State::Panning) {
+        EndPan(frustum_size_v);
+      }
     }
 
     if (rotation_toggle) {
-      StartRotation(p);
+      if (m_current_state_ == State::None) {
+        StartRotation(p);
+      } else if (m_current_state_ == State::Rotating) {
+        UpdatePosition(p);
+      }
     } else {
-      EndRotation();
+      if (m_current_state_ == State::Rotating) {
+        EndRotation();
+      }
     }
 
-    UpdatePosition(p);
-
-    auto frustum_size = DirectX::XMVectorSet(m_frustum_width_, m_frustum_height_, 0.0f, 0.0f);
     auto center = DirectX::XMLoadFloat3(&m_center_);
     auto q = DirectX::XMLoadFloat4(&m_rotation_quaterion_);
 
-    UpdateViewMatrix(center, q, frustum_size);
+    UpdateViewMatrix(center, q, frustum_size_v);
   }
 
   const DirectX::XMMATRIX& GetViewMatrix() const {
@@ -103,12 +107,13 @@ private:
   };
   
   void StartPan(const DirectX::XMFLOAT2& p) {
+    DXFW_TRACE(__FILE__, __LINE__, false, "Start Pan");
     StartOperation(State::Panning, p);
   }
 
-  void EndPan() {
+  void EndPan(const DirectX::XMVECTOR& frustum_size) {
+    DXFW_TRACE(__FILE__, __LINE__, false, "End Pan");
     if (m_current_state_ == State::Panning) {
-      auto frustum_size = DirectX::XMVectorSet(m_frustum_width_, m_frustum_height_, 0.0f, 0.0f);
       auto q = DirectX::XMLoadFloat4(&m_rotation_quaterion_);
       auto t = GetCurrentTranslationVector(q, frustum_size);
 
@@ -122,10 +127,12 @@ private:
   }
 
   void StartRotation(const DirectX::XMFLOAT2& p) {
+    DXFW_TRACE(__FILE__, __LINE__, false, "Start Rotation");
     StartOperation(State::Rotating, p);
   }
 
   void EndRotation() {
+    DXFW_TRACE(__FILE__, __LINE__, false, "End Rotation");
     if (m_current_state_ == State::Rotating) {
       auto q = DirectX::XMLoadFloat4(&m_rotation_quaterion_);
       q = DirectX::XMQuaternionMultiply(q, GetRotationQuaternion());
@@ -232,10 +239,6 @@ private:
   DirectX::XMFLOAT3 m_center_;
   DirectX::XMFLOAT4 m_rotation_quaterion_;
   float m_radius_;
-
-  // Viewport
-  float m_frustum_width_;
-  float m_frustum_height_;
 
   // State
   State m_current_state_;
