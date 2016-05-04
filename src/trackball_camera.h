@@ -8,6 +8,12 @@
 
 #include <dxfw/dxfw.h>
 
+enum class TrackballCameraOperation {
+  None,
+  Panning,
+  Rotating,
+};
+
 inline DirectX::XMFLOAT2 GetNormalizedScreenCoordinates(float width, float height, float x, float y) {
   return DirectX::XMFLOAT2((2 * x) / width - 1.0f, 1.0f - (2 * y) / height);
 
@@ -16,7 +22,7 @@ inline DirectX::XMFLOAT2 GetNormalizedScreenCoordinates(float width, float heigh
 class TrackballCamera {
 public:
   TrackballCamera()
-      : m_current_state_(State::None),
+      : m_current_state_(TrackballCameraOperation::None),
         m_start_point_(0.0f, 0.0f),
         m_end_point_(0.0f, 0.0f),
         m_center_(0.0f, 0.0f, 0.0f),
@@ -58,35 +64,28 @@ public:
     */
   }
 
-  void UpdateMatrices(bool pan_toggle, bool rotation_toggle, const DirectX::XMFLOAT2& frustum_size, const DirectX::XMFLOAT2& p) {
-    auto frustum_size_v = DirectX::XMLoadFloat2(&frustum_size);
-
-    if (pan_toggle) {
-      if (m_current_state_ == State::None) {
-        StartPan(p);
-      } else if (m_current_state_ == State::Panning) {
-        UpdatePosition(p);
-      }
-    } else {
-      if (m_current_state_ == State::Panning) {
-        EndPan(frustum_size_v);
-      }
-    }
-
-    if (rotation_toggle) {
-      if (m_current_state_ == State::None) {
-        StartRotation(p);
-      } else if (m_current_state_ == State::Rotating) {
-        UpdatePosition(p);
-      }
-    } else {
-      if (m_current_state_ == State::Rotating) {
-        EndRotation();
-      }
-    }
-
+  void UpdateMatrices(TrackballCameraOperation desired_state, float frustum_width, float frustum_height, const DirectX::XMFLOAT2& p) {
+    auto frustum_size_v = DirectX::XMVectorSet(frustum_width, frustum_height, 0.0f, 0.0f);
     auto center = DirectX::XMLoadFloat3(&m_center_);
     auto q = DirectX::XMLoadFloat4(&m_rotation_quaterion_);
+
+    if (desired_state == TrackballCameraOperation::Panning && m_current_state_ == TrackballCameraOperation::None) {
+      StartOperation(TrackballCameraOperation::Panning, p);
+    } else if (desired_state == TrackballCameraOperation::Panning && m_current_state_ == TrackballCameraOperation::Panning) {
+      m_end_point_ = p;
+    } else if (desired_state == TrackballCameraOperation::Rotating && m_current_state_ == TrackballCameraOperation::None) {
+      StartOperation(TrackballCameraOperation::Rotating, p);
+    } else if (desired_state == TrackballCameraOperation::Rotating && m_current_state_ == TrackballCameraOperation::Rotating) {
+      m_end_point_ = p;
+    } else if (desired_state == TrackballCameraOperation::None && m_current_state_ == TrackballCameraOperation::Panning) {
+      center = DirectX::XMVectorSubtract(center, GetCurrentTranslationVector(q, frustum_size_v));
+      DirectX::XMStoreFloat3(&m_center_, center);
+      EndOperation();
+    } else if (desired_state == TrackballCameraOperation::None && m_current_state_ == TrackballCameraOperation::Rotating) {
+      q = DirectX::XMQuaternionMultiply(q, GetRotationQuaternion());
+      DirectX::XMStoreFloat4(&m_rotation_quaterion_, q);
+      EndOperation();
+    }
 
     UpdateViewMatrix(center, q, frustum_size_v);
   }
@@ -100,55 +99,8 @@ public:
   }
 
 private:
-  enum class State {
-    None,
-    Panning,
-    Rotating,
-  };
-  
-  void StartPan(const DirectX::XMFLOAT2& p) {
-    DXFW_TRACE(__FILE__, __LINE__, false, "Start Pan");
-    StartOperation(State::Panning, p);
-  }
-
-  void EndPan(const DirectX::XMVECTOR& frustum_size) {
-    DXFW_TRACE(__FILE__, __LINE__, false, "End Pan");
-    if (m_current_state_ == State::Panning) {
-      auto q = DirectX::XMLoadFloat4(&m_rotation_quaterion_);
-      auto t = GetCurrentTranslationVector(q, frustum_size);
-
-      auto center = DirectX::XMLoadFloat3(&m_center_);
-      auto new_center = DirectX::XMVectorSubtract(center, t);
-
-      DirectX::XMStoreFloat3(&m_center_, new_center);
-
-      EndOperation();
-    }
-  }
-
-  void StartRotation(const DirectX::XMFLOAT2& p) {
-    DXFW_TRACE(__FILE__, __LINE__, false, "Start Rotation");
-    StartOperation(State::Rotating, p);
-  }
-
-  void EndRotation() {
-    DXFW_TRACE(__FILE__, __LINE__, false, "End Rotation");
-    if (m_current_state_ == State::Rotating) {
-      auto q = DirectX::XMLoadFloat4(&m_rotation_quaterion_);
-      q = DirectX::XMQuaternionMultiply(q, GetRotationQuaternion());
-      DirectX::XMStoreFloat4(&m_rotation_quaterion_, q);
-      EndOperation();
-    }
-  }
-
-  void UpdatePosition(const DirectX::XMFLOAT2& p) {
-    if (m_current_state_ != State::None) {
-      m_end_point_ = p;
-    }
-  }
-
-  void StartOperation(State operation, const DirectX::XMFLOAT2& p) {
-    if (m_current_state_ == State::None) {
+  void StartOperation(TrackballCameraOperation operation, const DirectX::XMFLOAT2& p) {
+    if (m_current_state_ == TrackballCameraOperation::None) {
       m_current_state_ = operation;
       m_start_point_ = p;
       m_end_point_ = m_start_point_;
@@ -156,8 +108,8 @@ private:
   }
 
   void EndOperation() {
-    if (m_current_state_ != State::None) {
-      m_current_state_ = State::None;
+    if (m_current_state_ != TrackballCameraOperation::None) {
+      m_current_state_ = TrackballCameraOperation::None;
       m_start_point_.x = m_start_point_.y = 0.0f;
       m_end_point_.x = m_end_point_.y = 0.0f;
     }
@@ -210,10 +162,10 @@ private:
     auto center = c;
     auto quaterion = q;
 
-    if (m_current_state_ == State::Panning) {
+    if (m_current_state_ == TrackballCameraOperation::Panning) {
       auto t_vector = GetCurrentTranslationVector(quaterion, frustum_size);
       center = DirectX::XMVectorSubtract(center, t_vector);
-    } else if (m_current_state_ == State::Rotating) {
+    } else if (m_current_state_ == TrackballCameraOperation::Rotating) {
       auto r = GetRotationQuaternion();
       quaterion = DirectX::XMQuaternionMultiply(quaterion, r);
     }
@@ -241,7 +193,7 @@ private:
   float m_radius_;
 
   // State
-  State m_current_state_;
+  TrackballCameraOperation m_current_state_;
   DirectX::XMFLOAT2 m_start_point_;
   DirectX::XMFLOAT2 m_end_point_;
 };

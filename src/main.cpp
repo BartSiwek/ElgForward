@@ -51,8 +51,7 @@ struct Scene {
   PerspectiveLens lens;
   TrackballCamera camera;
 
-  bool pan_on;
-  bool rotation_on;
+  TrackballCameraOperation camera_state;
   DirectX::XMFLOAT2 p;
 };
 
@@ -213,8 +212,7 @@ bool InitializeScene(const filesystem::path& base_path, dxfwWindow* window, Dire
   scene->camera.SetRadius(2.0f);
   scene->camera.SetLocation(0, 0, 0);
 
-  scene->pan_on = false;
-  scene->rotation_on = false;
+  scene->camera_state = TrackballCameraOperation::None;
   scene->p.x = 0.0f;
   scene->p.y = 0.0f;
 
@@ -245,14 +243,14 @@ bool InitializeScene(const filesystem::path& base_path, dxfwWindow* window, Dire
   Dxfw::RegisterMouseButtonCallback(window, [scene](dxfwWindow*, dxfwMouseButton button, dxfwMouseButtonAction action, int16_t x, int16_t y) {
     if (button == DXFW_RIGHT_MOUSE_BUTTON && action == DXFW_MOUSE_BUTTON_DOWN) {
       scene->p = GetNormalizedScreenCoordinates(scene->viewport.Width, scene->viewport.Height, x, y);
-      scene->pan_on = true;
+      scene->camera_state = TrackballCameraOperation::Panning;
     } else if (button == DXFW_RIGHT_MOUSE_BUTTON && action == DXFW_MOUSE_BUTTON_UP) {
-      scene->pan_on = false;
+      scene->camera_state = TrackballCameraOperation::None;
     } else if (button == DXFW_LEFT_MOUSE_BUTTON && action == DXFW_MOUSE_BUTTON_DOWN) {
       scene->p = GetNormalizedScreenCoordinates(scene->viewport.Width, scene->viewport.Height, x, y);
-      scene->rotation_on = true;
+      scene->camera_state = TrackballCameraOperation::Rotating;
     } else if (button == DXFW_LEFT_MOUSE_BUTTON && action == DXFW_MOUSE_BUTTON_UP) {
-      scene->rotation_on = false;
+      scene->camera_state = TrackballCameraOperation::None;
     }
     /*
     else if (button == DXFW_MIDDLE_MOUSE_BUTTON && action == DXFW_MOUSE_BUTTON_DOWN) {
@@ -335,9 +333,10 @@ int main(int /* argc */, char** /* argv */) {
     float aspect_ratio = static_cast<float>(scene.viewport.Width) / static_cast<float>(scene.viewport.Height);
 
     // Update the scene
-    DirectX::XMFLOAT2 frustum_size;
-    scene.lens.UpdateMatrices(aspect_ratio, &frustum_size);
-    scene.camera.UpdateMatrices(scene.pan_on, scene.rotation_on, frustum_size, scene.p);
+    float frustum_width;
+    float frustum_height;
+    scene.lens.UpdateMatrices(aspect_ratio, &frustum_width, &frustum_height);
+    scene.camera.UpdateMatrices(scene.camera_state, frustum_width, frustum_height, scene.p);
 
     // Update constant buffers contents
     auto R = DirectX::XMMatrixRotationAxis(axis, DirectX::XM_PIDIV2);

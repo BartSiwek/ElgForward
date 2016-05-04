@@ -6,7 +6,7 @@
 
 #include <DirectXMath.h>
 
-void PerspectiveLensUpdate(float zoom_factor, float aspect_ratio, float w, float h, float n, float f, DirectX::XMFLOAT2* frustum_size, DirectX::XMMATRIX* proj_matrix);
+void PerspectiveLensUpdate(float zoom_factor, float aspect_ratio, float w, float h, float n, float f, float* frustum_width, float* frustum_height, DirectX::XMMATRIX* proj_matrix);
 
 class PerspectiveLens {
 public:
@@ -45,12 +45,13 @@ public:
   }
 
   void UpdateMatrices(float aspect_ratio) {
-    DirectX::XMFLOAT2 frustum_size;
-    PerspectiveLensUpdate(m_zoom_factor_, aspect_ratio, m_frustum_width_, m_frustum_height_, m_near_, m_far_, &frustum_size, &m_proj_matrix_);
+    float frustum_width;
+    float frustum_height;
+    PerspectiveLensUpdate(m_zoom_factor_, aspect_ratio, m_frustum_width_, m_frustum_height_, m_near_, m_far_, &frustum_width, &frustum_height, &m_proj_matrix_);
   }
 
-  void UpdateMatrices(float aspect_ratio, DirectX::XMFLOAT2* frustum_size) {
-    PerspectiveLensUpdate(m_zoom_factor_, aspect_ratio, m_frustum_width_, m_frustum_height_, m_near_, m_far_, frustum_size, &m_proj_matrix_);
+  void UpdateMatrices(float aspect_ratio, float* frustum_width, float* frustum_height) {
+    PerspectiveLensUpdate(m_zoom_factor_, aspect_ratio, m_frustum_width_, m_frustum_height_, m_near_, m_far_, frustum_width, frustum_height, &m_proj_matrix_);
   }
 
   const DirectX::XMMATRIX& GetProjectionMatrix() const {
