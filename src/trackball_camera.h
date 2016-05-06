@@ -52,18 +52,20 @@ public:
     m_radius_ = r;
   }
 
-  void LookAt(float /* x */, float /* y */, float /* z */) {
-    /*
-    FIX ME
+  void LookAt(float from_x, float from_y, float from_z, float to_x, float to_y, float to_z) {
+    m_center_.x = from_x;
+    m_center_.y = from_y;
+    m_center_.z = from_z;
+
     auto zAxis = DirectX::XMVectorSet(0, 0, 1, 0);
     auto c = DirectX::XMLoadFloat3(&m_center_);
-    auto v = DirectX::XMPlaneNormalize(DirectX::XMVectorSubtract(DirectX::XMVectorSet(x, y, z, 0), c));
+    auto t = DirectX::XMVectorSet(to_x, to_y, to_z, 0);
+    auto v = DirectX::XMVector3Normalize(DirectX::XMVectorSubtract(c, t));
 
     auto axis = DirectX::XMVector3Cross(zAxis, v);
     auto angle = DirectX::XMScalarACos(DirectX::XMVectorGetX(DirectX::XMVector3Dot(zAxis, v)));
 
     DirectX::XMStoreFloat4(&m_rotation_quaterion_, DirectX::XMQuaternionRotationAxis(axis, angle));
-    */
   }
 
   void SetDesiredState(TrackballCameraOperation desired_state) {

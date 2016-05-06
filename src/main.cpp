@@ -320,9 +320,8 @@ int main(int /* argc */, char** /* argv */) {
   DirectX::XMVECTOR axis = { 1, 1, 1, 0 };
   while (!Dxfw::ShouldWindowClose(window.get())) {
     // Update the camera
-    // auto t = static_cast<float>(dxfwGetTime());
-    // scene.camera.SetLocation(2.0f * DirectX::XMScalarCos(t), 0.0f, 2.0f * DirectX::XMScalarSin(t));
-    // scene.camera.LookAt(0, 0, 0);
+    auto t = static_cast<float>(dxfwGetTime());
+    scene.camera.LookAt(2.0f * DirectX::XMScalarCos(t), 0.0f, 2.0f * DirectX::XMScalarSin(t), 0, 0, 0);
 
     // Get aspect ratio
     float aspect_ratio = static_cast<float>(scene.viewport.Width) / static_cast<float>(scene.viewport.Height);
