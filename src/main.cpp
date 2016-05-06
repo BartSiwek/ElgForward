@@ -246,13 +246,14 @@ bool InitializeScene(const filesystem::path& base_path, dxfwWindow* window, Dire
     } else if (button == DXFW_LEFT_MOUSE_BUTTON && action == DXFW_MOUSE_BUTTON_UP) {
       scene->camera.SetDesiredState(TrackballCameraOperation::None);
     }
-    /*
-    else if (button == DXFW_MIDDLE_MOUSE_BUTTON && action == DXFW_MOUSE_BUTTON_DOWN) {
-      scene->lens.SetZoomFactor(2.0f * scene->lens.GetZoomFactor());
-    } else if (button == DXFW_MIDDLE_MOUSE_BUTTON && action == DXFW_MOUSE_BUTTON_UP) {
-      scene->lens.SetZoomFactor(0.5f * scene->lens.GetZoomFactor());
+  });
+
+  Dxfw::RegisterMouseWheelCallback(window, [scene](dxfwWindow*, int16_t, int16_t, int16_t delta){
+    if (delta > 0) {
+      scene->lens.SetZoomFactor(1.1f * scene->lens.GetZoomFactor());
+    } else {
+      scene->lens.SetZoomFactor(0.9f * scene->lens.GetZoomFactor());
     }
-    */
   });
 
   Dxfw::RegisterMouseMoveCallback(window, [scene](dxfwWindow*, int16_t x, int16_t y){
