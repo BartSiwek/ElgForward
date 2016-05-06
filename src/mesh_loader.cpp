@@ -171,13 +171,13 @@ bool LoadIndexBuffer16UInt(const aiMesh& imported_mesh, ID3D11Device* device, Gp
 
 bool LoadMesh(const filesystem::path& path, const MeshLoaderOptions& options, ID3D11Device* device, std::vector<GpuMesh>* meshes) {
   if (meshes == nullptr) {
-    DXFW_TRACE(__FILE__, __LINE__, true, "Got a null mesh vector pointer");
+    DXFW_TRACE(__FILE__, __LINE__, true, "Got a null mesh vector pointer", nullptr);
     return false;
   }
 
   bool validate_ok = ValidateOptions(options);
   if (!validate_ok) {
-    DXFW_TRACE(__FILE__, __LINE__, true, "Invalid mesh loading options");
+    DXFW_TRACE(__FILE__, __LINE__, true, "Invalid mesh loading options", nullptr);
     return false;
   }
 
@@ -196,7 +196,7 @@ bool LoadMesh(const filesystem::path& path, const MeshLoaderOptions& options, ID
     auto imported_mesh = scene->mMeshes[i];
 
     if (imported_mesh->mPrimitiveTypes != aiPrimitiveType_TRIANGLE) {
-      DXFW_TRACE(__FILE__, __LINE__, true, "Only triangular meshes are supported for loading");
+      DXFW_TRACE(__FILE__, __LINE__, true, "Only triangular meshes are supported for loading", nullptr);
       return false;
     }
 
