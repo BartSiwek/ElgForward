@@ -15,7 +15,7 @@ enum class TrackballCameraOperation : uint32_t {
   MaxOperations = 3
 };
 
-void TrackballCameraUpdate(TrackballCameraOperation desired_state, const DirectX::XMFLOAT2& p, float frustum_width, float frustum_height,
+void TrackballCameraUpdate(TrackballCameraOperation desired_state, float frustum_width, float frustum_height,
                            TrackballCameraOperation* current_state, DirectX::XMFLOAT2* start_point, DirectX::XMFLOAT2* end_point,
                            DirectX::XMFLOAT3* center, DirectX::XMFLOAT4* rotation_quaterion, float* radius,
                            DirectX::XMMATRIX* view_matrix, DirectX::XMMATRIX* inverse_view_matrix);
@@ -31,8 +31,7 @@ public:
         m_radius_(1.0f),
         m_view_matrix_(DirectX::XMMatrixIdentity()),
         m_inverse_view_matrix_(DirectX::XMMatrixIdentity()),
-        m_desired_state_(TrackballCameraOperation::None),
-        m_p_(0.0f, 0.0f) {
+        m_desired_state_(TrackballCameraOperation::None) {
   }
 
   ~TrackballCamera() = default;
@@ -72,11 +71,11 @@ public:
   }
 
   void SetEndPoint(const DirectX::XMFLOAT2& p) {
-    m_p_ = p;
+    m_end_point_ = p;
   }
 
   void UpdateMatrices(float frustum_width, float frustum_height) {
-    TrackballCameraUpdate(m_desired_state_, m_p_, frustum_width, frustum_height, &m_current_state_, &m_start_point_, &m_end_point_, &m_center_, &m_rotation_quaterion_, &m_radius_, &m_view_matrix_, &m_inverse_view_matrix_);
+    TrackballCameraUpdate(m_desired_state_, frustum_width, frustum_height, &m_current_state_, &m_start_point_, &m_end_point_, &m_center_, &m_rotation_quaterion_, &m_radius_, &m_view_matrix_, &m_inverse_view_matrix_);
   }
 
   const DirectX::XMMATRIX& GetViewMatrix() const {
@@ -104,5 +103,4 @@ private:
   
   // Extra state
   TrackballCameraOperation m_desired_state_;
-  DirectX::XMFLOAT2 m_p_;
 };

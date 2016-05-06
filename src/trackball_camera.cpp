@@ -43,7 +43,7 @@ DirectX::XMVECTOR GetCurrentRotationQuaternion(const DirectX::XMFLOAT2& start_po
 
   auto axis = DirectX::XMVector3Cross(e, s);
   if (DirectX::XMVector3Equal(axis, DirectX::XMVectorZero())) {
-    return DirectX::XMQuaternionIdentity();
+    return rotation_quaterion;
   }
 
   auto angle = DirectX::XMScalarACos(DirectX::XMVectorGetX(DirectX::XMVector3Dot(e, s)));
@@ -70,10 +70,9 @@ void UpdateViewMatrix(const DirectX::XMVECTOR& center, const DirectX::XMVECTOR& 
 }
 
 /* STATE SWITCHING HELPERS */
-void StartOperation(TrackballCameraOperation operation, const DirectX::XMFLOAT2& p, TrackballCameraOperation* current_state, DirectX::XMFLOAT2* start_point, DirectX::XMFLOAT2* end_point) {
+void StartOperation(TrackballCameraOperation operation, TrackballCameraOperation* current_state, DirectX::XMFLOAT2* start_point, DirectX::XMFLOAT2* end_point) {
   *current_state = operation;
-  *start_point = p;
-  *end_point = p;
+  *start_point = *end_point;
 }
 
 void EndOperation(TrackballCameraOperation* current_state, DirectX::XMFLOAT2* start_point, DirectX::XMFLOAT2* end_point) {
@@ -82,32 +81,28 @@ void EndOperation(TrackballCameraOperation* current_state, DirectX::XMFLOAT2* st
   end_point->x = end_point->y = 0.0f;
 }
 
-void UpdateEndPoint(const DirectX::XMFLOAT2& p, DirectX::XMFLOAT2* end_point) {
-  *end_point = p;
-}
-
 /* STATE TRANSITION HANDLERS */
-void HandleNoneToNoneTransition(const DirectX::XMFLOAT2& /* p */, const DirectX::XMVECTOR& /* frustum_size */, TrackballCameraOperation* /* current_state */,
+void HandleNoneToNoneTransition(const DirectX::XMVECTOR& /* frustum_size */, TrackballCameraOperation* /* current_state */,
                                 DirectX::XMFLOAT2* /* start_point */, DirectX::XMFLOAT2* /* end_point */,
                                 DirectX::XMFLOAT3* /* center_storage */, DirectX::XMFLOAT4* /* rotation_quaterion_storage */,
                                 DirectX::XMVECTOR* /* center */, DirectX::XMVECTOR* /* rotation_quaterion */) {
 }
 
-void HandleNoneToPanningTransition(const DirectX::XMFLOAT2& p, const DirectX::XMVECTOR& /* frustum_size */, TrackballCameraOperation* current_state,
+void HandleNoneToPanningTransition(const DirectX::XMVECTOR& /* frustum_size */, TrackballCameraOperation* current_state,
                                    DirectX::XMFLOAT2* start_point, DirectX::XMFLOAT2* end_point,
                                    DirectX::XMFLOAT3* /* center_storage */, DirectX::XMFLOAT4* /* rotation_quaterion_storage */,
                                    DirectX::XMVECTOR* /* center */, DirectX::XMVECTOR* /* rotation_quaterion */) {
-  StartOperation(TrackballCameraOperation::Panning, p, current_state, start_point, end_point);
+  StartOperation(TrackballCameraOperation::Panning, current_state, start_point, end_point);
 }
 
-void HandleNoneToRotatingTransition(const DirectX::XMFLOAT2& p, const DirectX::XMVECTOR& /* frustum_size */, TrackballCameraOperation* current_state,
+void HandleNoneToRotatingTransition(const DirectX::XMVECTOR& /* frustum_size */, TrackballCameraOperation* current_state,
                                     DirectX::XMFLOAT2* start_point, DirectX::XMFLOAT2* end_point,
                                     DirectX::XMFLOAT3* /* center_storage */, DirectX::XMFLOAT4* /* rotation_quaterion_storage */,
                                     DirectX::XMVECTOR* /* center */, DirectX::XMVECTOR* /* rotation_quaterion */) {
-  StartOperation(TrackballCameraOperation::Rotating, p, current_state, start_point, end_point);
+  StartOperation(TrackballCameraOperation::Rotating, current_state, start_point, end_point);
 }
 
-void HandlePanningToNoneTransition(const DirectX::XMFLOAT2& /* p */, const DirectX::XMVECTOR& frustum_size, TrackballCameraOperation* current_state,
+void HandlePanningToNoneTransition(const DirectX::XMVECTOR& frustum_size, TrackballCameraOperation* current_state,
                                    DirectX::XMFLOAT2* start_point, DirectX::XMFLOAT2* end_point,
                                    DirectX::XMFLOAT3* center_storage, DirectX::XMFLOAT4* /* rotation_quaterion_storage */,
                                    DirectX::XMVECTOR* center, DirectX::XMVECTOR* rotation_quaterion) {
@@ -116,23 +111,21 @@ void HandlePanningToNoneTransition(const DirectX::XMFLOAT2& /* p */, const Direc
   EndOperation(current_state, start_point, end_point);
 }
 
-void HandlePanningToPanningTransition(const DirectX::XMFLOAT2& p, const DirectX::XMVECTOR& frustum_size, TrackballCameraOperation* /* current_state */,
+void HandlePanningToPanningTransition(const DirectX::XMVECTOR& frustum_size, TrackballCameraOperation* /* current_state */,
                                       DirectX::XMFLOAT2* start_point, DirectX::XMFLOAT2* end_point,
                                       DirectX::XMFLOAT3* /* center_storage */, DirectX::XMFLOAT4* /* rotation_quaterion_storage */,
                                       DirectX::XMVECTOR* center, DirectX::XMVECTOR* rotation_quaterion) {
   *center = GetCurrentTranslationVector(*start_point, *end_point, *center, *rotation_quaterion, frustum_size);
-  UpdateEndPoint(p, end_point);
 }
 
-void HandlePanningToRotatingTransition(const DirectX::XMFLOAT2& p, const DirectX::XMVECTOR& frustum_size, TrackballCameraOperation* /* current_state */,
+void HandlePanningToRotatingTransition(const DirectX::XMVECTOR& frustum_size, TrackballCameraOperation* /* current_state */,
                                        DirectX::XMFLOAT2* start_point, DirectX::XMFLOAT2* end_point,
                                        DirectX::XMFLOAT3* /* center_storage */, DirectX::XMFLOAT4* /* rotation_quaterion_storage */,
                                        DirectX::XMVECTOR* center, DirectX::XMVECTOR* rotation_quaterion) {
   *center = GetCurrentTranslationVector(*start_point, *end_point, *center, *rotation_quaterion, frustum_size);
-  UpdateEndPoint(p, end_point);
 }
 
-void HandleRotatingToNoneTransition(const DirectX::XMFLOAT2& /* p */, const DirectX::XMVECTOR& /* frustum_size */, TrackballCameraOperation* current_state,
+void HandleRotatingToNoneTransition(const DirectX::XMVECTOR& /* frustum_size */, TrackballCameraOperation* current_state,
                                     DirectX::XMFLOAT2* start_point, DirectX::XMFLOAT2* end_point,
                                     DirectX::XMFLOAT3* /* center_storage */, DirectX::XMFLOAT4* rotation_quaterion_storage,
                                     DirectX::XMVECTOR* /* center */, DirectX::XMVECTOR* rotation_quaterion) {
@@ -141,24 +134,22 @@ void HandleRotatingToNoneTransition(const DirectX::XMFLOAT2& /* p */, const Dire
   EndOperation(current_state, start_point, end_point);
 }
 
-void HandleRotatingToPanningTransition(const DirectX::XMFLOAT2& p, const DirectX::XMVECTOR& /* frustum_size */, TrackballCameraOperation* /* current_state */,
+void HandleRotatingToPanningTransition(const DirectX::XMVECTOR& /* frustum_size */, TrackballCameraOperation* /* current_state */,
                                        DirectX::XMFLOAT2* start_point, DirectX::XMFLOAT2* end_point,
                                        DirectX::XMFLOAT3* /* center_storage */, DirectX::XMFLOAT4* /* rotation_quaterion_storage */,
                                        DirectX::XMVECTOR* /* center */, DirectX::XMVECTOR* rotation_quaterion) {
   *rotation_quaterion = GetCurrentRotationQuaternion(*start_point, *end_point, *rotation_quaterion);
-  UpdateEndPoint(p, end_point);
 }
 
-void HandleRotatingToRotatingTransition(const DirectX::XMFLOAT2& p, const DirectX::XMVECTOR& /* frustum_size */, TrackballCameraOperation* /* current_state */,
+void HandleRotatingToRotatingTransition(const DirectX::XMVECTOR& /* frustum_size */, TrackballCameraOperation* /* current_state */,
                                         DirectX::XMFLOAT2* start_point, DirectX::XMFLOAT2* end_point,
                                         DirectX::XMFLOAT3* /* center_storage */, DirectX::XMFLOAT4* /* rotation_quaterion_storage */,
                                         DirectX::XMVECTOR* /* center */, DirectX::XMVECTOR* rotation_quaterion) {
   *rotation_quaterion = GetCurrentRotationQuaternion(*start_point, *end_point, *rotation_quaterion);
-  UpdateEndPoint(p, end_point);
 }
 
 /* STATE TRANSITION HANDLER TABLE */
-using TransitionHandler = void(*)(const DirectX::XMFLOAT2& p, const DirectX::XMVECTOR& frustum_size, TrackballCameraOperation* current_state,
+using TransitionHandler = void(*)(const DirectX::XMVECTOR& frustum_size, TrackballCameraOperation* current_state,
                                   DirectX::XMFLOAT2* start_point, DirectX::XMFLOAT2* end_point,
                                   DirectX::XMFLOAT3* center_storage, DirectX::XMFLOAT4* rotation_quaterion_storage,
                                   DirectX::XMVECTOR* center, DirectX::XMVECTOR* rotation_quaterion);
@@ -181,7 +172,7 @@ constexpr TransitionHandlerTable g_transition_table_ = {
 };
 
 /* MAIN UPDATE ROUTINE */
-void TrackballCameraUpdate(TrackballCameraOperation desired_state, const DirectX::XMFLOAT2& p, float frustum_width, float frustum_height,
+void TrackballCameraUpdate(TrackballCameraOperation desired_state, float frustum_width, float frustum_height,
                            TrackballCameraOperation* current_state, DirectX::XMFLOAT2* start_point, DirectX::XMFLOAT2* end_point,
                            DirectX::XMFLOAT3* center, DirectX::XMFLOAT4* rotation_quaterion, float* radius,
                            DirectX::XMMATRIX* view_matrix, DirectX::XMMATRIX* inverse_view_matrix) {
@@ -192,7 +183,7 @@ void TrackballCameraUpdate(TrackballCameraOperation desired_state, const DirectX
   auto radius_f = *radius;
 
   auto handler = g_transition_table_[static_cast<uint32_t>(*current_state)][static_cast<uint32_t>(desired_state)];
-  (*handler)(p, frustum_size_v, current_state, start_point, end_point, center, rotation_quaterion, &center_v, &rotation_quaterion_v);
+  (*handler)(frustum_size_v, current_state, start_point, end_point, center, rotation_quaterion, &center_v, &rotation_quaterion_v);
 
   UpdateViewMatrix(center_v, rotation_quaterion_v, radius_f, view_matrix, inverse_view_matrix);
 }
