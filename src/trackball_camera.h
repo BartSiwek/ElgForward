@@ -42,26 +42,36 @@ public:
   TrackballCamera(TrackballCamera&&) = default;
   TrackballCamera& operator=(TrackballCamera&&) = default;
 
+  void GetLocation(float* x, float* y, float* z) const {
+    *x = m_center_.x;
+    *y = m_center_.y;
+    *z = m_center_.z;
+  }
+
   void SetLocation(float x, float y, float z) {
     m_center_.x = x;
     m_center_.y = y;
     m_center_.z = z;
   }
 
+  float GetRadius() const {
+    return m_radius_;
+  }
+
   void SetRadius(float r) {
     m_radius_ = r;
   }
 
-  void LookAt(float from_x, float from_y, float from_z, float to_x, float to_y, float to_z) {
-    m_center_.x = from_x;
-    m_center_.y = from_y;
-    m_center_.z = from_z;
+  void LookAt(float from_x, float from_y, float from_z, float at_x, float at_y, float at_z) {
+    m_center_.x = at_x;
+    m_center_.y = at_y;
+    m_center_.z = at_z;
+
+    auto c = DirectX::XMLoadFloat3(&m_center_);
+    auto f = DirectX::XMVectorSet(from_x, from_y, from_z, 0);
+    auto v = DirectX::XMVector3Normalize(DirectX::XMVectorSubtract(f, c));
 
     auto zAxis = DirectX::XMVectorSet(0, 0, 1, 0);
-    auto c = DirectX::XMLoadFloat3(&m_center_);
-    auto t = DirectX::XMVectorSet(to_x, to_y, to_z, 0);
-    auto v = DirectX::XMVector3Normalize(DirectX::XMVectorSubtract(c, t));
-
     auto axis = DirectX::XMVector3Cross(zAxis, v);
     auto angle = DirectX::XMScalarACos(DirectX::XMVectorGetX(DirectX::XMVector3Dot(zAxis, v)));
 
