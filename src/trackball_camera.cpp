@@ -57,7 +57,7 @@ DirectX::XMVECTOR GetCurrentRotationQuaternion(const DirectX::XMFLOAT2& start_po
 
 float GetCurrentRadius(const DirectX::XMFLOAT2& start_point, const DirectX::XMFLOAT2& end_point, float radius) {
   float delta = end_point.y - start_point.y;
-  delta = (-3.0f * delta + 5.0f) / 4.0f;
+  delta = (delta * delta - 3.0f * delta + 4.0f) / 4.0f;
   return delta * radius;
 }
 
