@@ -12,7 +12,8 @@ enum class TrackballCameraOperation : uint32_t {
   None = 0,
   Panning = 1,
   Rotating = 2,
-  MaxOperations = 3
+  Zooming = 3,
+  MaxOperations = 4
 };
 
 void TrackballCameraUpdate(TrackballCameraOperation desired_state, float frustum_width, float frustum_height,

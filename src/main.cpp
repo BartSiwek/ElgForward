@@ -245,6 +245,11 @@ bool InitializeScene(const filesystem::path& base_path, dxfwWindow* window, Dire
       scene->camera.SetEndPoint(GetNormalizedScreenCoordinates(scene->viewport.Width, scene->viewport.Height, x, y));
     } else if (button == DXFW_LEFT_MOUSE_BUTTON && action == DXFW_MOUSE_BUTTON_UP) {
       scene->camera.SetDesiredState(TrackballCameraOperation::None);
+    } else if (button == DXFW_MIDDLE_MOUSE_BUTTON && action == DXFW_MOUSE_BUTTON_DOWN) {
+      scene->camera.SetDesiredState(TrackballCameraOperation::Zooming);
+      scene->camera.SetEndPoint(GetNormalizedScreenCoordinates(scene->viewport.Width, scene->viewport.Height, x, y));
+    } else if (button == DXFW_MIDDLE_MOUSE_BUTTON && action == DXFW_MOUSE_BUTTON_UP) {
+      scene->camera.SetDesiredState(TrackballCameraOperation::None);
     }
   });
 
