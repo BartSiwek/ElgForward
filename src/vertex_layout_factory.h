@@ -16,7 +16,7 @@ inline bool CreateVertexLayout(const std::vector<D3D11_INPUT_ELEMENT_DESC>& inpu
                                                                  shader_blob->GetBufferSize(),
                                                                  vertex_layout);
   if (FAILED(create_input_layout_result)) {
-    DXFW_DIRECTX_TRACE(__FILE__, __LINE__, create_input_layout_result, true);
+    DXFW_DIRECTX_TRACE(__FILE__, __LINE__, true, create_input_layout_result);
     return false;
   }
 

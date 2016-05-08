@@ -4,6 +4,8 @@
 
 #include <d3d11.h>
 
+#include <dxfw/dxfw.h>
+
 template<typename EntryType>
 bool CreateVertexBuffer(const std::vector<EntryType>& data, ID3D11Device* device, ID3D11Buffer** buffer) {
   D3D11_BUFFER_DESC bufferDesc;
@@ -22,7 +24,7 @@ bool CreateVertexBuffer(const std::vector<EntryType>& data, ID3D11Device* device
   HRESULT create_buffer_result = device->CreateBuffer(&bufferDesc, &bufferData, buffer);
 
   if (FAILED(create_buffer_result)) {
-    DXFW_DIRECTX_TRACE(__FILE__, __LINE__, create_buffer_result, true);
+    DXFW_DIRECTX_TRACE(__FILE__, __LINE__, true, create_buffer_result);
     return false;
   }
 
@@ -47,7 +49,7 @@ bool CreateIndexBuffer(const std::vector<IndexType>& data, ID3D11Device* device,
   HRESULT create_buffer_result = device->CreateBuffer(&bufferDesc, &bufferData, buffer);
 
   if (FAILED(create_buffer_result)) {
-    DXFW_DIRECTX_TRACE(__FILE__, __LINE__, create_buffer_result, true);
+    DXFW_DIRECTX_TRACE(__FILE__, __LINE__, true, create_buffer_result);
     return false;
   }
 
@@ -77,7 +79,7 @@ bool CrateConstantBuffer(BufferType* initial, ID3D11Device* device, ID3D11Buffer
   }
 
   if (FAILED(cb_result)) {
-    DXFW_DIRECTX_TRACE(__FILE__, __LINE__, cb_result, true);
+    DXFW_DIRECTX_TRACE(__FILE__, __LINE__, true, cb_result);
     return false;
   }
 
@@ -90,7 +92,7 @@ bool UpdateConstantBuffer(BufferType* data, ID3D11DeviceContext* device_context,
 
   auto map_result = device_context->Map(constant_buffer, 0, D3D11_MAP::D3D11_MAP_WRITE_DISCARD, 0, &mapped_subresource);
   if (FAILED(map_result)) {
-    DXFW_DIRECTX_TRACE(__FILE__, __LINE__, map_result, true);
+    DXFW_DIRECTX_TRACE(__FILE__, __LINE__, true, map_result);
     return false;
   }
 
