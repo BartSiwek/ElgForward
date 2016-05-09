@@ -1,28 +1,26 @@
 #pragma once
 
-#include <dxfw/dxfw.h>
-
-class DxfwGuard {
+template<uint8_t I, uint8_t G, typename Tag>
+class Handle {
 public:
-  DxfwGuard() : m_is_initialized_(false) {
-    m_is_initialized_ = dxfwInitialize();
+  using StorageType = uint8_t;
+  using TagType = Tag;
+
+  void NextGeneration() {
+    ++m_generation_;
   }
 
-  DxfwGuard(const DxfwGuard&) = delete;
-  DxfwGuard& operator=(const DxfwGuard&) = delete;
-  DxfwGuard(DxfwGuard&&) = delete;
-  DxfwGuard& operator=(DxfwGuard&&) = delete;
+  uint32_t Index : I;
+  uint32_t Generation : G;
 
-  ~DxfwGuard() {
-    if (m_is_initialized_) {
-      dxfwTerminate();
-    }
-  }
+  static_assert(I + G <= 32, "The index and generation bit size exceeds 32 bits");
+};
 
-  bool IsInitialized() {
-    return m_is_initialized_;
-  }
+template<typename Tag>
+class Handle<32, 0, Tag> {
+public:
+  using StorageType = uint8_t;
+  using TagType = Tag;
 
-private:
-  bool m_is_initialized_;
+  uint32_t Index;
 };

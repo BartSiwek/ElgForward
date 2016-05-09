@@ -53,6 +53,7 @@ set(PROJECT_SRCS
   ${PROJECT_SOURCE_DIR}/mesh_loader.cpp
   ${PROJECT_SOURCE_DIR}/perspective_lens.h
   ${PROJECT_SOURCE_DIR}/perspective_lens.cpp
+  ${PROJECT_SOURCE_DIR}/resource_array.h
   ${PROJECT_SOURCE_DIR}/screen.h
   ${PROJECT_SOURCE_DIR}/shader.h
   ${PROJECT_SOURCE_DIR}/shader.cpp
