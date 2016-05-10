@@ -62,6 +62,7 @@ set(PROJECT_SRCS
   ${PROJECT_SOURCE_DIR}/vertex_data.h
   ${PROJECT_SOURCE_DIR}/vertex_data.cpp
   ${PROJECT_SOURCE_DIR}/vertex_layout_factory.h
+  ${PROJECT_SOURCE_DIR}/vertex_layout_factory.cpp
 )
 
 set_source_files_properties(${PROJECT_SOURCE_DIR}/shaders/vs.hlsl PROPERTIES VS_SHADER_TYPE Vertex VS_SHADER_MODEL 5.0 VS_SHADER_ENTRYPOINT main)
