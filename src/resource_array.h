@@ -1,7 +1,6 @@
 #pragma once
 
 #include <array>
-// #include <type_traits>
 
 template<typename H, typename T, size_t S>
 class ResourceArray {
@@ -53,7 +52,7 @@ public:
     return { index, generation };
   }
 
-  bool IsActive(HandleType handle) {
+  bool IsActive(HandleType handle) const {
     auto index = handle.Index;
     if (index < m_array_.size()) {
       return m_array_[index].Generation == handle.Generation;

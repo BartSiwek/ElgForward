@@ -11,15 +11,18 @@ public:
   using HandleType = H;
 
   template<typename F>
-  HandleType& Get(const KeyType& key, const F& factory) {
+  HandleType GetOrAdd(const KeyType& key, const F& factory) {
     auto it = m_storage_.find(key);
 
     if (it != std::end(m_storage_)) {
       return it->second;
     }
 
-    auto result = m_storage_.emplace(key, factory());
-    return result.first->second;
+    auto new_handle = factory();
+    if (new_handle.IsValid()) {
+      m_storage_.emplace(key, new_handle);
+    }
+    return new_handle;
   }
 
 private:
