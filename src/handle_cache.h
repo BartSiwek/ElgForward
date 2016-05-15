@@ -4,14 +4,14 @@
 
 #include "hash.h"
 
-template<typename KeyType, typename HandleType>
+template<typename K, typename H>
 class HandleCache {
 public:
-  using Key = KeyType;
-  using Value = HandleType;
+  using KeyType = K;
+  using HandleType = H;
 
   template<typename F>
-  Value& Get(const Key& key, const F& factory) {
+  HandleType& Get(const KeyType& key, const F& factory) {
     auto it = m_storage_.find(key);
 
     if (it != std::end(m_storage_)) {

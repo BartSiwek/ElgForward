@@ -1,25 +1,17 @@
 #pragma once
 
 #include <array>
-#include <type_traits>
+// #include <type_traits>
 
-#ifndef WIN32_LEAN_AND_MEAN
-#define WIN32_LEAN_AND_MEAN
-#include <d3d11.h>
-#include <wrl.h>
-#endif
-
-#include "handle.h"
-
-struct ResourceArrayTag {};
-
+template<typename H, typename T, size_t S>
 class ResourceArray {
 public:
-  using TagType = ResourceArrayTag;
-  using HandleType = Handle<8, 24, TagType>;
-  using Type = Microsoft::WRL::ComPtr<ID3D11InputLayout>;
+  using HandleType = H;
+  using Type = T;
 
-  constexpr static const size_t Size = 255;  // Need a special terminator so 1 less
+  constexpr static const size_t Size = S;
+
+  static_assert(S <= H::MaxIndex, "Size must be less or equal to handle max index");
 
   ResourceArray() : m_array_(), m_freelist_head_(0) {
     for (size_t i = 0; i < Size; ++i) {
@@ -97,7 +89,7 @@ private:
       // Should be cleaned up by the ResourceArray
     }
 
-    HandleType::StorageType Generation;
+    typename HandleType::StorageType Generation;
     union {
       size_t NextFreelistIndex;
       Type Value;

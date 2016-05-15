@@ -4,11 +4,13 @@
 
 #include <d3d11.h>
 
-#include "resource_array.h"
+#include "handle.h"
 
-using VertexLayoutHandleType = ResourceArray::HandleType;
+struct VertexLayoutTag {};
 
-ResourceArray::HandleType CreateVertexLayout(const std::vector<D3D11_INPUT_ELEMENT_DESC>& input_layout, ID3DBlob* shader_blob, ID3D11Device* device);
+using VertexLayoutHandle = Handle<8, 24, VertexLayoutTag>;
 
-ID3D11InputLayout* GetVertexLayoutFromFactory(ResourceArray::HandleType handle);
+VertexLayoutHandle CreateVertexLayout(const std::vector<D3D11_INPUT_ELEMENT_DESC>& input_layout, ID3DBlob* shader_blob, ID3D11Device* device);
+
+ID3D11InputLayout* GetVertexLayoutFromFactory(VertexLayoutHandle handle);
 

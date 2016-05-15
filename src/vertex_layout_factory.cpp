@@ -14,13 +14,20 @@
 #include "resource_array.h"
 #include "handle_cache.h"
 
-using Key = std::vector<D3D11_INPUT_ELEMENT_DESC>;
-using Value = ResourceArray::HandleType;
+ResourceArray<VertexLayoutHandle, Microsoft::WRL::ComPtr<ID3D11InputLayout>, 255> g_storage_;
+HandleCache<std::vector<D3D11_INPUT_ELEMENT_DESC>, VertexLayoutHandle> g_cache_;
 
-ResourceArray g_storage_;
-HandleCache<Key, Value> g_cache_;
+/*
+class CachedResourceArray {
+public:
 
-ResourceArray::HandleType CreateVertexLayout(const std::vector<D3D11_INPUT_ELEMENT_DESC>& input_layout, ID3DBlob* shader_blob, ID3D11Device* device) {
+ private:
+  ResourceArray m_storage_;
+  HandleCache<Key, Value> m_cache_;
+};
+*/
+
+VertexLayoutHandle CreateVertexLayout(const std::vector<D3D11_INPUT_ELEMENT_DESC>& input_layout, ID3DBlob* shader_blob, ID3D11Device* device) {
   return g_cache_.Get(input_layout, [&](){
     Microsoft::WRL::ComPtr<ID3D11InputLayout> vertex_layout;
     auto create_input_layout_result = device->CreateInputLayout(&input_layout[0],
@@ -31,7 +38,7 @@ ResourceArray::HandleType CreateVertexLayout(const std::vector<D3D11_INPUT_ELEME
 
     if (FAILED(create_input_layout_result)) {
       DXFW_DIRECTX_TRACE(__FILE__, __LINE__, true, create_input_layout_result);
-      return ResourceArray::HandleType{};
+      return VertexLayoutHandle{};
     }
 
     auto result = g_storage_.Add(vertex_layout);
@@ -39,7 +46,7 @@ ResourceArray::HandleType CreateVertexLayout(const std::vector<D3D11_INPUT_ELEME
   });
 };
 
-ID3D11InputLayout* GetVertexLayoutFromFactory(ResourceArray::HandleType handle) {
+ID3D11InputLayout* GetVertexLayoutFromFactory(VertexLayoutHandle handle) {
   if (g_storage_.IsActive(handle)) {
     return g_storage_.Get(handle).Get();
   }

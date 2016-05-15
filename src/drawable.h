@@ -141,7 +141,7 @@ private:
   std::array<ID3D11Buffer*, D3D11_IA_VERTEX_INPUT_RESOURCE_SLOT_COUNT> m_vertex_buffers_;
   std::array<uint32_t, D3D11_IA_VERTEX_INPUT_RESOURCE_SLOT_COUNT> m_vertex_buffer_strides_;
   std::array<uint32_t, D3D11_IA_VERTEX_INPUT_RESOURCE_SLOT_COUNT> m_vertex_buffer_offsets_;
-  VertexLayoutHandleType m_input_layout_;
+  VertexLayoutHandle m_input_layout_;
 
   Microsoft::WRL::ComPtr<ID3D11Buffer> m_index_buffer_ = nullptr;
   DXGI_FORMAT m_index_buffer_format_ = DXGI_FORMAT_UNKNOWN;
