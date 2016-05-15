@@ -69,3 +69,71 @@ inline void hash_range(std::size_t& seed, It first, It last) {
     hash_combine(seed, *first);
   }
 }
+
+/*
+ * Project specific extensions
+ */
+namespace std {
+
+template<>
+struct hash<DXGI_FORMAT> {
+  size_t operator()(const DXGI_FORMAT& f) const {
+    return static_cast<size_t>(f);
+  }
+};
+
+template<>
+struct hash<D3D11_INPUT_CLASSIFICATION> {
+  size_t operator()(const D3D11_INPUT_CLASSIFICATION& c) const {
+    return static_cast<size_t>(c);
+  }
+};
+
+template<>
+struct hash<D3D11_INPUT_ELEMENT_DESC> {
+  size_t operator()(const D3D11_INPUT_ELEMENT_DESC& d) const {
+    size_t seed = 0;
+
+    hash_combine(seed, d.SemanticName);
+    hash_combine(seed, d.SemanticIndex);
+    hash_combine(seed, d.Format);
+    hash_combine(seed, d.InputSlot);
+    hash_combine(seed, d.AlignedByteOffset);
+    hash_combine(seed, d.InputSlotClass);
+    hash_combine(seed, d.InstanceDataStepRate);
+
+    return seed;
+  }
+};
+
+template<>
+struct hash<std::vector<D3D11_INPUT_ELEMENT_DESC>> {
+  size_t operator()(const std::vector<D3D11_INPUT_ELEMENT_DESC>& v) const {
+    return hash_range(std::begin(v), std::end(v));
+  }
+};
+
+template<>
+struct equal_to<D3D11_INPUT_ELEMENT_DESC> {
+  bool operator()(const D3D11_INPUT_ELEMENT_DESC& lhs, const D3D11_INPUT_ELEMENT_DESC& rhs) const {
+    auto semantic_name_comparison_result = lstrcmpA(lhs.SemanticName, rhs.SemanticName);
+    if (semantic_name_comparison_result == 0) {
+      return lhs.SemanticIndex == rhs.SemanticIndex
+        && lhs.Format == rhs.Format
+        && lhs.InputSlot == rhs.InputSlot
+        && lhs.AlignedByteOffset == rhs.AlignedByteOffset
+        && lhs.InputSlotClass == rhs.InputSlotClass
+        && lhs.InstanceDataStepRate == rhs.InstanceDataStepRate;
+    }
+    return false;
+  }
+};
+
+template<>
+struct equal_to<std::vector<D3D11_INPUT_ELEMENT_DESC>> {
+  bool operator()(const std::vector<D3D11_INPUT_ELEMENT_DESC>& lhs, const std::vector<D3D11_INPUT_ELEMENT_DESC>& rhs) const {
+    return std::equal(std::begin(lhs), std::end(lhs), std::begin(rhs), std::end(rhs), std::equal_to<D3D11_INPUT_ELEMENT_DESC>());
+  }
+};
+
+}  // std

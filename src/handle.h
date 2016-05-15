@@ -16,11 +16,15 @@ public:
   }
 
   void NextGeneration() {
-    ++m_generation_;
+    ++Generation;
   }
 
   bool IsValid() {
     return Index != MaxIndex && Generation != MaxGenerarion;
+  }
+
+  StorageType CompactForm() {
+    return (static_cast<StorageType>(Index) << G) | static_cast<StorageType>(Generation);
   }
 
   StorageType Index : I;
@@ -39,6 +43,13 @@ public:
   constexpr static const StorageType MaxGenerarion = 0;
 
   Handle() : Index(MaxIndex) {
+  }
+
+  Handle(StorageType index) : Index(index) {
+  }
+
+  StorageType CompactForm() {
+    return Index;
   }
 
   StorageType Index;

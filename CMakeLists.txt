@@ -49,6 +49,7 @@ set(PROJECT_SRCS
   ${PROJECT_SOURCE_DIR}/gpu_mesh.h
   ${PROJECT_SOURCE_DIR}/gpu_mesh.cpp
   ${PROJECT_SOURCE_DIR}/handle.h
+  ${PROJECT_SOURCE_DIR}/handle_cache.h
   ${PROJECT_SOURCE_DIR}/hash.h
   ${PROJECT_SOURCE_DIR}/mesh_loader.h
   ${PROJECT_SOURCE_DIR}/mesh_loader.cpp
