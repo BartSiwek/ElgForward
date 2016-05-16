@@ -5,6 +5,8 @@
 #include <d3d11.h>
 #include <wrl.h>
 
+#include <dxfw/dxfw.h>
+
 #include "hash.h"
 #include "shader.h"
 #include "resource_array.h"
@@ -36,6 +38,6 @@ VertexLayoutHandle CreateVertexLayout(const std::vector<D3D11_INPUT_ELEMENT_DESC
   return new_handle;
 };
 
-ID3D11InputLayout* RetreiveVertexLayout(VertexLayoutHandle handle) {
-  return g_storage_.Get(handle).Get();
+Microsoft::WRL::ComPtr<ID3D11InputLayout> RetreiveVertexLayout(VertexLayoutHandle handle) {
+  return g_storage_.Get(handle);
 }

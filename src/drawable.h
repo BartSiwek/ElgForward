@@ -23,12 +23,16 @@ public:
     }
   }
 
-  bool SetVertexBuffer(uint32_t index, ID3D11Buffer* buffer, uint32_t stride) {
-    if (m_vertex_buffers_[index] == nullptr) {
-      m_vertex_buffers_[index] = buffer;
+  bool SetVertexBuffer(uint32_t index, VertexBufferHandle buffer_handle, uint32_t stride) {
+    if (buffer_handle.IsValid()) {
+      auto buffer = RetreiveVertexBuffer(buffer_handle);
+      auto buffer_ptr = buffer.Get();
+
+      buffer_ptr->AddRef();
+
+      m_vertex_buffers_[index] = buffer_ptr;
       m_vertex_buffer_strides_[index] = stride;
       m_vertex_buffer_offsets_[index] = 0;
-      buffer->AddRef();
       return true;
     }
     return false;
@@ -59,24 +63,27 @@ public:
   }
 
   bool SetVertexLayout(const std::vector<D3D11_INPUT_ELEMENT_DESC> input_layout_desc, ID3D10Blob* shader_blob, ID3D11Device* device) {
-    if (!m_input_layout_.IsValid()) {
-      m_input_layout_ = CreateVertexLayout(input_layout_desc, shader_blob, device);
-      return m_input_layout_.IsValid();
+    if (m_input_layout_ == nullptr) {
+      auto handle = CreateVertexLayout(input_layout_desc, shader_blob, device);
+      if (handle.IsValid()) {
+        m_input_layout_ = RetreiveVertexLayout(handle);
+        return true;
+      }
     }
     return false;
   }
 
   const ID3D11InputLayout* GetVertexLayout() const {
-    return RetreiveVertexLayout(m_input_layout_);
+    return m_input_layout_.Get();
   }
 
   ID3D11InputLayout* GetVertexLayout() {
-    return RetreiveVertexLayout(m_input_layout_);
+    return m_input_layout_.Get();
   }
 
-  bool SetIndexData(Microsoft::WRL::ComPtr<ID3D11Buffer> index_buffer, DXGI_FORMAT format, uint32_t index_count, D3D_PRIMITIVE_TOPOLOGY topology) {
+  bool SetIndexData(IndexBufferHandle index_buffer_handle, DXGI_FORMAT format, uint32_t index_count, D3D_PRIMITIVE_TOPOLOGY topology) {
     if (m_index_buffer_ == nullptr) {
-      m_index_buffer_ = index_buffer;
+      m_index_buffer_ = RetreiveIndexBuffer(index_buffer_handle);
       m_index_buffer_format_ = format;
       m_index_count_ = index_count;
       m_primitive_topology_ = topology;
@@ -141,7 +148,7 @@ private:
   std::array<ID3D11Buffer*, D3D11_IA_VERTEX_INPUT_RESOURCE_SLOT_COUNT> m_vertex_buffers_;
   std::array<uint32_t, D3D11_IA_VERTEX_INPUT_RESOURCE_SLOT_COUNT> m_vertex_buffer_strides_;
   std::array<uint32_t, D3D11_IA_VERTEX_INPUT_RESOURCE_SLOT_COUNT> m_vertex_buffer_offsets_;
-  VertexLayoutHandle m_input_layout_;
+  Microsoft::WRL::ComPtr<ID3D11InputLayout> m_input_layout_;
 
   Microsoft::WRL::ComPtr<ID3D11Buffer> m_index_buffer_ = nullptr;
   DXGI_FORMAT m_index_buffer_format_ = DXGI_FORMAT_UNKNOWN;

@@ -85,7 +85,7 @@ bool CreateDrawable(const GpuMesh& mesh, const Material& material, ID3D11Device*
       return false;
     }
 
-    drawable->SetVertexBuffer(slot_index, mesh.VertexBuffers[input_index].Get(), mesh.VertexBufferStrides[input_index]);
+    drawable->SetVertexBuffer(slot_index, mesh.VertexBuffers[input_index], mesh.VertexBufferStrides[input_index]);
 
     input_layout_desc.emplace_back();
     auto& input_layout_desc_entry = input_layout_desc.back();

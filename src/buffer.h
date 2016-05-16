@@ -6,56 +6,6 @@
 
 #include <dxfw/dxfw.h>
 
-template<typename EntryType>
-bool CreateVertexBuffer(const std::vector<EntryType>& data, ID3D11Device* device, ID3D11Buffer** buffer) {
-  D3D11_BUFFER_DESC bufferDesc;
-  ZeroMemory(&bufferDesc, sizeof(bufferDesc));
-
-  bufferDesc.Usage = D3D11_USAGE_DEFAULT;
-  bufferDesc.ByteWidth = data.size() * sizeof(EntryType);
-  bufferDesc.BindFlags = D3D11_BIND_VERTEX_BUFFER;
-  bufferDesc.CPUAccessFlags = 0;
-  bufferDesc.MiscFlags = 0;
-
-  D3D11_SUBRESOURCE_DATA bufferData;
-  ZeroMemory(&bufferData, sizeof(bufferData));
-  bufferData.pSysMem = &data[0];
-
-  HRESULT create_buffer_result = device->CreateBuffer(&bufferDesc, &bufferData, buffer);
-
-  if (FAILED(create_buffer_result)) {
-    DXFW_DIRECTX_TRACE(__FILE__, __LINE__, true, create_buffer_result);
-    return false;
-  }
-
-  return true;
-}
-
-template<typename IndexType>
-bool CreateIndexBuffer(const std::vector<IndexType>& data, ID3D11Device* device, ID3D11Buffer** buffer) {
-  D3D11_BUFFER_DESC bufferDesc;
-  ZeroMemory(&bufferDesc, sizeof(bufferDesc));
-
-  bufferDesc.Usage = D3D11_USAGE_DEFAULT;
-  bufferDesc.ByteWidth = data.size() * sizeof(IndexType);
-  bufferDesc.BindFlags = D3D11_BIND_INDEX_BUFFER;
-  bufferDesc.CPUAccessFlags = 0;
-  bufferDesc.MiscFlags = 0;
-
-  D3D11_SUBRESOURCE_DATA bufferData;
-  ZeroMemory(&bufferData, sizeof(bufferData));
-  bufferData.pSysMem = &data[0];
-
-  HRESULT create_buffer_result = device->CreateBuffer(&bufferDesc, &bufferData, buffer);
-
-  if (FAILED(create_buffer_result)) {
-    DXFW_DIRECTX_TRACE(__FILE__, __LINE__, true, create_buffer_result);
-    return false;
-  }
-
-  return true;
-}
-
 template<typename BufferType>
 bool CrateConstantBuffer(BufferType* initial, ID3D11Device* device, ID3D11Buffer** constant_buffer) {
   D3D11_BUFFER_DESC desc;

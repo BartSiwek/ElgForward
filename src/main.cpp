@@ -182,7 +182,7 @@ bool InitializeScene(const filesystem::path& base_path, dxfwWindow* window, Dire
 
   MeshLoaderOptions options;
   options.IndexBufferFormat = DXGI_FORMAT_R32_UINT;
-  bool load_ok = LoadMesh(base_path / "assets/meshes/cube.obj", options, state->device.Get(), &scene->meshes);
+  bool load_ok = LoadMesh("cube", base_path / "assets/meshes/cube.obj", options, state->device.Get(), &scene->meshes);
   if (!load_ok) {
     return false;
   }
