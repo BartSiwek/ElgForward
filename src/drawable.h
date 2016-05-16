@@ -67,11 +67,11 @@ public:
   }
 
   const ID3D11InputLayout* GetVertexLayout() const {
-    return GetVertexLayoutFromFactory(m_input_layout_);
+    return RetreiveVertexLayout(m_input_layout_);
   }
 
   ID3D11InputLayout* GetVertexLayout() {
-    return GetVertexLayoutFromFactory(m_input_layout_);
+    return RetreiveVertexLayout(m_input_layout_);
   }
 
   bool SetIndexData(Microsoft::WRL::ComPtr<ID3D11Buffer> index_buffer, DXGI_FORMAT format, uint32_t index_count, D3D_PRIMITIVE_TOPOLOGY topology) {
