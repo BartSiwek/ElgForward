@@ -49,18 +49,26 @@ set(PROJECT_SRCS
   ${PROJECT_SOURCE_DIR}/gpu_mesh.h
   ${PROJECT_SOURCE_DIR}/gpu_mesh.cpp
   ${PROJECT_SOURCE_DIR}/handle.h
+  ${PROJECT_SOURCE_DIR}/handle_cache.h
+  ${PROJECT_SOURCE_DIR}/hash.h
+  ${PROJECT_SOURCE_DIR}/index_buffer.h
+  ${PROJECT_SOURCE_DIR}/index_buffer.cpp
   ${PROJECT_SOURCE_DIR}/mesh_loader.h
   ${PROJECT_SOURCE_DIR}/mesh_loader.cpp
   ${PROJECT_SOURCE_DIR}/perspective_lens.h
   ${PROJECT_SOURCE_DIR}/perspective_lens.cpp
+  ${PROJECT_SOURCE_DIR}/resource_array.h
   ${PROJECT_SOURCE_DIR}/screen.h
   ${PROJECT_SOURCE_DIR}/shader.h
   ${PROJECT_SOURCE_DIR}/shader.cpp
   ${PROJECT_SOURCE_DIR}/trackball_camera.h
   ${PROJECT_SOURCE_DIR}/trackball_camera.cpp
+  ${PROJECT_SOURCE_DIR}/vertex_buffer.h
+  ${PROJECT_SOURCE_DIR}/vertex_buffer.cpp
   ${PROJECT_SOURCE_DIR}/vertex_data.h
   ${PROJECT_SOURCE_DIR}/vertex_data.cpp
   ${PROJECT_SOURCE_DIR}/vertex_layout_factory.h
+  ${PROJECT_SOURCE_DIR}/vertex_layout_factory.cpp
 )
 
 set_source_files_properties(${PROJECT_SOURCE_DIR}/shaders/vs.hlsl PROPERTIES VS_SHADER_TYPE Vertex VS_SHADER_MODEL 5.0 VS_SHADER_ENTRYPOINT main)

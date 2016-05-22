@@ -3,6 +3,6 @@
 #include "shader.h"
 
 struct Material {
-  VertexShader VertexShader;
-  PixelShader PixelShader;
+  VertexShaderHandle VertexShader;
+  PixelShaderHandle PixelShader;
 };

@@ -16,7 +16,7 @@
 #include "filesystem.h"
 #include "dxfw_wrapper.h"
 #include "dxfw_helpers.h"
-#include "buffer.h"
+#include "constant_buffer.h"
 #include "mesh_loader.h"
 #include "gpu_mesh.h"
 #include "vertex_layout_factory.h"
@@ -47,7 +47,6 @@ struct Scene {
   std::vector<GpuMesh> meshes;
   std::vector<Drawable> drawables;
   Material material;
-  Microsoft::WRL::ComPtr<ID3D11InputLayout> vertex_layout;
   D3D11_VIEWPORT viewport;
   PerspectiveLens lens;
   TrackballCamera camera;
@@ -170,19 +169,19 @@ void SetViewportSize(D3D11_VIEWPORT* viewport, unsigned int width, unsigned int 
 }
 
 bool InitializeScene(const filesystem::path& base_path, dxfwWindow* window, DirectXState* state, Scene* scene) {
-  bool vs_ok = LoadVertexShader(base_path / "vs.cso", std::unordered_map<std::string, VertexDataChannel>(), state->device.Get(), &scene->material.VertexShader);
-  if (!vs_ok) {
+  scene->material.VertexShader = CreateVertexShader(base_path / "vs.cso", std::unordered_map<std::string, VertexDataChannel>(), state->device.Get());
+  if (!scene->material.VertexShader.IsValid()) {
     return false;
   }
 
-  bool ps_ok = LoadPixelShader(base_path / "ps.cso", state->device.Get(), &scene->material.PixelShader);
-  if (!ps_ok) {
+  scene->material.PixelShader = CreatePixelShader(base_path / "ps.cso", state->device.Get());
+  if (!scene->material.PixelShader.IsValid()) {
     return false;
   }
 
   MeshLoaderOptions options;
   options.IndexBufferFormat = DXGI_FORMAT_R32_UINT;
-  bool load_ok = LoadMesh(base_path / "assets/meshes/cube.obj", options, state->device.Get(), &scene->meshes);
+  bool load_ok = LoadMesh("cube", base_path / "assets/meshes/cube.obj", options, state->device.Get(), &scene->meshes);
   if (!load_ok) {
     return false;
   }

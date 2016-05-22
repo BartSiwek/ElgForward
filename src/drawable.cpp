@@ -70,10 +70,13 @@ bool IsVertexBufferFormatCompatible(uint32_t component_count, D3D_REGISTER_COMPO
 }
 
 bool CreateDrawable(const GpuMesh& mesh, const Material& material, ID3D11Device* device, Drawable* drawable) {
-  std::vector<D3D11_INPUT_ELEMENT_DESC> input_layout_desc;
+  auto vertex_shader_ptr = RetreiveVertexShader(material.VertexShader);
+  auto pixel_shader_ptr = RetreivePixelShader(material.PixelShader);
 
+  std::vector<D3D11_INPUT_ELEMENT_DESC> input_layout_desc;
+  
   uint32_t slot_index = 0;
-  for (const auto& input_desc : material.VertexShader.InputDescription) {
+  for (const auto& input_desc : vertex_shader_ptr->InputDescription) {
     auto input_index = GetVertexBufferIndex(input_desc.Channel, mesh);
 
     if (input_index == -1) {
@@ -85,7 +88,7 @@ bool CreateDrawable(const GpuMesh& mesh, const Material& material, ID3D11Device*
       return false;
     }
 
-    drawable->SetVertexBuffer(slot_index, mesh.VertexBuffers[input_index].Get(), mesh.VertexBufferStrides[input_index]);
+    drawable->SetVertexBuffer(slot_index, mesh.VertexBuffers[input_index], mesh.VertexBufferStrides[input_index]);
 
     input_layout_desc.emplace_back();
     auto& input_layout_desc_entry = input_layout_desc.back();
@@ -101,7 +104,7 @@ bool CreateDrawable(const GpuMesh& mesh, const Material& material, ID3D11Device*
     ++slot_index;
   }
 
-  bool vertex_layout_ok = drawable->SetVertexLayout(input_layout_desc, material.VertexShader.Buffer.Get(), device);
+  bool vertex_layout_ok = drawable->SetVertexLayout(input_layout_desc, vertex_shader_ptr->Buffer.Get(), device);
   if (!vertex_layout_ok) {
     return false;
   }
@@ -111,12 +114,12 @@ bool CreateDrawable(const GpuMesh& mesh, const Material& material, ID3D11Device*
     return false;
   }
 
-  bool vs_ok = drawable->SetVertexShader(material.VertexShader.Shader);
+  bool vs_ok = drawable->SetVertexShader(vertex_shader_ptr->Shader);
   if (!vs_ok) {
     return false;
   }
 
-  bool ps_ok = drawable->SetPixelShader(material.PixelShader.Shader);
+  bool ps_ok = drawable->SetPixelShader(pixel_shader_ptr->Shader);
   if (!ps_ok) {
     return false;
   }
