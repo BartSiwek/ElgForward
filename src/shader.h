@@ -8,6 +8,7 @@
 
 #include "filesystem.h"
 #include "vertex_data.h"
+#include "handle.h"
 
 struct VertexShaderInputDescription {
   VertexShaderInputDescription(const char* name, uint32_t index, VertexDataChannel channel, uint32_t component_count, D3D_REGISTER_COMPONENT_TYPE component_type)
@@ -36,6 +37,18 @@ struct PixelShader {
   Microsoft::WRL::ComPtr<ID3D11PixelShader> Shader = nullptr;
 };
 
-bool LoadVertexShader(const filesystem::path& path, const std::unordered_map<std::string, VertexDataChannel>& custom_channel_map, ID3D11Device* device, VertexShader* vertex_shader);
+struct VertexShaderTag {};
 
-bool LoadPixelShader(const filesystem::path& path, ID3D11Device* device, PixelShader* pixel_shader);
+using VertexShaderHandle = Handle<8, 24, VertexShaderTag>;
+
+struct PixelShaderTag {};
+
+using PixelShaderHandle = Handle<8, 24, PixelShaderTag>;
+
+VertexShaderHandle CreateVertexShader(const filesystem::path& path, const std::unordered_map<std::string, VertexDataChannel>& custom_channel_map, ID3D11Device* device);
+
+VertexShader* RetreiveVertexShader(VertexShaderHandle handle);
+
+PixelShaderHandle CreatePixelShader(const filesystem::path& path, ID3D11Device* device);
+
+PixelShader* RetreivePixelShader(PixelShaderHandle handle);
