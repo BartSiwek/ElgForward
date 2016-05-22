@@ -16,7 +16,7 @@
 #include "filesystem.h"
 #include "dxfw_wrapper.h"
 #include "dxfw_helpers.h"
-#include "buffer.h"
+#include "constant_buffer.h"
 #include "mesh_loader.h"
 #include "gpu_mesh.h"
 #include "vertex_layout_factory.h"

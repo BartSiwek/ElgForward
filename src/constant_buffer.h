@@ -1,7 +1,5 @@
 #pragma once
 
-#include <vector>
-
 #include <d3d11.h>
 
 #include <dxfw/dxfw.h>

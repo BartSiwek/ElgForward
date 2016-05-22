@@ -19,7 +19,6 @@
 #include "hash.h"
 #include "vertex_buffer.h"
 #include "index_buffer.h"
-#include "buffer.h"
 
 class AiLogStreamGuard {
 public:
