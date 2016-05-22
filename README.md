@@ -17,13 +17,17 @@ Needed per-vertex data:
 - Texture coords (diffuse, specular, normal/bump, normal mapping)
 
 Current agenda:
-- Trackball camera
+- ~~Trackball camera~~
 - FPS camera (?, http://in2gpu.com/2016/02/26/opengl-fps-camera/)
 - ~~Restructure the mesh, material, input layout architecture~~
   - ~~Shader reflection~~
   - ~~Move to using fcx to compile shaders~~
   - ~~Move to using AssImp for loading to support wider range of mesh data~~
-- Move to using handles for shaders, meshes, inputlayouts etc. and managers to enable caching
+- ~~Move to using handles for shaders, meshes, inputlayouts etc. and managers to enable caching~~
   - Add a drawable manager and drawable handle
+  - ...
+- Scene loading
+  - JSON Format
+  - Loading of json
   - ...
 - ...
