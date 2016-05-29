@@ -1,4 +1,4 @@
-#include "gpu_mesh.h"
+#include "mesh.h"
 
 #include <fstream>
 #include <memory>
@@ -22,8 +22,8 @@
 #include "resource_array.h"
 #include "handle_cache.h"
 
-ResourceArray<GpuMeshHandle, std::unique_ptr<GpuMesh>, 255> g_storage_;
-HandleCache<size_t, GpuMeshHandle> g_cache_;
+ResourceArray<MeshHandle, std::unique_ptr<Mesh>, 255> g_storage_;
+HandleCache<size_t, MeshHandle> g_cache_;
 
 class AiLogStreamGuard {
 public:
@@ -57,7 +57,7 @@ public:
 };
 
 template<typename T>
-bool AddVertexBufferToGpuMesh(size_t hash, const std::vector<T>& data, DXGI_FORMAT format, VertexDataChannel channel, ID3D11Device* device, GpuMesh* mesh) {
+bool AddVertexBufferToMesh(size_t hash, const std::vector<T>& data, DXGI_FORMAT format, VertexDataChannel channel, ID3D11Device* device, Mesh* mesh) {
   auto vb_handle = CreateVertexBuffer(hash, data, device);
   if (!vb_handle.IsValid()) {
     return false;
@@ -71,7 +71,7 @@ bool AddVertexBufferToGpuMesh(size_t hash, const std::vector<T>& data, DXGI_FORM
   return true;
 }
 
-bool PrepareFloat1VertexBuffer(size_t base_hash, const aiVector3D* input, uint32_t vertex_count, VertexDataChannel channel, ID3D11Device* device, GpuMesh* mesh) {
+bool PrepareFloat1VertexBuffer(size_t base_hash, const aiVector3D* input, uint32_t vertex_count, VertexDataChannel channel, ID3D11Device* device, Mesh* mesh) {
   using EntryType = float;
 
   std::vector<EntryType> data(vertex_count);
@@ -82,12 +82,12 @@ bool PrepareFloat1VertexBuffer(size_t base_hash, const aiVector3D* input, uint32
   size_t channel_hash = base_hash;
   hash_combine(channel_hash, channel);
 
-  AddVertexBufferToGpuMesh(channel_hash, data, DXGI_FORMAT_R32_FLOAT, channel, device, mesh);
+  AddVertexBufferToMesh(channel_hash, data, DXGI_FORMAT_R32_FLOAT, channel, device, mesh);
 
   return true;
 }
 
-bool PrepareFloat2VertexBuffer(size_t base_hash, const aiVector3D* input, uint32_t vertex_count, VertexDataChannel channel, ID3D11Device* device, GpuMesh* mesh) {
+bool PrepareFloat2VertexBuffer(size_t base_hash, const aiVector3D* input, uint32_t vertex_count, VertexDataChannel channel, ID3D11Device* device, Mesh* mesh) {
   using EntryType = DirectX::XMFLOAT2;
 
   std::vector<EntryType> data(vertex_count);
@@ -99,12 +99,12 @@ bool PrepareFloat2VertexBuffer(size_t base_hash, const aiVector3D* input, uint32
   size_t channel_hash = base_hash;
   hash_combine(channel_hash, channel);
 
-  AddVertexBufferToGpuMesh(channel_hash, data, DXGI_FORMAT_R32G32_FLOAT, channel, device, mesh);
+  AddVertexBufferToMesh(channel_hash, data, DXGI_FORMAT_R32G32_FLOAT, channel, device, mesh);
 
   return true;
 }
 
-bool PrepareFloat3VertexBuffer(size_t base_hash, const aiVector3D* input, uint32_t vertex_count, VertexDataChannel channel, ID3D11Device* device, GpuMesh* mesh) {
+bool PrepareFloat3VertexBuffer(size_t base_hash, const aiVector3D* input, uint32_t vertex_count, VertexDataChannel channel, ID3D11Device* device, Mesh* mesh) {
   using EntryType = DirectX::XMFLOAT3;
 
   std::vector<EntryType> data(vertex_count);
@@ -117,12 +117,12 @@ bool PrepareFloat3VertexBuffer(size_t base_hash, const aiVector3D* input, uint32
   size_t channel_hash = base_hash;
   hash_combine(channel_hash, channel);
 
-  AddVertexBufferToGpuMesh(channel_hash, data, DXGI_FORMAT_R32G32B32_FLOAT, channel, device, mesh);
+  AddVertexBufferToMesh(channel_hash, data, DXGI_FORMAT_R32G32B32_FLOAT, channel, device, mesh);
 
   return true;
 }
 
-bool PrepareFloat4VertexBuffer(size_t base_hash, const aiColor4D* input, uint32_t vertex_count, VertexDataChannel channel, ID3D11Device* device, GpuMesh* mesh) {
+bool PrepareFloat4VertexBuffer(size_t base_hash, const aiColor4D* input, uint32_t vertex_count, VertexDataChannel channel, ID3D11Device* device, Mesh* mesh) {
   using EntryType = DirectX::XMFLOAT4;
 
   std::vector<EntryType> data(vertex_count);
@@ -136,7 +136,7 @@ bool PrepareFloat4VertexBuffer(size_t base_hash, const aiColor4D* input, uint32_
   size_t channel_hash = base_hash;
   hash_combine(channel_hash, channel);
 
-  AddVertexBufferToGpuMesh(channel_hash, data, DXGI_FORMAT_R32G32B32A32_FLOAT, channel, device, mesh);
+  AddVertexBufferToMesh(channel_hash, data, DXGI_FORMAT_R32G32B32A32_FLOAT, channel, device, mesh);
 
   return true;
 }
@@ -149,7 +149,7 @@ bool ValidateOptions(const MeshLoadOptions& options) {
   return true;
 }
 
-bool LoadIndexBuffer32UInt(size_t hash, const aiMesh& imported_mesh, ID3D11Device* device, GpuMesh* mesh) {
+bool LoadIndexBuffer32UInt(size_t hash, const aiMesh& imported_mesh, ID3D11Device* device, Mesh* mesh) {
   std::vector<uint32_t> indices;
   for (size_t face_index = 0; face_index < imported_mesh.mNumFaces; ++face_index) {
     for (size_t index_index = 0; index_index < imported_mesh.mFaces[face_index].mNumIndices; ++index_index) {
@@ -169,7 +169,7 @@ bool LoadIndexBuffer32UInt(size_t hash, const aiMesh& imported_mesh, ID3D11Devic
   return true;
 }
 
-bool LoadIndexBuffer16UInt(size_t hash, const aiMesh& imported_mesh, ID3D11Device* device, GpuMesh* mesh) {
+bool LoadIndexBuffer16UInt(size_t hash, const aiMesh& imported_mesh, ID3D11Device* device, Mesh* mesh) {
   std::vector<uint16_t> indices;
   for (size_t face_index = 0; face_index < imported_mesh.mNumFaces; ++face_index) {
     for (size_t index_index = 0; index_index < imported_mesh.mFaces[face_index].mNumIndices; ++index_index) {
@@ -189,9 +189,9 @@ bool LoadIndexBuffer16UInt(size_t hash, const aiMesh& imported_mesh, ID3D11Devic
   return true;
 }
 
-bool CreateMesh(const std::string& prefix, const filesystem::path& path, const MeshLoadOptions& options, ID3D11Device* device, std::vector<GpuMeshHandle>* meshes) {
-  if (meshes == nullptr) {
-    DXFW_TRACE(__FILE__, __LINE__, true, "Got a null mesh vector pointer", nullptr);
+bool CreateMesh(const std::string& prefix, const filesystem::path& path, const MeshLoadOptions& options, ID3D11Device* device, std::vector<MeshHandle>* handles) {
+  if (handles == nullptr) {
+    DXFW_TRACE(__FILE__, __LINE__, true, "Got a null handle vector pointer", nullptr);
     return false;
   }
 
@@ -218,7 +218,7 @@ bool CreateMesh(const std::string& prefix, const filesystem::path& path, const M
 
     auto cached_handle = g_cache_.Get(mesh_hash);
     if (cached_handle.IsValid()) {
-      meshes->emplace_back(cached_handle);
+      handles->emplace_back(cached_handle);
       continue;
     }
 
@@ -227,7 +227,7 @@ bool CreateMesh(const std::string& prefix, const filesystem::path& path, const M
       return false;
     }
 
-    auto mesh = std::make_unique<GpuMesh>();
+    auto mesh = std::make_unique<Mesh>();
 
     uint32_t vertex_count = imported_mesh->mNumVertices;
 
@@ -298,12 +298,12 @@ bool CreateMesh(const std::string& prefix, const filesystem::path& path, const M
 
     auto new_mesh_handle = g_storage_.Add(std::move(mesh));
     g_cache_.Set(mesh_hash, new_mesh_handle);
-    meshes->emplace_back(new_mesh_handle);
+    handles->emplace_back(new_mesh_handle);
   }
 
   return true;
 }
 
-GpuMesh* RetreiveMesh(GpuMeshHandle handle) {
+Mesh* RetreiveMesh(MeshHandle handle) {
   return g_storage_.Get(handle).get();
 }

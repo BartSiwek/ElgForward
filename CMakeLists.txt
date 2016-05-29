@@ -46,8 +46,8 @@ set(PROJECT_SRCS
   ${PROJECT_SOURCE_DIR}/filesystem.h
   ${PROJECT_SOURCE_DIR}/filesystem.cpp
   ${PROJECT_SOURCE_DIR}/material.h
-  ${PROJECT_SOURCE_DIR}/gpu_mesh.h
-  ${PROJECT_SOURCE_DIR}/gpu_mesh.cpp
+  ${PROJECT_SOURCE_DIR}/mesh.h
+  ${PROJECT_SOURCE_DIR}/mesh.cpp
   ${PROJECT_SOURCE_DIR}/handle.h
   ${PROJECT_SOURCE_DIR}/handle_cache.h
   ${PROJECT_SOURCE_DIR}/hash.h

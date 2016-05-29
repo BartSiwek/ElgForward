@@ -9,14 +9,14 @@
 #include "vertex_buffer.h"
 #include "index_buffer.h"
 
-struct GpuMesh {
-  GpuMesh() = default;
+struct Mesh {
+  Mesh() = default;
 
-  GpuMesh(const GpuMesh&) = delete;
-  GpuMesh& operator=(const GpuMesh&) = delete;
+  Mesh(const Mesh&) = delete;
+  Mesh& operator=(const Mesh&) = delete;
 
-  GpuMesh(GpuMesh&&) = default;
-  GpuMesh& operator=(GpuMesh&&) = default;
+  Mesh(Mesh&&) = default;
+  Mesh& operator=(Mesh&&) = default;
 
   std::vector<VertexBufferHandle> VertexBuffers = {};
   std::vector<DXGI_FORMAT> VertexBufferFormats = {};
@@ -30,14 +30,14 @@ struct GpuMesh {
   uint32_t IndexCount = 0;
 };
 
-struct GpuMeshTag {};
+struct MeshTag {};
 
-using GpuMeshHandle = Handle<8, 24, GpuMeshTag>;
+using MeshHandle = Handle<8, 24, MeshTag>;
 
 struct MeshLoadOptions {
   DXGI_FORMAT IndexBufferFormat = DXGI_FORMAT_R32_UINT;
 };
 
-bool CreateMesh(const std::string& prefix, const filesystem::path& path, const MeshLoadOptions& options, ID3D11Device* device, std::vector<GpuMeshHandle>* meshes);
+bool CreateMesh(const std::string& prefix, const filesystem::path& path, const MeshLoadOptions& options, ID3D11Device* device, std::vector<MeshHandle>* handles);
 
-GpuMesh* RetreiveMesh(GpuMeshHandle handle);
+Mesh* RetreiveMesh(MeshHandle handle);

@@ -1,6 +1,6 @@
 #include "drawable.h"
 
-int32_t GetVertexBufferIndex(VertexDataChannel channel, const GpuMesh& mesh) {
+int32_t GetVertexBufferIndex(VertexDataChannel channel, const Mesh& mesh) {
   auto it = std::find(std::begin(mesh.VertexDataChannels), std::end(mesh.VertexDataChannels), channel);
   if (it != std::end(mesh.VertexDataChannels)) {
     int32_t index = std::distance(std::begin(mesh.VertexDataChannels), it);
@@ -69,7 +69,7 @@ bool IsVertexBufferFormatCompatible(uint32_t component_count, D3D_REGISTER_COMPO
   }
 }
 
-bool CreateDrawable(GpuMeshHandle mesh_handle, const Material& material, ID3D11Device* device, Drawable* drawable) {
+bool CreateDrawable(MeshHandle mesh_handle, const Material& material, ID3D11Device* device, Drawable* drawable) {
   auto mesh_ptr = RetreiveMesh(mesh_handle);
   auto vertex_shader_ptr = RetreiveVertexShader(material.VertexShader);
   auto pixel_shader_ptr = RetreivePixelShader(material.PixelShader);

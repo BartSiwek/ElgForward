@@ -17,7 +17,7 @@
 #include "dxfw_wrapper.h"
 #include "dxfw_helpers.h"
 #include "constant_buffer.h"
-#include "gpu_mesh.h"
+#include "mesh.h"
 #include "vertex_layout.h"
 #include "material.h"
 #include "drawable.h"
@@ -44,7 +44,7 @@ struct PerFrameConstantBuffer {
 };
 
 struct TempScene {
-  std::vector<GpuMeshHandle> meshes;
+  std::vector<MeshHandle> meshes;
   Material material;
 };
 

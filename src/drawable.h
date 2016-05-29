@@ -3,7 +3,7 @@
 #include <array>
 
 #include "com_helpers.h"
-#include "gpu_mesh.h"
+#include "mesh.h"
 #include "material.h"
 
 #include "vertex_layout.h"
@@ -159,4 +159,4 @@ private:
   Microsoft::WRL::ComPtr<ID3D11PixelShader> m_ps_ = nullptr;
 };
 
-bool CreateDrawable(GpuMeshHandle mesh, const Material& material, ID3D11Device* device, Drawable* drawable);
+bool CreateDrawable(MeshHandle mesh, const Material& material, ID3D11Device* device, Drawable* drawable);

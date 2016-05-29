@@ -9,7 +9,7 @@
 
 #include <dxfw/dxfw.h>
 
-#include "gpu_mesh.h"
+#include "mesh.h"
 
 using json = nlohmann::json;
 
