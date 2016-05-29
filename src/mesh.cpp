@@ -189,9 +189,9 @@ bool LoadIndexBuffer16UInt(size_t hash, const aiMesh& imported_mesh, ID3D11Devic
   return true;
 }
 
-bool CreateMesh(const std::string& prefix, const filesystem::path& path, const MeshLoadOptions& options, ID3D11Device* device, std::vector<MeshHandle>* handles) {
-  if (handles == nullptr) {
-    DXFW_TRACE(__FILE__, __LINE__, true, "Got a null handle vector pointer", nullptr);
+bool CreateMeshes(const std::string& prefix, const filesystem::path& path, const MeshLoadOptions& options, ID3D11Device* device, std::vector<MeshIdentifier>* identifiers) {
+  if (identifiers == nullptr) {
+    DXFW_TRACE(__FILE__, __LINE__, true, "Got a null identifier vector pointer", nullptr);
     return false;
   }
 
@@ -218,7 +218,7 @@ bool CreateMesh(const std::string& prefix, const filesystem::path& path, const M
 
     auto cached_handle = g_cache_.Get(mesh_hash);
     if (cached_handle.IsValid()) {
-      handles->emplace_back(cached_handle);
+      identifiers->emplace_back(MeshIdentifier{ mesh_hash, cached_handle });
       continue;
     }
 
@@ -298,7 +298,7 @@ bool CreateMesh(const std::string& prefix, const filesystem::path& path, const M
 
     auto new_mesh_handle = g_storage_.Add(std::move(mesh));
     g_cache_.Set(mesh_hash, new_mesh_handle);
-    handles->emplace_back(new_mesh_handle);
+    identifiers->emplace_back(MeshIdentifier{ mesh_hash, new_mesh_handle });
   }
 
   return true;

@@ -1,8 +1,11 @@
 {
   "meshes": [
     {
-      "name": "cube",
-      "filename": "assets/meshes/cube.obj"
+      "prefix": "cube",
+      "path": "assets/meshes/cube.obj",
+      "options": {
+        "index_buffer_format": "32_UINT"
+      }
     }
   ],
   "materials": [
@@ -15,8 +18,8 @@
   "scene" : [
     {
       "name" : "cube_drawable",
-      "mesh_id" : 0,
-      "material_id" : 0
+      "mesh_name" : "cube g cube",
+      "material_name" : "basic"
     }
   ]
 }

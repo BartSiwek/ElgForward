@@ -38,6 +38,11 @@ struct MeshLoadOptions {
   DXGI_FORMAT IndexBufferFormat = DXGI_FORMAT_R32_UINT;
 };
 
-bool CreateMesh(const std::string& prefix, const filesystem::path& path, const MeshLoadOptions& options, ID3D11Device* device, std::vector<MeshHandle>* handles);
+struct MeshIdentifier {
+  size_t Hash;
+  MeshHandle handle;
+};
+
+bool CreateMeshes(const std::string& prefix, const filesystem::path& path, const MeshLoadOptions& options, ID3D11Device* device, std::vector<MeshIdentifier>* identifiers);
 
 Mesh* RetreiveMesh(MeshHandle handle);

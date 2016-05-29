@@ -44,7 +44,7 @@ struct PerFrameConstantBuffer {
 };
 
 struct TempScene {
-  std::vector<MeshHandle> meshes;
+  std::vector<MeshIdentifier> meshes;
   Material material;
 };
 
@@ -173,32 +173,26 @@ void SetViewportSize(D3D11_VIEWPORT* viewport, unsigned int width, unsigned int 
 
 bool InitializeScene(const filesystem::path& base_path, dxfwWindow* window, DirectXState* state, TempScene* temp_scene, OldScene* old_scene) {
   Scene scene;
-  LoadScene(base_path / "assets/scenes/cube.json", &scene);
+  LoadScene(base_path / "assets/scenes/cube.json", base_path, state->device.Get(), &scene);
 
-
-  temp_scene->material.VertexShader = CreateVertexShader(base_path / "vs.cso", std::unordered_map<std::string, VertexDataChannel>(), state->device.Get());
-  if (!temp_scene->material.VertexShader.IsValid()) {
-    return false;
-  }
-
-  temp_scene->material.PixelShader = CreatePixelShader(base_path / "ps.cso", state->device.Get());
-  if (!temp_scene->material.PixelShader.IsValid()) {
+  bool material_ok = CreateMaterial("basic", base_path / "vs.cso", base_path / "ps.cso", state->device.Get(), &temp_scene->material);
+  if (!material_ok) {
     return false;
   }
 
   MeshLoadOptions options;
   options.IndexBufferFormat = DXGI_FORMAT_R32_UINT;
-  bool load_ok = CreateMesh("cube", base_path / "assets/meshes/cube.obj", options, state->device.Get(), &temp_scene->meshes);
+  bool load_ok = CreateMeshes("cube", base_path / "assets/meshes/cube.obj", options, state->device.Get(), &temp_scene->meshes);
   if (!load_ok) {
     return false;
   }
 
   old_scene->drawables.reserve(temp_scene->meshes.size());
-  for (const auto& mesh : temp_scene->meshes) {
+  for (const auto& mesh_identifer : temp_scene->meshes) {
     old_scene->drawables.emplace_back();
     auto& drawable = old_scene->drawables.back();
     
-    bool drawable_ok = CreateDrawable(mesh, temp_scene->material, state->device.Get(), &drawable);
+    bool drawable_ok = CreateDrawable(mesh_identifer.handle, temp_scene->material, state->device.Get(), &drawable);
     if (!drawable_ok) {
       return false;
     }
