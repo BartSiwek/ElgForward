@@ -4,6 +4,7 @@
 
 #include <d3d11.h>
 
+#include "filesystem.h"
 #include "vertex_data.h"
 #include "vertex_buffer.h"
 #include "index_buffer.h"
@@ -29,3 +30,14 @@ struct GpuMesh {
   uint32_t IndexCount = 0;
 };
 
+struct GpuMeshTag {};
+
+using GpuMeshHandle = Handle<8, 24, GpuMeshTag>;
+
+struct MeshLoadOptions {
+  DXGI_FORMAT IndexBufferFormat = DXGI_FORMAT_R32_UINT;
+};
+
+bool CreateMesh(const std::string& prefix, const filesystem::path& path, const MeshLoadOptions& options, ID3D11Device* device, std::vector<GpuMeshHandle>* meshes);
+
+GpuMesh* RetreiveMesh(GpuMeshHandle handle);

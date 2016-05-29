@@ -1,0 +1,22 @@
+{
+  "meshes": [
+    {
+      "name": "cube",
+      "filename": "assets/meshes/cube.obj"
+    }
+  ],
+  "materials": [
+    {
+      "name": "basic",
+      "vertex_shader": "vs.cso",
+      "pixel_shader": "ps.cso"
+    }
+  ],
+  "scene" : [
+    {
+      "name" : "cube_drawable",
+      "mesh_id" : 0,
+      "material_id" : 0
+    }
+  ]
+}

@@ -17,15 +17,15 @@
 #include "dxfw_wrapper.h"
 #include "dxfw_helpers.h"
 #include "constant_buffer.h"
-#include "mesh_loader.h"
 #include "gpu_mesh.h"
-#include "vertex_layout_factory.h"
+#include "vertex_layout.h"
 #include "material.h"
 #include "drawable.h"
 #include "shaders/hlsl_definitions.h"
 #include "screen.h"
 #include "perspective_lens.h"
 #include "trackball_camera.h"
+#include "scene_loader.h"
 
 struct DirectXState {
   Microsoft::WRL::ComPtr<ID3D11Device> device;
@@ -43,10 +43,13 @@ struct PerFrameConstantBuffer {
   DirectX::XMMATRIX ModelViewProjectionMatrix;
 };
 
-struct Scene {
-  std::vector<GpuMesh> meshes;
-  std::vector<Drawable> drawables;
+struct TempScene {
+  std::vector<GpuMeshHandle> meshes;
   Material material;
+};
+
+struct OldScene {
+  std::vector<Drawable> drawables;
   D3D11_VIEWPORT viewport;
   PerspectiveLens lens;
   TrackballCamera camera;
@@ -168,30 +171,34 @@ void SetViewportSize(D3D11_VIEWPORT* viewport, unsigned int width, unsigned int 
   viewport->Height = static_cast<float>(height);
 }
 
-bool InitializeScene(const filesystem::path& base_path, dxfwWindow* window, DirectXState* state, Scene* scene) {
-  scene->material.VertexShader = CreateVertexShader(base_path / "vs.cso", std::unordered_map<std::string, VertexDataChannel>(), state->device.Get());
-  if (!scene->material.VertexShader.IsValid()) {
+bool InitializeScene(const filesystem::path& base_path, dxfwWindow* window, DirectXState* state, TempScene* temp_scene, OldScene* old_scene) {
+  Scene scene;
+  LoadScene(base_path / "assets/scenes/cube.json", &scene);
+
+
+  temp_scene->material.VertexShader = CreateVertexShader(base_path / "vs.cso", std::unordered_map<std::string, VertexDataChannel>(), state->device.Get());
+  if (!temp_scene->material.VertexShader.IsValid()) {
     return false;
   }
 
-  scene->material.PixelShader = CreatePixelShader(base_path / "ps.cso", state->device.Get());
-  if (!scene->material.PixelShader.IsValid()) {
+  temp_scene->material.PixelShader = CreatePixelShader(base_path / "ps.cso", state->device.Get());
+  if (!temp_scene->material.PixelShader.IsValid()) {
     return false;
   }
 
-  MeshLoaderOptions options;
+  MeshLoadOptions options;
   options.IndexBufferFormat = DXGI_FORMAT_R32_UINT;
-  bool load_ok = LoadMesh("cube", base_path / "assets/meshes/cube.obj", options, state->device.Get(), &scene->meshes);
+  bool load_ok = CreateMesh("cube", base_path / "assets/meshes/cube.obj", options, state->device.Get(), &temp_scene->meshes);
   if (!load_ok) {
     return false;
   }
 
-  scene->drawables.reserve(scene->meshes.size());
-  for (const auto& mesh : scene->meshes) {
-    scene->drawables.emplace_back();
-    auto& drawable = scene->drawables.back();
+  old_scene->drawables.reserve(temp_scene->meshes.size());
+  for (const auto& mesh : temp_scene->meshes) {
+    old_scene->drawables.emplace_back();
+    auto& drawable = old_scene->drawables.back();
     
-    bool drawable_ok = CreateDrawable(mesh, scene->material, state->device.Get(), &drawable);
+    bool drawable_ok = CreateDrawable(mesh, temp_scene->material, state->device.Get(), &drawable);
     if (!drawable_ok) {
       return false;
     }
@@ -201,15 +208,15 @@ bool InitializeScene(const filesystem::path& base_path, dxfwWindow* window, Dire
   uint32_t height;
   Dxfw::GetWindowSize(window, &width, &height);
   
-  SetViewportSize(&scene->viewport, width, height);
-  state->device_context->RSSetViewports(1, &scene->viewport);
+  SetViewportSize(&old_scene->viewport, width, height);
+  state->device_context->RSSetViewports(1, &old_scene->viewport);
 
-  scene->lens.SetFrustum(1, 3, static_cast<float>(width) / static_cast<float>(height), DirectX::XM_PIDIV2);
+  old_scene->lens.SetFrustum(1, 3, static_cast<float>(width) / static_cast<float>(height), DirectX::XM_PIDIV2);
 
-  scene->camera.SetRadius(2.0f);
-  scene->camera.SetLocation(0, 0, 0);
+  old_scene->camera.SetRadius(2.0f);
+  old_scene->camera.SetLocation(0, 0, 0);
 
-  Dxfw::RegisterWindowResizeCallback(window, [state, scene](dxfwWindow* /* window */, uint32_t width, uint32_t height){
+  Dxfw::RegisterWindowResizeCallback(window, [state, old_scene](dxfwWindow* /* window */, uint32_t width, uint32_t height){
     state->device_context->OMSetRenderTargets(0, 0, 0);
 
     // Release all outstanding references to the swap chain's buffers.
@@ -229,45 +236,45 @@ bool InitializeScene(const filesystem::path& base_path, dxfwWindow* window, Dire
     }
 
     // Set viewport data
-    SetViewportSize(&scene->viewport, width, height);
-    state->device_context->RSSetViewports(1, &scene->viewport);
+    SetViewportSize(&old_scene->viewport, width, height);
+    state->device_context->RSSetViewports(1, &old_scene->viewport);
   });
 
-  Dxfw::RegisterMouseButtonCallback(window, [scene](dxfwWindow*, dxfwMouseButton button, dxfwMouseButtonAction action, int16_t x, int16_t y) {
+  Dxfw::RegisterMouseButtonCallback(window, [old_scene](dxfwWindow*, dxfwMouseButton button, dxfwMouseButtonAction action, int16_t x, int16_t y) {
     if (button == DXFW_RIGHT_MOUSE_BUTTON && action == DXFW_MOUSE_BUTTON_DOWN) {
-      scene->camera.SetDesiredState(TrackballCameraOperation::Panning);
-      scene->camera.SetEndPoint(GetNormalizedScreenCoordinates(scene->viewport.Width, scene->viewport.Height, x, y));
+      old_scene->camera.SetDesiredState(TrackballCameraOperation::Panning);
+      old_scene->camera.SetEndPoint(GetNormalizedScreenCoordinates(old_scene->viewport.Width, old_scene->viewport.Height, x, y));
     } else if (button == DXFW_RIGHT_MOUSE_BUTTON && action == DXFW_MOUSE_BUTTON_UP) {
-      scene->camera.SetDesiredState(TrackballCameraOperation::None);
+      old_scene->camera.SetDesiredState(TrackballCameraOperation::None);
     } else if (button == DXFW_LEFT_MOUSE_BUTTON && action == DXFW_MOUSE_BUTTON_DOWN) {
-      scene->camera.SetDesiredState(TrackballCameraOperation::Rotating);
-      scene->camera.SetEndPoint(GetNormalizedScreenCoordinates(scene->viewport.Width, scene->viewport.Height, x, y));
+      old_scene->camera.SetDesiredState(TrackballCameraOperation::Rotating);
+      old_scene->camera.SetEndPoint(GetNormalizedScreenCoordinates(old_scene->viewport.Width, old_scene->viewport.Height, x, y));
     } else if (button == DXFW_LEFT_MOUSE_BUTTON && action == DXFW_MOUSE_BUTTON_UP) {
-      scene->camera.SetDesiredState(TrackballCameraOperation::None);
+      old_scene->camera.SetDesiredState(TrackballCameraOperation::None);
     } else if (button == DXFW_MIDDLE_MOUSE_BUTTON && action == DXFW_MOUSE_BUTTON_DOWN) {
-      scene->camera.SetDesiredState(TrackballCameraOperation::Zooming);
-      scene->camera.SetEndPoint(GetNormalizedScreenCoordinates(scene->viewport.Width, scene->viewport.Height, x, y));
+      old_scene->camera.SetDesiredState(TrackballCameraOperation::Zooming);
+      old_scene->camera.SetEndPoint(GetNormalizedScreenCoordinates(old_scene->viewport.Width, old_scene->viewport.Height, x, y));
     } else if (button == DXFW_MIDDLE_MOUSE_BUTTON && action == DXFW_MOUSE_BUTTON_UP) {
-      scene->camera.SetDesiredState(TrackballCameraOperation::None);
+      old_scene->camera.SetDesiredState(TrackballCameraOperation::None);
     }
   });
 
-  Dxfw::RegisterMouseWheelCallback(window, [scene](dxfwWindow*, int16_t, int16_t, int16_t delta){
+  Dxfw::RegisterMouseWheelCallback(window, [old_scene](dxfwWindow*, int16_t, int16_t, int16_t delta){
     if (delta > 0) {
-      scene->lens.SetZoomFactor(1.1f * scene->lens.GetZoomFactor());
+      old_scene->lens.SetZoomFactor(1.1f * old_scene->lens.GetZoomFactor());
     } else {
-      scene->lens.SetZoomFactor(0.9f * scene->lens.GetZoomFactor());
+      old_scene->lens.SetZoomFactor(0.9f * old_scene->lens.GetZoomFactor());
     }
   });
 
-  Dxfw::RegisterMouseMoveCallback(window, [scene](dxfwWindow*, int16_t x, int16_t y){
-    scene->camera.SetEndPoint(GetNormalizedScreenCoordinates(scene->viewport.Width, scene->viewport.Height, x, y));
+  Dxfw::RegisterMouseMoveCallback(window, [old_scene](dxfwWindow*, int16_t x, int16_t y){
+    old_scene->camera.SetEndPoint(GetNormalizedScreenCoordinates(old_scene->viewport.Width, old_scene->viewport.Height, x, y));
   });
 
   return true;
 }
 
-void Render(Scene* scene, ID3D11Buffer* perFrameConstantBuffer, DirectXState* state) {
+void Render(OldScene* scene, ID3D11Buffer* perFrameConstantBuffer, DirectXState* state) {
   state->device_context->VSSetConstantBuffers(PER_FRAME_CB_INDEX, 1, &perFrameConstantBuffer);
 
   for (auto& drawable : scene->drawables) {
@@ -308,8 +315,9 @@ int main(int /* argc */, char** /* argv */) {
     return -1;
   }
 
-  Scene scene;
-  bool scene_ok = InitializeScene(base_path, window.get(), &state, &scene);
+  TempScene temp_scene;
+  OldScene old_scene;
+  bool scene_ok = InitializeScene(base_path, window.get(), &state, &temp_scene, &old_scene);
   if (!scene_ok) {
     return -1;
   }
@@ -325,16 +333,16 @@ int main(int /* argc */, char** /* argv */) {
   while (!Dxfw::ShouldWindowClose(window.get())) {
     // Update the camera
     auto t = static_cast<float>(dxfwGetTime());
-    scene.camera.LookAt(2.0f * DirectX::XMScalarCos(t), 0.0f, 2.0f * DirectX::XMScalarSin(t), 0, 0, 0);
+    old_scene.camera.LookAt(2.0f * DirectX::XMScalarCos(t), 0.0f, 2.0f * DirectX::XMScalarSin(t), 0, 0, 0);
 
     // Get aspect ratio
-    float aspect_ratio = static_cast<float>(scene.viewport.Width) / static_cast<float>(scene.viewport.Height);
+    float aspect_ratio = static_cast<float>(old_scene.viewport.Width) / static_cast<float>(old_scene.viewport.Height);
 
     // Update the scene
     float frustum_width;
     float frustum_height;
-    scene.lens.UpdateMatrices(aspect_ratio, &frustum_width, &frustum_height);
-    scene.camera.UpdateMatrices(frustum_width, frustum_height);
+    old_scene.lens.UpdateMatrices(aspect_ratio, &frustum_width, &frustum_height);
+    old_scene.camera.UpdateMatrices(frustum_width, frustum_height);
 
     // Update constant buffers contents
     auto R = DirectX::XMMatrixRotationAxis(axis, DirectX::XM_PIDIV2);
@@ -342,9 +350,9 @@ int main(int /* argc */, char** /* argv */) {
     auto SInv = DirectX::XMMatrixScaling(2.0f, 2.0f, 2.0f);
 
     perFrameConstaneBuffer.ModelMatrix = S * R;
-    perFrameConstaneBuffer.ViewMatrix = scene.camera.GetViewMatrix();
-    perFrameConstaneBuffer.ProjectionMatrix = scene.lens.GetProjectionMatrix();
-    perFrameConstaneBuffer.NormalMatrix = SInv * R * DirectX::XMMatrixTranspose(scene.camera.GetViewMatrixInverse());
+    perFrameConstaneBuffer.ViewMatrix = old_scene.camera.GetViewMatrix();
+    perFrameConstaneBuffer.ProjectionMatrix = old_scene.lens.GetProjectionMatrix();
+    perFrameConstaneBuffer.NormalMatrix = SInv * R * DirectX::XMMatrixTranspose(old_scene.camera.GetViewMatrixInverse());
     perFrameConstaneBuffer.ModelViewMatrix = perFrameConstaneBuffer.ModelMatrix * perFrameConstaneBuffer.ViewMatrix;
     perFrameConstaneBuffer.ModelViewProjectionMatrix = perFrameConstaneBuffer.ModelViewMatrix * perFrameConstaneBuffer.ProjectionMatrix;
 
@@ -358,7 +366,7 @@ int main(int /* argc */, char** /* argv */) {
     float bgColor[4] = { 0.0f, 0.0f, 0.0f, 0.0f };
     state.device_context->ClearRenderTargetView(state.render_target_view.Get(), bgColor);
 
-    Render(&scene, constant_buffer.Get(), &state);
+    Render(&old_scene, constant_buffer.Get(), &state);
 
     state.swap_chain->Present(0, 0);
 

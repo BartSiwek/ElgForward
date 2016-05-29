@@ -1,4 +1,4 @@
-#include "vertex_layout_factory.h"
+#include "vertex_layout.h"
 
 #include <vector>
 

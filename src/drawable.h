@@ -6,7 +6,7 @@
 #include "gpu_mesh.h"
 #include "material.h"
 
-#include "vertex_layout_factory.h"
+#include "vertex_layout.h"
 
 class Drawable {
 public:
@@ -159,4 +159,4 @@ private:
   Microsoft::WRL::ComPtr<ID3D11PixelShader> m_ps_ = nullptr;
 };
 
-bool CreateDrawable(const GpuMesh& mesh, const Material& material, ID3D11Device* device, Drawable* drawable);
+bool CreateDrawable(GpuMeshHandle mesh, const Material& material, ID3D11Device* device, Drawable* drawable);
