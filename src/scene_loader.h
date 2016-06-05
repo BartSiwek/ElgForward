@@ -1,5 +1,6 @@
 #pragma once
 
 #include "scene.h"
+#include "directx_state.h"
 
-bool LoadScene(const filesystem::path& path, const filesystem::path& base_path, ID3D11Device* device, Scene* scene);
+bool LoadScene(const filesystem::path& path, const filesystem::path& base_path, DirectXState* state, Scene* scene);

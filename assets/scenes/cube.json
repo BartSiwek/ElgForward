@@ -21,5 +21,16 @@
       "mesh_name" : "cube g cube",
       "material_name" : "basic"
     }
-  ]
+  ],
+  "camera": {
+    "prespective_lens": {
+      "near_plane": 1.0,
+      "far_plane": 3.0,
+      "fov": 0.5
+    },
+    "trackball_camera": {
+      "radius": 2.0,
+      "position": [0.0, 0.0, 0.0]
+    }
+  }
 }

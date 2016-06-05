@@ -10,7 +10,6 @@
 
 struct Scene {
   std::vector<Drawable> drawables;
-  D3D11_VIEWPORT viewport;
   PerspectiveLens lens;
   TrackballCamera camera;
 };

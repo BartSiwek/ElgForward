@@ -37,6 +37,7 @@ set(PROJECT_SRCS
   ${PROJECT_SOURCE_DIR}/shaders/hlsl_definitions.h
   ${PROJECT_SOURCE_DIR}/constant_buffer.h
   ${PROJECT_SOURCE_DIR}/com_helpers.h
+  ${PROJECT_SOURCE_DIR}/directx_state.h
   ${PROJECT_SOURCE_DIR}/drawable.h
   ${PROJECT_SOURCE_DIR}/drawable.cpp
   ${PROJECT_SOURCE_DIR}/dxfw_wrapper.h

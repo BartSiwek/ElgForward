@@ -144,7 +144,43 @@ void BuildDrawables(const json& json_scene, const std::vector<MeshIdentifier>& m
   }
 }
 
-bool LoadScene(const filesystem::path& path, const filesystem::path& base_path, ID3D11Device* device, Scene* scene) {
+void ReadCamera(const json& json_scene, DirectXState* state, TrackballCamera* camera, PerspectiveLens* lens) {
+  const auto& json_camera = json_scene["camera"];
+  
+  const auto& json_lens = json_camera["prespective_lens"];
+  if (json_lens.is_object()) {
+    const auto& near_plane = json_lens["near_plane"];
+    const auto& far_plane = json_lens["far_plane"];
+    const auto& fov = json_lens["fov"];
+
+    bool is_valid_lens_entry = near_plane.is_number_float()
+                            && far_plane.is_number_float()
+                            && fov.is_number_float();
+    if (is_valid_lens_entry) {
+      lens->SetFrustum(near_plane, far_plane, state->viewport.Width / state->viewport.Height, DirectX::XMConvertToRadians(fov));
+    }
+  }
+
+  const auto& json_trackball_camera = json_camera["trackball_camera"];
+  if (json_trackball_camera.is_object()) {
+    const auto& radius = json_trackball_camera["radius"];
+    if (radius.is_number_float()) {
+      camera->SetRadius(radius);
+    }
+    
+    const auto& json_position = json_trackball_camera["position"];
+    if (json_position.is_array() && json_position.size() == 3) {
+      const auto& x = json_position[0];
+      const auto& y = json_position[1];
+      const auto& z = json_position[2];
+      if (x.is_number_float() && y.is_number_float() && z.is_number_float()) {
+        camera->SetLocation(x, y, z);
+      }
+    } 
+  }
+}
+
+bool LoadScene(const filesystem::path& path, const filesystem::path& base_path, DirectXState* state, Scene* scene) {
   json json_scene;
   
   bool load_ok = ReadJsonFile(path, &json_scene);
@@ -154,16 +190,14 @@ bool LoadScene(const filesystem::path& path, const filesystem::path& base_path, 
   }
 
   std::vector<MeshIdentifier> mesh_identifiers;
-  ReadMeshes(json_scene, base_path, device, &mesh_identifiers);
+  ReadMeshes(json_scene, base_path, state->device.Get(), &mesh_identifiers);
   
   std::vector<Material> materials;
-  ReadMaterials(json_scene, base_path, device, &materials);
+  ReadMaterials(json_scene, base_path, state->device.Get(), &materials);
   
-  BuildDrawables(json_scene, mesh_identifiers, materials, device, &scene->drawables);
+  BuildDrawables(json_scene, mesh_identifiers, materials, state->device.Get(), &scene->drawables);
   
-  // TODO: Fill in lens settings
-  // TODO: Fill in camera settings
-  // TODO: Move the viewport out of the scene
+  ReadCamera(json_scene, state, &scene->camera, &scene->lens);
 
   return true;
 }
