@@ -186,43 +186,6 @@ bool InitializeDirect3d11(DirectXState* state) {
   return true;
 }
 
-bool InitializeScene(const filesystem::path& base_path, DirectXState* state, Scene* scene) {
-  LoadScene(base_path / "assets/scenes/cube.json", base_path, state, scene);
-
-  Dxfw::RegisterMouseButtonCallback(state->window.get(), [scene, state](dxfwWindow*, dxfwMouseButton button, dxfwMouseButtonAction action, int16_t x, int16_t y) {
-    if (button == DXFW_RIGHT_MOUSE_BUTTON && action == DXFW_MOUSE_BUTTON_DOWN) {
-      scene->camera.SetDesiredState(TrackballCameraOperation::Panning);
-      scene->camera.SetEndPoint(GetNormalizedScreenCoordinates(state->viewport.Width, state->viewport.Height, x, y));
-    } else if (button == DXFW_RIGHT_MOUSE_BUTTON && action == DXFW_MOUSE_BUTTON_UP) {
-      scene->camera.SetDesiredState(TrackballCameraOperation::None);
-    } else if (button == DXFW_LEFT_MOUSE_BUTTON && action == DXFW_MOUSE_BUTTON_DOWN) {
-      scene->camera.SetDesiredState(TrackballCameraOperation::Rotating);
-      scene->camera.SetEndPoint(GetNormalizedScreenCoordinates(state->viewport.Width, state->viewport.Height, x, y));
-    } else if (button == DXFW_LEFT_MOUSE_BUTTON && action == DXFW_MOUSE_BUTTON_UP) {
-      scene->camera.SetDesiredState(TrackballCameraOperation::None);
-    } else if (button == DXFW_MIDDLE_MOUSE_BUTTON && action == DXFW_MOUSE_BUTTON_DOWN) {
-      scene->camera.SetDesiredState(TrackballCameraOperation::Zooming);
-      scene->camera.SetEndPoint(GetNormalizedScreenCoordinates(state->viewport.Width, state->viewport.Height, x, y));
-    } else if (button == DXFW_MIDDLE_MOUSE_BUTTON && action == DXFW_MOUSE_BUTTON_UP) {
-      scene->camera.SetDesiredState(TrackballCameraOperation::None);
-    }
-  });
-
-  Dxfw::RegisterMouseMoveCallback(state->window.get(), [scene, state](dxfwWindow*, int16_t x, int16_t y) {
-    scene->camera.SetEndPoint(GetNormalizedScreenCoordinates(state->viewport.Width, state->viewport.Height, x, y));
-  });
-
-  Dxfw::RegisterMouseWheelCallback(state->window.get(), [scene](dxfwWindow*, int16_t, int16_t, int16_t delta){
-    if (delta > 0) {
-      scene->lens.SetZoomFactor(1.1f * scene->lens.GetZoomFactor());
-    } else {
-      scene->lens.SetZoomFactor(0.9f * scene->lens.GetZoomFactor());
-    }
-  });
-
-  return true;
-}
-
 void Render(Scene* scene, ID3D11Buffer* perFrameConstantBuffer, DirectXState* state) {
   state->device_context->VSSetConstantBuffers(PER_FRAME_CB_INDEX, 1, &perFrameConstantBuffer);
 
@@ -260,10 +223,7 @@ int main(int /* argc */, char** /* argv */) {
   }
 
   Scene scene;
-  bool scene_ok = InitializeScene(base_path, &state, &scene);
-  if (!scene_ok) {
-    return -1;
-  }
+  LoadScene(base_path / "assets/scenes/cube.json", base_path, &state, &scene);
 
   Microsoft::WRL::ComPtr<ID3D11Buffer> constant_buffer;
   bool cb_ok = CrateConstantBuffer<PerFrameConstantBuffer>(nullptr, state.device.Get(), constant_buffer.GetAddressOf());

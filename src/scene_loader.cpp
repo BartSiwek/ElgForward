@@ -11,6 +11,7 @@
 
 #include "mesh.h"
 #include "material.h"
+#include "screen.h"
 
 using json = nlohmann::json;
 
@@ -180,6 +181,39 @@ void ReadCamera(const json& json_scene, DirectXState* state, TrackballCamera* ca
   }
 }
 
+void ConnectCameraToInput(DirectXState* state, TrackballCamera* camera, PerspectiveLens* lens) {
+  Dxfw::RegisterMouseButtonCallback(state->window.get(), [camera, viewport = &state->viewport](dxfwWindow*, dxfwMouseButton button, dxfwMouseButtonAction action, int16_t x, int16_t y) {
+    if (button == DXFW_RIGHT_MOUSE_BUTTON && action == DXFW_MOUSE_BUTTON_DOWN) {
+      camera->SetDesiredState(TrackballCameraOperation::Panning);
+      camera->SetEndPoint(GetNormalizedScreenCoordinates(viewport->Width, viewport->Height, x, y));
+    } else if (button == DXFW_RIGHT_MOUSE_BUTTON && action == DXFW_MOUSE_BUTTON_UP) {
+      camera->SetDesiredState(TrackballCameraOperation::None);
+    } else if (button == DXFW_LEFT_MOUSE_BUTTON && action == DXFW_MOUSE_BUTTON_DOWN) {
+      camera->SetDesiredState(TrackballCameraOperation::Rotating);
+      camera->SetEndPoint(GetNormalizedScreenCoordinates(viewport->Width, viewport->Height, x, y));
+    } else if (button == DXFW_LEFT_MOUSE_BUTTON && action == DXFW_MOUSE_BUTTON_UP) {
+      camera->SetDesiredState(TrackballCameraOperation::None);
+    } else if (button == DXFW_MIDDLE_MOUSE_BUTTON && action == DXFW_MOUSE_BUTTON_DOWN) {
+      camera->SetDesiredState(TrackballCameraOperation::Zooming);
+      camera->SetEndPoint(GetNormalizedScreenCoordinates(viewport->Width, viewport->Height, x, y));
+    } else if (button == DXFW_MIDDLE_MOUSE_BUTTON && action == DXFW_MOUSE_BUTTON_UP) {
+      camera->SetDesiredState(TrackballCameraOperation::None);
+    }
+  });
+
+  Dxfw::RegisterMouseMoveCallback(state->window.get(), [camera, viewport = &state->viewport](dxfwWindow*, int16_t x, int16_t y) {
+    camera->SetEndPoint(GetNormalizedScreenCoordinates(viewport->Width, viewport->Height, x, y));
+  });
+
+  Dxfw::RegisterMouseWheelCallback(state->window.get(), [lens](dxfwWindow*, int16_t, int16_t, int16_t delta) {
+    if (delta > 0) {
+      lens->SetZoomFactor(1.1f * lens->GetZoomFactor());
+    } else {
+      lens->SetZoomFactor(0.9f * lens->GetZoomFactor());
+    }
+  });
+}
+
 bool LoadScene(const filesystem::path& path, const filesystem::path& base_path, DirectXState* state, Scene* scene) {
   json json_scene;
   
@@ -198,6 +232,8 @@ bool LoadScene(const filesystem::path& path, const filesystem::path& base_path, 
   BuildDrawables(json_scene, mesh_identifiers, materials, state->device.Get(), &scene->drawables);
   
   ReadCamera(json_scene, state, &scene->camera, &scene->lens);
+
+  ConnectCameraToInput(state, &scene->camera, &scene->lens);
 
   return true;
 }
