@@ -25,6 +25,7 @@ endif()
 include("${CMAKE_EXTRAS}/dxfw.cmake")
 include("${CMAKE_EXTRAS}/assimp.cmake")
 include("${CMAKE_EXTRAS}/json.cmake")
+include("${CMAKE_EXTRAS}/chaiscript.cmake")
 
 set(PROJECT_ASSETS_DIR "${ROOT_DIR}/assets")
 set(PROJECT_INCLUDE_DIR "${ROOT_DIR}/src")
@@ -85,7 +86,7 @@ include_directories("${PROJECT_INCLUDE_DIR}")
 
 add_executable(${PROJECT_NAME} "${PROJECT_SRCS}" "${PROJECT_SHADERS}")
 
-target_link_libraries(${PROJECT_NAME} libdxfw libassimp libjson d3d11.lib D3DCompiler.lib dxguid.lib Shlwapi.lib)
+target_link_libraries(${PROJECT_NAME} libdxfw libassimp libjson libchaiscript d3d11.lib D3DCompiler.lib dxguid.lib Shlwapi.lib)
 
 set_target_properties(${PROJECT_NAME} PROPERTIES COMPILE_DEFINITIONS "_UNICODE;UNICODE;NOMINMAX")
 set_target_properties(${PROJECT_NAME} PROPERTIES LINK_FLAGS "/subsystem:windows /ENTRY:mainCRTStartup")
@@ -94,7 +95,7 @@ get_filename_component(PROJECT_ASSETS_PARENT_DIR ${PROJECT_ASSETS_DIR} DIRECTORY
 foreach(CURRENT_ASSET ${PROJECT_ASSETS})
 	file(RELATIVE_PATH CURRENT_ASSET_PATH ${PROJECT_ASSETS_PARENT_DIR} ${CURRENT_ASSET})
 	add_custom_command(TARGET ${PROJECT_NAME} POST_BUILD
-                   	   COMMAND ${CMAKE_COMMAND} -E copy_if_different "${CURRENT_ASSET}" "$<TARGET_FILE_DIR:${PROJECT_NAME}>/${CURRENT_ASSET_PATH}")
+                   	 COMMAND ${CMAKE_COMMAND} -E copy_if_different "${CURRENT_ASSET}" "$<TARGET_FILE_DIR:${PROJECT_NAME}>/${CURRENT_ASSET_PATH}")
 endforeach()
 
 get_target_property(ASSIMP_DLL_LOCATION libassimp "IMPORTED_LOCATION")

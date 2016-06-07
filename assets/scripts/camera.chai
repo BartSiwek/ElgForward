@@ -1,0 +1,7 @@
+dxfw_trace("Camera script loaded");
+
+global camera;
+
+def update(t) {
+	camera.LookAt(2.0f * cos(t), 0.0f, 2.0f * sin(t), 0.0f, 0.0f, 0.0f);
+}
