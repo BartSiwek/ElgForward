@@ -35,8 +35,9 @@ file(GLOB_RECURSE PROJECT_ASSETS ${PROJECT_ASSETS_DIR}/*)
 set(PROJECT_SRCS
   ${PROJECT_SOURCE_DIR}/main.cpp
   ${PROJECT_SOURCE_DIR}/shaders/hlsl_definitions.h
-  ${PROJECT_SOURCE_DIR}/buffer.h
+  ${PROJECT_SOURCE_DIR}/constant_buffer.h
   ${PROJECT_SOURCE_DIR}/com_helpers.h
+  ${PROJECT_SOURCE_DIR}/directx_state.h
   ${PROJECT_SOURCE_DIR}/drawable.h
   ${PROJECT_SOURCE_DIR}/drawable.cpp
   ${PROJECT_SOURCE_DIR}/dxfw_wrapper.h
@@ -46,18 +47,19 @@ set(PROJECT_SRCS
   ${PROJECT_SOURCE_DIR}/filesystem.h
   ${PROJECT_SOURCE_DIR}/filesystem.cpp
   ${PROJECT_SOURCE_DIR}/material.h
-  ${PROJECT_SOURCE_DIR}/gpu_mesh.h
-  ${PROJECT_SOURCE_DIR}/gpu_mesh.cpp
+  ${PROJECT_SOURCE_DIR}/mesh.h
+  ${PROJECT_SOURCE_DIR}/mesh.cpp
   ${PROJECT_SOURCE_DIR}/handle.h
   ${PROJECT_SOURCE_DIR}/handle_cache.h
   ${PROJECT_SOURCE_DIR}/hash.h
   ${PROJECT_SOURCE_DIR}/index_buffer.h
   ${PROJECT_SOURCE_DIR}/index_buffer.cpp
-  ${PROJECT_SOURCE_DIR}/mesh_loader.h
-  ${PROJECT_SOURCE_DIR}/mesh_loader.cpp
   ${PROJECT_SOURCE_DIR}/perspective_lens.h
   ${PROJECT_SOURCE_DIR}/perspective_lens.cpp
   ${PROJECT_SOURCE_DIR}/resource_array.h
+  ${PROJECT_SOURCE_DIR}/scene.h
+  ${PROJECT_SOURCE_DIR}/scene_loader.h
+  ${PROJECT_SOURCE_DIR}/scene_loader.cpp
   ${PROJECT_SOURCE_DIR}/screen.h
   ${PROJECT_SOURCE_DIR}/shader.h
   ${PROJECT_SOURCE_DIR}/shader.cpp
@@ -67,8 +69,8 @@ set(PROJECT_SRCS
   ${PROJECT_SOURCE_DIR}/vertex_buffer.cpp
   ${PROJECT_SOURCE_DIR}/vertex_data.h
   ${PROJECT_SOURCE_DIR}/vertex_data.cpp
-  ${PROJECT_SOURCE_DIR}/vertex_layout_factory.h
-  ${PROJECT_SOURCE_DIR}/vertex_layout_factory.cpp
+  ${PROJECT_SOURCE_DIR}/vertex_layout.h
+  ${PROJECT_SOURCE_DIR}/vertex_layout.cpp
 )
 
 set_source_files_properties(${PROJECT_SOURCE_DIR}/shaders/vs.hlsl PROPERTIES VS_SHADER_TYPE Vertex VS_SHADER_MODEL 5.0 VS_SHADER_ENTRYPOINT main)
@@ -85,7 +87,7 @@ add_executable(${PROJECT_NAME} "${PROJECT_SRCS}" "${PROJECT_SHADERS}")
 
 target_link_libraries(${PROJECT_NAME} libdxfw libassimp libjson d3d11.lib D3DCompiler.lib dxguid.lib Shlwapi.lib)
 
-set_target_properties(${PROJECT_NAME} PROPERTIES COMPILE_DEFINITIONS "_UNICODE;UNICODE")
+set_target_properties(${PROJECT_NAME} PROPERTIES COMPILE_DEFINITIONS "_UNICODE;UNICODE;NOMINMAX")
 set_target_properties(${PROJECT_NAME} PROPERTIES LINK_FLAGS "/subsystem:windows /ENTRY:mainCRTStartup")
 
 get_filename_component(PROJECT_ASSETS_PARENT_DIR ${PROJECT_ASSETS_DIR} DIRECTORY)

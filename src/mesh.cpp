@@ -1,4 +1,4 @@
-#include "mesh_loader.h"
+#include "mesh.h"
 
 #include <fstream>
 #include <memory>
@@ -19,6 +19,11 @@
 #include "hash.h"
 #include "vertex_buffer.h"
 #include "index_buffer.h"
+#include "resource_array.h"
+#include "handle_cache.h"
+
+ResourceArray<MeshHandle, std::unique_ptr<Mesh>, 255> g_storage_;
+HandleCache<size_t, MeshHandle> g_cache_;
 
 class AiLogStreamGuard {
 public:
@@ -52,7 +57,7 @@ public:
 };
 
 template<typename T>
-bool AddVertexBufferToGpuMesh(size_t hash, const std::vector<T>& data, DXGI_FORMAT format, VertexDataChannel channel, ID3D11Device* device, GpuMesh* mesh) {
+bool AddVertexBufferToMesh(size_t hash, const std::vector<T>& data, DXGI_FORMAT format, VertexDataChannel channel, ID3D11Device* device, Mesh* mesh) {
   auto vb_handle = CreateVertexBuffer(hash, data, device);
   if (!vb_handle.IsValid()) {
     return false;
@@ -66,7 +71,7 @@ bool AddVertexBufferToGpuMesh(size_t hash, const std::vector<T>& data, DXGI_FORM
   return true;
 }
 
-bool PrepareFloat1VertexBuffer(size_t base_hash, const aiVector3D* input, uint32_t vertex_count, VertexDataChannel channel, ID3D11Device* device, GpuMesh* mesh) {
+bool PrepareFloat1VertexBuffer(size_t base_hash, const aiVector3D* input, uint32_t vertex_count, VertexDataChannel channel, ID3D11Device* device, Mesh* mesh) {
   using EntryType = float;
 
   std::vector<EntryType> data(vertex_count);
@@ -77,12 +82,12 @@ bool PrepareFloat1VertexBuffer(size_t base_hash, const aiVector3D* input, uint32
   size_t channel_hash = base_hash;
   hash_combine(channel_hash, channel);
 
-  AddVertexBufferToGpuMesh(channel_hash, data, DXGI_FORMAT_R32_FLOAT, channel, device, mesh);
+  AddVertexBufferToMesh(channel_hash, data, DXGI_FORMAT_R32_FLOAT, channel, device, mesh);
 
   return true;
 }
 
-bool PrepareFloat2VertexBuffer(size_t base_hash, const aiVector3D* input, uint32_t vertex_count, VertexDataChannel channel, ID3D11Device* device, GpuMesh* mesh) {
+bool PrepareFloat2VertexBuffer(size_t base_hash, const aiVector3D* input, uint32_t vertex_count, VertexDataChannel channel, ID3D11Device* device, Mesh* mesh) {
   using EntryType = DirectX::XMFLOAT2;
 
   std::vector<EntryType> data(vertex_count);
@@ -94,12 +99,12 @@ bool PrepareFloat2VertexBuffer(size_t base_hash, const aiVector3D* input, uint32
   size_t channel_hash = base_hash;
   hash_combine(channel_hash, channel);
 
-  AddVertexBufferToGpuMesh(channel_hash, data, DXGI_FORMAT_R32G32_FLOAT, channel, device, mesh);
+  AddVertexBufferToMesh(channel_hash, data, DXGI_FORMAT_R32G32_FLOAT, channel, device, mesh);
 
   return true;
 }
 
-bool PrepareFloat3VertexBuffer(size_t base_hash, const aiVector3D* input, uint32_t vertex_count, VertexDataChannel channel, ID3D11Device* device, GpuMesh* mesh) {
+bool PrepareFloat3VertexBuffer(size_t base_hash, const aiVector3D* input, uint32_t vertex_count, VertexDataChannel channel, ID3D11Device* device, Mesh* mesh) {
   using EntryType = DirectX::XMFLOAT3;
 
   std::vector<EntryType> data(vertex_count);
@@ -112,12 +117,12 @@ bool PrepareFloat3VertexBuffer(size_t base_hash, const aiVector3D* input, uint32
   size_t channel_hash = base_hash;
   hash_combine(channel_hash, channel);
 
-  AddVertexBufferToGpuMesh(channel_hash, data, DXGI_FORMAT_R32G32B32_FLOAT, channel, device, mesh);
+  AddVertexBufferToMesh(channel_hash, data, DXGI_FORMAT_R32G32B32_FLOAT, channel, device, mesh);
 
   return true;
 }
 
-bool PrepareFloat4VertexBuffer(size_t base_hash, const aiColor4D* input, uint32_t vertex_count, VertexDataChannel channel, ID3D11Device* device, GpuMesh* mesh) {
+bool PrepareFloat4VertexBuffer(size_t base_hash, const aiColor4D* input, uint32_t vertex_count, VertexDataChannel channel, ID3D11Device* device, Mesh* mesh) {
   using EntryType = DirectX::XMFLOAT4;
 
   std::vector<EntryType> data(vertex_count);
@@ -131,12 +136,12 @@ bool PrepareFloat4VertexBuffer(size_t base_hash, const aiColor4D* input, uint32_
   size_t channel_hash = base_hash;
   hash_combine(channel_hash, channel);
 
-  AddVertexBufferToGpuMesh(channel_hash, data, DXGI_FORMAT_R32G32B32A32_FLOAT, channel, device, mesh);
+  AddVertexBufferToMesh(channel_hash, data, DXGI_FORMAT_R32G32B32A32_FLOAT, channel, device, mesh);
 
   return true;
 }
 
-bool ValidateOptions(const MeshLoaderOptions& options) {
+bool ValidateOptions(const MeshLoadOptions& options) {
   if (options.IndexBufferFormat != DXGI_FORMAT_R32_UINT && options.IndexBufferFormat != DXGI_FORMAT_R16_UINT) {
     return false;
   }
@@ -144,7 +149,7 @@ bool ValidateOptions(const MeshLoaderOptions& options) {
   return true;
 }
 
-bool LoadIndexBuffer32UInt(size_t hash, const aiMesh& imported_mesh, ID3D11Device* device, GpuMesh* mesh) {
+bool LoadIndexBuffer32UInt(size_t hash, const aiMesh& imported_mesh, ID3D11Device* device, Mesh* mesh) {
   std::vector<uint32_t> indices;
   for (size_t face_index = 0; face_index < imported_mesh.mNumFaces; ++face_index) {
     for (size_t index_index = 0; index_index < imported_mesh.mFaces[face_index].mNumIndices; ++index_index) {
@@ -164,7 +169,7 @@ bool LoadIndexBuffer32UInt(size_t hash, const aiMesh& imported_mesh, ID3D11Devic
   return true;
 }
 
-bool LoadIndexBuffer16UInt(size_t hash, const aiMesh& imported_mesh, ID3D11Device* device, GpuMesh* mesh) {
+bool LoadIndexBuffer16UInt(size_t hash, const aiMesh& imported_mesh, ID3D11Device* device, Mesh* mesh) {
   std::vector<uint16_t> indices;
   for (size_t face_index = 0; face_index < imported_mesh.mNumFaces; ++face_index) {
     for (size_t index_index = 0; index_index < imported_mesh.mFaces[face_index].mNumIndices; ++index_index) {
@@ -184,9 +189,9 @@ bool LoadIndexBuffer16UInt(size_t hash, const aiMesh& imported_mesh, ID3D11Devic
   return true;
 }
 
-bool LoadMesh(const std::string& id, const filesystem::path& path, const MeshLoaderOptions& options, ID3D11Device* device, std::vector<GpuMesh>* meshes) {
-  if (meshes == nullptr) {
-    DXFW_TRACE(__FILE__, __LINE__, true, "Got a null mesh vector pointer", nullptr);
+bool CreateMeshes(const std::string& prefix, const filesystem::path& path, const MeshLoadOptions& options, ID3D11Device* device, std::vector<MeshIdentifier>* identifiers) {
+  if (identifiers == nullptr) {
+    DXFW_TRACE(__FILE__, __LINE__, true, "Got a null identifier vector pointer", nullptr);
     return false;
   }
 
@@ -196,55 +201,57 @@ bool LoadMesh(const std::string& id, const filesystem::path& path, const MeshLoa
     return false;
   }
 
-  std::string path_string = path.string();
-  
   AiLogStreamGuard log_stream_guard(aiGetPredefinedLogStream(aiDefaultLogStream_DEBUGGER, nullptr));
 
+  std::string path_string = path.string();
   std::unique_ptr<const aiScene, AiSceneDeleter> scene(aiImportFile(path_string.c_str(), aiProcessPreset_TargetRealtime_MaxQuality));
 
   if (!scene->HasMeshes()) {
     return false;
   }
 
-  size_t id_hash = std::hash<std::string>()(id);
-
-  meshes->resize(scene->mNumMeshes);
   for (uint32_t i = 0; i < scene->mNumMeshes; ++i) {
     auto imported_mesh = scene->mMeshes[i];
-    
-    size_t mesh_hash = id_hash;
-    hash_combine(mesh_hash, i);
+
+    std::string mesh_name = prefix + ' ' + imported_mesh->mName.C_Str();
+    size_t mesh_hash = std::hash<std::string>()(mesh_name);
+
+    auto cached_handle = g_cache_.Get(mesh_hash);
+    if (cached_handle.IsValid()) {
+      identifiers->emplace_back(MeshIdentifier{ mesh_hash, cached_handle });
+      continue;
+    }
 
     if (imported_mesh->mPrimitiveTypes != aiPrimitiveType_TRIANGLE) {
       DXFW_TRACE(__FILE__, __LINE__, true, "Only triangular meshes are supported for loading", nullptr);
       return false;
     }
 
-    auto& mesh = meshes->back();
+    auto mesh = std::make_unique<Mesh>();
 
     uint32_t vertex_count = imported_mesh->mNumVertices;
 
     if (imported_mesh->HasPositions()) {
-      bool prep_ok = PrepareFloat3VertexBuffer(mesh_hash, imported_mesh->mVertices, vertex_count, VertexDataChannel::POSITIONS, device, &mesh);
+      bool prep_ok = PrepareFloat3VertexBuffer(mesh_hash, imported_mesh->mVertices, vertex_count, VertexDataChannel::POSITIONS, device, mesh.get());
       if (!prep_ok) {
         return false;
       }
     }
 
     if (imported_mesh->HasNormals()) {
-      bool prep_ok = PrepareFloat3VertexBuffer(mesh_hash, imported_mesh->mNormals, vertex_count, VertexDataChannel::NORMALS, device, &mesh);
+      bool prep_ok = PrepareFloat3VertexBuffer(mesh_hash, imported_mesh->mNormals, vertex_count, VertexDataChannel::NORMALS, device, mesh.get());
       if (!prep_ok) {
         return false;
       }
     }
 
     if (imported_mesh->HasTangentsAndBitangents()) {
-      bool tangent_prep_ok = PrepareFloat3VertexBuffer(mesh_hash, imported_mesh->mTangents, vertex_count, VertexDataChannel::TANGENTS, device, &mesh);
+      bool tangent_prep_ok = PrepareFloat3VertexBuffer(mesh_hash, imported_mesh->mTangents, vertex_count, VertexDataChannel::TANGENTS, device, mesh.get());
       if (!tangent_prep_ok) {
         return false;
       }
 
-      bool bitangent_prep_ok = PrepareFloat3VertexBuffer(mesh_hash, imported_mesh->mBitangents, vertex_count, VertexDataChannel::BITANGENTS, device, &mesh);
+      bool bitangent_prep_ok = PrepareFloat3VertexBuffer(mesh_hash, imported_mesh->mBitangents, vertex_count, VertexDataChannel::BITANGENTS, device, mesh.get());
       if (!bitangent_prep_ok) {
         return false;
       }
@@ -254,11 +261,11 @@ bool LoadMesh(const std::string& id, const filesystem::path& path, const MeshLoa
     for (size_t texture_index = 0; texture_index < MAX_TEXCOORDS; ++texture_index) {
       if (imported_mesh->mTextureCoords[texture_index] != nullptr) {
         if (imported_mesh->mNumUVComponents[texture_index] == 1) {
-          PrepareFloat1VertexBuffer(mesh_hash, imported_mesh->mTextureCoords[texture_index], vertex_count, GetTexCoordsChannel(texture_index), device, &mesh);
+          PrepareFloat1VertexBuffer(mesh_hash, imported_mesh->mTextureCoords[texture_index], vertex_count, GetTexCoordsChannel(texture_index), device, mesh.get());
         } else if (imported_mesh->mNumUVComponents[texture_index] == 2) {
-          PrepareFloat2VertexBuffer(mesh_hash, imported_mesh->mTextureCoords[texture_index], vertex_count, GetTexCoordsChannel(texture_index), device, &mesh);
+          PrepareFloat2VertexBuffer(mesh_hash, imported_mesh->mTextureCoords[texture_index], vertex_count, GetTexCoordsChannel(texture_index), device, mesh.get());
         } else {  // imported_mesh->mNumUVComponents[texture_index] == 3
-          PrepareFloat3VertexBuffer(mesh_hash, imported_mesh->mTextureCoords[texture_index], vertex_count, GetTexCoordsChannel(texture_index), device, &mesh);
+          PrepareFloat3VertexBuffer(mesh_hash, imported_mesh->mTextureCoords[texture_index], vertex_count, GetTexCoordsChannel(texture_index), device, mesh.get());
         }
       }
     }
@@ -266,29 +273,37 @@ bool LoadMesh(const std::string& id, const filesystem::path& path, const MeshLoa
     static_assert(MAX_COLORS <= AI_MAX_NUMBER_OF_COLOR_SETS, "MAX_COLORS must be no more than AI_MAX_NUMBER_OF_COLOR_SETS");
     for (size_t color_index = 0; color_index < MAX_COLORS; ++color_index) {
       if (imported_mesh->mColors[color_index] != nullptr) {
-        bool prep_ok = PrepareFloat4VertexBuffer(mesh_hash, imported_mesh->mColors[color_index], vertex_count, GetColorsChannel(color_index), device, &mesh);
+        bool prep_ok = PrepareFloat4VertexBuffer(mesh_hash, imported_mesh->mColors[color_index], vertex_count, GetColorsChannel(color_index), device, mesh.get());
         if (!prep_ok) {
           return false;
         }
       }
     }
 
-    mesh.PrimitiveTopology = D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST;
+    mesh->PrimitiveTopology = D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST;
 
     if (options.IndexBufferFormat == DXGI_FORMAT_R32_UINT) {
-      bool indices_ok = LoadIndexBuffer32UInt(mesh_hash, *imported_mesh, device, &mesh);
+      bool indices_ok = LoadIndexBuffer32UInt(mesh_hash, *imported_mesh, device, mesh.get());
       if (!indices_ok) {
         return false;
       }
     } else if (options.IndexBufferFormat == DXGI_FORMAT_R16_UINT) {
-      bool indices_ok = LoadIndexBuffer16UInt(mesh_hash, *imported_mesh, device, &mesh);
+      bool indices_ok = LoadIndexBuffer16UInt(mesh_hash, *imported_mesh, device, mesh.get());
       if (!indices_ok) {
         return false;
       }
     } else {
       return false;
     }
+
+    auto new_mesh_handle = g_storage_.Add(std::move(mesh));
+    g_cache_.Set(mesh_hash, new_mesh_handle);
+    identifiers->emplace_back(MeshIdentifier{ mesh_hash, new_mesh_handle });
   }
 
   return true;
+}
+
+Mesh* RetreiveMesh(MeshHandle handle) {
+  return g_storage_.Get(handle).get();
 }

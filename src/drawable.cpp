@@ -1,6 +1,6 @@
 #include "drawable.h"
 
-int32_t GetVertexBufferIndex(VertexDataChannel channel, const GpuMesh& mesh) {
+int32_t GetVertexBufferIndex(VertexDataChannel channel, const Mesh& mesh) {
   auto it = std::find(std::begin(mesh.VertexDataChannels), std::end(mesh.VertexDataChannels), channel);
   if (it != std::end(mesh.VertexDataChannels)) {
     int32_t index = std::distance(std::begin(mesh.VertexDataChannels), it);
@@ -69,7 +69,8 @@ bool IsVertexBufferFormatCompatible(uint32_t component_count, D3D_REGISTER_COMPO
   }
 }
 
-bool CreateDrawable(const GpuMesh& mesh, const Material& material, ID3D11Device* device, Drawable* drawable) {
+bool CreateDrawable(MeshHandle mesh_handle, const Material& material, ID3D11Device* device, Drawable* drawable) {
+  auto mesh_ptr = RetreiveMesh(mesh_handle);
   auto vertex_shader_ptr = RetreiveVertexShader(material.VertexShader);
   auto pixel_shader_ptr = RetreivePixelShader(material.PixelShader);
 
@@ -77,25 +78,25 @@ bool CreateDrawable(const GpuMesh& mesh, const Material& material, ID3D11Device*
   
   uint32_t slot_index = 0;
   for (const auto& input_desc : vertex_shader_ptr->InputDescription) {
-    auto input_index = GetVertexBufferIndex(input_desc.Channel, mesh);
+    auto input_index = GetVertexBufferIndex(input_desc.Channel, *mesh_ptr);
 
     if (input_index == -1) {
       return false;
     }
 
-    bool is_compatible = IsVertexBufferFormatCompatible(input_desc.ComponentCount, input_desc.ComponentType, mesh.VertexBufferFormats[input_index]);
+    bool is_compatible = IsVertexBufferFormatCompatible(input_desc.ComponentCount, input_desc.ComponentType, mesh_ptr->VertexBufferFormats[input_index]);
     if (!is_compatible) {
       return false;
     }
 
-    drawable->SetVertexBuffer(slot_index, mesh.VertexBuffers[input_index], mesh.VertexBufferStrides[input_index]);
+    drawable->SetVertexBuffer(slot_index, mesh_ptr->VertexBuffers[input_index], mesh_ptr->VertexBufferStrides[input_index]);
 
     input_layout_desc.emplace_back();
     auto& input_layout_desc_entry = input_layout_desc.back();
 
     input_layout_desc_entry.SemanticName = input_desc.SemanticName.c_str();
     input_layout_desc_entry.SemanticIndex = input_desc.SemanticIndex;
-    input_layout_desc_entry.Format = mesh.VertexBufferFormats[input_index];
+    input_layout_desc_entry.Format = mesh_ptr->VertexBufferFormats[input_index];
     input_layout_desc_entry.InputSlot = slot_index;
     input_layout_desc_entry.AlignedByteOffset = D3D11_APPEND_ALIGNED_ELEMENT;
     input_layout_desc_entry.InputSlotClass = D3D11_INPUT_PER_VERTEX_DATA;
@@ -109,7 +110,7 @@ bool CreateDrawable(const GpuMesh& mesh, const Material& material, ID3D11Device*
     return false;
   }
 
-  bool index_data_ok = drawable->SetIndexData(mesh.IndexBuffer, DXGI_FORMAT_R32_UINT, mesh.IndexCount, mesh.PrimitiveTopology);
+  bool index_data_ok = drawable->SetIndexData(mesh_ptr->IndexBuffer, mesh_ptr->IndexBufferFormat, mesh_ptr->IndexCount, mesh_ptr->PrimitiveTopology);
   if (!index_data_ok) {
     return false;
   }
