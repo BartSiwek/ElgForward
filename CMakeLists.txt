@@ -31,8 +31,6 @@ set(PROJECT_ASSETS_DIR "${ROOT_DIR}/assets")
 set(PROJECT_INCLUDE_DIR "${ROOT_DIR}/src")
 set(PROJECT_SOURCE_DIR "${ROOT_DIR}/src")
 
-file(GLOB_RECURSE PROJECT_ASSETS ${PROJECT_ASSETS_DIR}/*)
-
 set(PROJECT_SRCS
   ${PROJECT_SOURCE_DIR}/main.cpp
   ${PROJECT_SOURCE_DIR}/shaders/hlsl_definitions.h
@@ -74,17 +72,55 @@ set(PROJECT_SRCS
   ${PROJECT_SOURCE_DIR}/vertex_layout.cpp
 )
 
+source_group(Sources FILES "${PROJECT_SRCS}")
+
+set(PROJECT_ASSETS_MATERIALS
+  ${PROJECT_ASSETS_DIR}/materials/default.mtl
+)
+source_group(Assets\\Materials FILES "${PROJECT_ASSETS_MATERIALS}")
+
+set(PROJECT_ASSETS_MESHES
+  ${PROJECT_ASSETS_DIR}/meshes/cube.obj
+  ${PROJECT_ASSETS_DIR}/meshes/teapot.obj
+)
+source_group(Assets\\Meshes FILES "${PROJECT_ASSETS_MESHES}")
+
+set(PROJECT_ASSETS_SCENES
+  ${PROJECT_ASSETS_DIR}/scenes/cube.json
+)
+source_group(Assets\\Scenes FILES "${PROJECT_ASSETS_SCENES}")
+
+set(PROJECT_ASSETS_SCRIPTS
+  ${PROJECT_ASSETS_DIR}/scripts/camera.chai
+)
+source_group(Assets\\Sctipts FILES "${PROJECT_ASSETS_SCRIPTS}")
+
+set(PROJECT_ASSETS_TEXTURES
+  ${PROJECT_ASSETS_DIR}/textures/default.png
+)
+source_group(Assets\\Textures FILES "${PROJECT_ASSETS_TEXTURES}")
+
+set(PROJECT_ASSETS_SHADERS
+  ${PROJECT_SOURCE_DIR}/shaders/vs.hlsl
+  ${PROJECT_SOURCE_DIR}/shaders/ps.hlsl
+)
+source_group(Assets\\Shaders FILES "${PROJECT_ASSETS_SHADERS}")
+
 set_source_files_properties(${PROJECT_SOURCE_DIR}/shaders/vs.hlsl PROPERTIES VS_SHADER_TYPE Vertex VS_SHADER_MODEL 5.0 VS_SHADER_ENTRYPOINT main)
 set_source_files_properties(${PROJECT_SOURCE_DIR}/shaders/ps.hlsl PROPERTIES VS_SHADER_TYPE Pixel VS_SHADER_MODEL 5.0 VS_SHADER_ENTRYPOINT main)
 
-set(PROJECT_SHADERS
-  ${PROJECT_SOURCE_DIR}/shaders/vs.hlsl
-  ${PROJECT_SOURCE_DIR}/shaders/ps.hlsl
+set(PROJECT_ASSETS
+  "${PROJECT_ASSETS_MATERIALS}"
+  "${PROJECT_ASSETS_MESHES}"
+  "${PROJECT_ASSETS_SCENES}"
+  "${PROJECT_ASSETS_SCRIPTS}"
+  "${PROJECT_ASSETS_TEXTURES}"
+  "${PROJECT_ASSETS_SHADERS}"
 )
 
 include_directories("${PROJECT_INCLUDE_DIR}")
 
-add_executable(${PROJECT_NAME} "${PROJECT_SRCS}" "${PROJECT_SHADERS}")
+add_executable(${PROJECT_NAME} "${PROJECT_SRCS}" "${PROJECT_ASSETS}")
 
 target_link_libraries(${PROJECT_NAME} libdxfw libassimp libjson libchaiscript d3d11.lib D3DCompiler.lib dxguid.lib Shlwapi.lib)
 
