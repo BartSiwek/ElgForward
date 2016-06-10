@@ -1,8 +1,6 @@
 #pragma pack_matrix(row_major)
 
-#include "hlsl_definitions.h"
-
-cbuffer PerFrameConstants  : register(PER_FRAME_CB_REGISTER) {
+cbuffer PerFrameConstants  : register(b0) {
   float4x4 ModelMatrix;
   float4x4 ViewMatrix;
   float4x4 ProjectionMatrix;

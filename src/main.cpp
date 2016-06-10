@@ -29,7 +29,6 @@
 #include "vertex_layout.h"
 #include "material.h"
 #include "drawable.h"
-#include "shaders/hlsl_definitions.h"
 #include "screen.h"
 #include "perspective_lens.h"
 #include "trackball_camera.h"
@@ -193,7 +192,7 @@ bool InitializeDirect3d11(DirectXState* state) {
 }
 
 void Render(Scene* scene, ID3D11Buffer* perFrameConstantBuffer, DirectXState* state) {
-  state->device_context->VSSetConstantBuffers(PER_FRAME_CB_INDEX, 1, &perFrameConstantBuffer);
+  state->device_context->VSSetConstantBuffers(1, 1, &perFrameConstantBuffer);
 
   for (auto& drawable : scene->drawables) {
     state->device_context->VSSetShader(drawable.GetVertexShader(), 0, 0);

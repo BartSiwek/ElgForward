@@ -31,9 +31,9 @@ set(PROJECT_ASSETS_DIR "${ROOT_DIR}/assets")
 set(PROJECT_INCLUDE_DIR "${ROOT_DIR}/src")
 set(PROJECT_SOURCE_DIR "${ROOT_DIR}/src")
 
+# Sources
 set(PROJECT_SRCS
   ${PROJECT_SOURCE_DIR}/main.cpp
-  ${PROJECT_SOURCE_DIR}/shaders/hlsl_definitions.h
   ${PROJECT_SOURCE_DIR}/constant_buffer.h
   ${PROJECT_SOURCE_DIR}/com_helpers.h
   ${PROJECT_SOURCE_DIR}/directx_state.h
@@ -74,41 +74,64 @@ set(PROJECT_SRCS
 
 source_group(Sources FILES ${PROJECT_SRCS})
 
+# Materials
 set(PROJECT_ASSETS_MATERIALS
   ${PROJECT_ASSETS_DIR}/materials/default.mtl
 )
+
+set_source_files_properties(${PROJECT_ASSETS_DIR}/materials/default.mtl PROPERTIES HEADER_FILE_ONLY TRUE)
+
 source_group(Assets\\Materials FILES ${PROJECT_ASSETS_MATERIALS})
 
+# Meshes
 set(PROJECT_ASSETS_MESHES
   ${PROJECT_ASSETS_DIR}/meshes/cube.obj
   ${PROJECT_ASSETS_DIR}/meshes/teapot.obj
 )
+
+set_source_files_properties(${PROJECT_ASSETS_DIR}/meshes/cube.obj PROPERTIES HEADER_FILE_ONLY TRUE)
+set_source_files_properties(${PROJECT_ASSETS_DIR}/meshes/teapot.obj PROPERTIES HEADER_FILE_ONLY TRUE)
+
 source_group(Assets\\Meshes FILES ${PROJECT_ASSETS_MESHES})
 
+# Scenes
 set(PROJECT_ASSETS_SCENES
   ${PROJECT_ASSETS_DIR}/scenes/cube.json
 )
+
+set_source_files_properties(${PROJECT_ASSETS_DIR}/scenes/cube.json PROPERTIES HEADER_FILE_ONLY TRUE)
+
 source_group(Assets\\Scenes FILES ${PROJECT_ASSETS_SCENES})
 
+# Sctipts
 set(PROJECT_ASSETS_SCRIPTS
   ${PROJECT_ASSETS_DIR}/scripts/camera.chai
 )
+
+set_source_files_properties(${PROJECT_ASSETS_DIR}/scripts/camera.chai PROPERTIES HEADER_FILE_ONLY TRUE)
+
 source_group(Assets\\Sctipts FILES ${PROJECT_ASSETS_SCRIPTS})
 
+# Textures
 set(PROJECT_ASSETS_TEXTURES
   ${PROJECT_ASSETS_DIR}/textures/default.png
 )
+
+set_source_files_properties(${PROJECT_ASSETS_DIR}/textures/default.png PROPERTIES HEADER_FILE_ONLY TRUE)
+
 source_group(Assets\\Textures FILES ${PROJECT_ASSETS_TEXTURES})
 
+# Shaders
 set(PROJECT_ASSETS_SHADERS
-  ${PROJECT_SOURCE_DIR}/shaders/vs.hlsl
-  ${PROJECT_SOURCE_DIR}/shaders/ps.hlsl
+  ${PROJECT_ASSETS_DIR}/shaders/vs.hlsl
+  ${PROJECT_ASSETS_DIR}/shaders/ps.hlsl
 )
 source_group(Assets\\Shaders FILES ${PROJECT_ASSETS_SHADERS})
 
-set_source_files_properties(${PROJECT_SOURCE_DIR}/shaders/vs.hlsl PROPERTIES VS_SHADER_TYPE Vertex VS_SHADER_MODEL 5.0 VS_SHADER_ENTRYPOINT main)
-set_source_files_properties(${PROJECT_SOURCE_DIR}/shaders/ps.hlsl PROPERTIES VS_SHADER_TYPE Pixel VS_SHADER_MODEL 5.0 VS_SHADER_ENTRYPOINT main)
+set_source_files_properties(${PROJECT_ASSETS_DIR}/shaders/vs.hlsl PROPERTIES VS_SHADER_TYPE Vertex VS_SHADER_MODEL 5.0 VS_SHADER_ENTRYPOINT main)
+set_source_files_properties(${PROJECT_ASSETS_DIR}/shaders/ps.hlsl PROPERTIES VS_SHADER_TYPE Pixel VS_SHADER_MODEL 5.0 VS_SHADER_ENTRYPOINT main)
 
+# All assets
 set(PROJECT_ASSETS
   "${PROJECT_ASSETS_MATERIALS}"
   "${PROJECT_ASSETS_MESHES}"
