@@ -49,21 +49,7 @@ set_source_files_properties(${TARGET_ASSETS_DIR}/textures/default.png PROPERTIES
 
 source_group(Assets\\Textures FILES ${TARGET_ASSETS_TEXTURES})
 
-# Shaders
-set(TARGET_ASSETS_SHADERS
-  ${TARGET_ASSETS_DIR}/shaders/vs.hlsl
-  ${TARGET_ASSETS_DIR}/shaders/ps.hlsl
-)
-source_group(Assets\\Shaders FILES ${TARGET_ASSETS_SHADERS})
-
-set_source_files_properties(${TARGET_ASSETS_DIR}/shaders/vs.hlsl PROPERTIES VS_SHADER_TYPE Vertex VS_SHADER_MODEL 5.0 VS_SHADER_ENTRYPOINT main)
-set_source_files_properties(${TARGET_ASSETS_DIR}/shaders/ps.hlsl PROPERTIES VS_SHADER_TYPE Pixel VS_SHADER_MODEL 5.0 VS_SHADER_ENTRYPOINT main)
-
 # All assets
-set(TARGET_BUILT_ASSETS
-  "${TARGET_ASSETS_SHADERS}"
-)
-
 set(TARGET_COPY_ASSETS
   "${TARGET_ASSETS_MATERIALS}"
   "${TARGET_ASSETS_MESHES}"
