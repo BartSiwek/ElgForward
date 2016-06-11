@@ -1,0 +1,13 @@
+﻿diff --git a/code/CMakeLists.txt b/code/CMakeLists.txt
+index f55d2eb..5a5f7d5 100644
+--- a/code/CMakeLists.txt
++++ b/code/CMakeLists.txt
+@@ -822,7 +822,7 @@ if (UNZIP_FOUND)
+   INCLUDE_DIRECTORIES(${UNZIP_INCLUDE_DIRS})
+   TARGET_LINK_LIBRARIES(assimp ${UNZIP_LIBRARIES})
+ else (UNZIP_FOUND)
+-  INCLUDE_DIRECTORIES("../contrib/unzip")
++  INCLUDE_DIRECTORIES("..")
+ endif (UNZIP_FOUND)
+
+ INSTALL( TARGETS assimp
