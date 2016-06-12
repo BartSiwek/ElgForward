@@ -26,6 +26,7 @@ set(TARGET_SOURCES
   ${TARGET_SOURCE_DIR}/main.cpp
   ${TARGET_SOURCE_DIR}/constant_buffer.h
   ${TARGET_SOURCE_DIR}/com_helpers.h
+  ${TARGET_SOURCE_DIR}/camera_script.h
   ${TARGET_SOURCE_DIR}/directx_state.h
   ${TARGET_SOURCE_DIR}/drawable.h
   ${TARGET_SOURCE_DIR}/drawable.cpp

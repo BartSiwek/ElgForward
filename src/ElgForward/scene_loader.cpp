@@ -13,9 +13,7 @@
 #include "material.h"
 #include "screen.h"
 
-using json = nlohmann::json;
-
-bool ReadJsonFile(const filesystem::path& path, json* json_scene) {
+bool ReadJsonFile(const filesystem::path& path, nlohmann::json* json_scene) {
   std::ifstream input(path);
 
   if (!input.good()) {
@@ -26,7 +24,7 @@ bool ReadJsonFile(const filesystem::path& path, json* json_scene) {
 
   return true;
 }
-bool ReadOptions(const json& json_options, MeshLoadOptions* options) {
+bool ReadOptions(const nlohmann::json& json_options, MeshLoadOptions* options) {
   bool are_valid_options = json_options["index_buffer_format"].is_string();
   if (!are_valid_options) {
     return false;
@@ -44,7 +42,7 @@ bool ReadOptions(const json& json_options, MeshLoadOptions* options) {
   }
 }
 
-void ReadMeshes(const json& json_scene, const filesystem::path& base_path, ID3D11Device* device, std::vector<MeshIdentifier>* mesh_identifiers) {
+void ReadMeshes(const nlohmann::json& json_scene, const filesystem::path& base_path, ID3D11Device* device, std::vector<MeshIdentifier>* mesh_identifiers) {
   auto& json_meshes = json_scene["meshes"];
 
   for (const auto& json_mesh : json_meshes) {
@@ -78,7 +76,7 @@ void ReadMeshes(const json& json_scene, const filesystem::path& base_path, ID3D1
   }
 }
 
-void ReadMaterials(const json& json_scene, const filesystem::path& base_path, ID3D11Device* device, std::vector<Material>* materials) {
+void ReadMaterials(const nlohmann::json& json_scene, const filesystem::path& base_path, ID3D11Device* device, std::vector<Material>* materials) {
   auto json_materials = json_scene["materials"];
 
   for (const auto& json_material : json_materials) {
@@ -107,7 +105,7 @@ void ReadMaterials(const json& json_scene, const filesystem::path& base_path, ID
   }
 }
 
-void BuildDrawables(const json& json_scene, const std::vector<MeshIdentifier>& mesh_indetifiers, const std::vector<Material>& materials, ID3D11Device* device, std::vector<Drawable>* drawables) {
+void BuildDrawables(const nlohmann::json& json_scene, const std::vector<MeshIdentifier>& mesh_indetifiers, const std::vector<Material>& materials, ID3D11Device* device, std::vector<Drawable>* drawables) {
   auto json_drawables = json_scene["scene"];
 
   for (const auto& json_drawable : json_drawables) {
@@ -145,7 +143,7 @@ void BuildDrawables(const json& json_scene, const std::vector<MeshIdentifier>& m
   }
 }
 
-void ReadCamera(const json& json_scene, DirectXState* state, TrackballCamera* camera, PerspectiveLens* lens) {
+void ReadCamera(const nlohmann::json& json_scene, const filesystem::path& base_path, DirectXState* state, TrackballCamera* camera, PerspectiveLens* lens, CameraScript* script) {
   const auto& json_camera = json_scene["camera"];
   
   const auto& json_lens = json_camera["prespective_lens"];
@@ -178,6 +176,15 @@ void ReadCamera(const json& json_scene, DirectXState* state, TrackballCamera* ca
         camera->SetLocation(x, y, z);
       }
     } 
+  }
+
+  const auto& json_camera_script = json_camera["script"];
+  if (json_camera_script.is_string()) {
+    auto path = base_path / json_camera_script;
+    bool init_ok = script->init(path, camera, lens);
+    if (!init_ok) {
+      DXFW_TRACE(__FILE__, __LINE__, false, "Error initializing camera from file %S", path.string());
+    }
   }
 }
 
@@ -215,7 +222,7 @@ void ConnectCameraToInput(DirectXState* state, TrackballCamera* camera, Perspect
 }
 
 bool LoadScene(const filesystem::path& path, const filesystem::path& base_path, DirectXState* state, Scene* scene) {
-  json json_scene;
+  nlohmann::json json_scene;
   
   bool load_ok = ReadJsonFile(path, &json_scene);
   if (!load_ok) {
@@ -231,7 +238,7 @@ bool LoadScene(const filesystem::path& path, const filesystem::path& base_path, 
   
   BuildDrawables(json_scene, mesh_identifiers, materials, state->device.Get(), &scene->drawables);
   
-  ReadCamera(json_scene, state, &scene->camera, &scene->lens);
+  ReadCamera(json_scene, base_path, state, &scene->camera, &scene->lens, &scene->camera_script);
 
   ConnectCameraToInput(state, &scene->camera, &scene->lens);
 

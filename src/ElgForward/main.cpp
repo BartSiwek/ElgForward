@@ -13,12 +13,6 @@
 #include <wrl.h>
 #endif
 
-#pragma warning(push)
-#pragma warning(disable: 4602)
-#include <chaiscript/chaiscript.hpp>
-#include <chaiscript/chaiscript_stdlib.hpp>
-#pragma warning(pop)
-
 #include "filesystem.h"
 #include "dxfw_wrapper.h"
 #include "dxfw_helpers.h"
@@ -236,41 +230,12 @@ int main(int /* argc */, char** /* argv */) {
     return -1;
   }
 
-  auto chai_path = base_path / "assets/scripts/camera.chai";
-
-  std::function<void(float)> camera_update_fun;
-
-  chaiscript::ChaiScript chai(chaiscript::Std_Lib::library());
-
-  chai.add(chaiscript::fun(static_cast<float(*)(float)>(&DirectX::XMScalarSin)), "sin");
-  chai.add(chaiscript::fun(static_cast<float(*)(float)>(&DirectX::XMScalarCos)), "cos");
-
-  chai.add(chaiscript::user_type<TrackballCamera>(), "TrackballCamera");
-  chai.add(chaiscript::fun(&TrackballCamera::LookAt), "LookAt");
-
-  chai.add_global(chaiscript::var(std::ref(scene.camera)), "camera");
-
-  chai.add(chaiscript::fun([](const std::string& msg) {
-    DXFW_TRACE(__FILE__, __LINE__, false, "%S", msg.c_str());
-  }), "dxfw_trace");
-
-  try {
-    chai.use(chai_path.string());
-    camera_update_fun = chai.eval<std::function<void(float)>>("update");
-  } catch (const chaiscript::exception::file_not_found_error& ex) {
-    DXFW_TRACE(__FILE__, __LINE__, false, "Script not found: %S", ex.what());
-  } catch (const chaiscript::exception::eval_error& ex) {
-    DXFW_TRACE(__FILE__, __LINE__, false, "Evaluation error: %S", ex.what());
-  }
-
   PerFrameConstantBuffer perFrameConstaneBuffer;
   DirectX::XMVECTOR axis = { 1, 1, 1, 0 };
   while (!Dxfw::ShouldWindowClose(state.window.get())) {
     // Update the camera
     auto t = static_cast<float>(dxfwGetTime());
-    if (camera_update_fun) {
-      camera_update_fun(t);
-    }
+    scene.camera_script.update(t);
 
     // Get aspect ratio
     float aspect_ratio = static_cast<float>(state.viewport.Width) / static_cast<float>(state.viewport.Height);
