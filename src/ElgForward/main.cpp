@@ -23,7 +23,6 @@
 #include "vertex_layout.h"
 #include "material.h"
 #include "drawable.h"
-#include "shaders/hlsl_definitions.h"
 #include "screen.h"
 #include "perspective_lens.h"
 #include "trackball_camera.h"
@@ -187,7 +186,7 @@ bool InitializeDirect3d11(DirectXState* state) {
 }
 
 void Render(Scene* scene, ID3D11Buffer* perFrameConstantBuffer, DirectXState* state) {
-  state->device_context->VSSetConstantBuffers(PER_FRAME_CB_INDEX, 1, &perFrameConstantBuffer);
+  state->device_context->VSSetConstantBuffers(0, 1, &perFrameConstantBuffer);
 
   for (auto& drawable : scene->drawables) {
     state->device_context->VSSetShader(drawable.GetVertexShader(), 0, 0);
@@ -236,7 +235,7 @@ int main(int /* argc */, char** /* argv */) {
   while (!Dxfw::ShouldWindowClose(state.window.get())) {
     // Update the camera
     auto t = static_cast<float>(dxfwGetTime());
-    scene.camera.LookAt(2.0f * DirectX::XMScalarCos(t), 0.0f, 2.0f * DirectX::XMScalarSin(t), 0, 0, 0);
+    scene.camera_script.update(t);
 
     // Get aspect ratio
     float aspect_ratio = static_cast<float>(state.viewport.Width) / static_cast<float>(state.viewport.Height);

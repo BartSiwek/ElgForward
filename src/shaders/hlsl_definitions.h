@@ -1,7 +1,0 @@
-#ifndef HLSL_DEFINITIONS_H_
-#define HLSL_DEFINITIONS_H_
-
-#define PER_FRAME_CB_INDEX 0
-#define PER_FRAME_CB_REGISTER b0
-
-#endif  // HLSL_DEFINITIONS_H_
