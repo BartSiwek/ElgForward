@@ -24,10 +24,13 @@ Current agenda:
   - ~~Move to using fcx to compile shaders~~
   - ~~Move to using AssImp for loading to support wider range of mesh data~~
 - ~~Move to using handles for shaders, meshes, inputlayouts etc. and managers to enable caching~~
-  - Add a drawable manager and drawable handle
-  - ...
+  - ~~Add a drawable manager and drawable handle~~
 - Scene loading
-  - JSON Format
-  - Loading of json
-  - ...
-- ...
+  - ~~JSON Format~~
+  - ~~Loading of json~~
+  - Loading of transforms for drawables
+  - Loading of lights
+  - Loading of textures
+- Shader reflection
+  - Mapping of textures
+  - Mapping of constant buffers
