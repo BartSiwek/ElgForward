@@ -44,7 +44,6 @@ VertexShaderOutput main(VertexShaderInput input) {
   float4 finalColor = LightDiffuseColor * MaterialDiffuseColor * max(nDotL, 0);
 
   output.Position = mul(positionMs, ModelViewProjectionMatrix);
-  // output.Position = mul(positionMs, ModelViewMatrix);
   output.Color = finalColor;
 
   return output;
