@@ -2,6 +2,8 @@
 
 #include <array>
 
+#include <DirectXMath.h>
+
 #include "com_helpers.h"
 #include "mesh.h"
 #include "material.h"
@@ -144,6 +146,31 @@ public:
     return m_ps_.Get();
   }
 
+  void SetModelMatrix(const DirectX::XMMATRIX& matrix) {
+    m_model_matrix_ = matrix;
+  }
+
+  const DirectX::XMMATRIX& GetModelMatrix() const {
+    return m_model_matrix_;
+  }
+
+  DirectX::XMMATRIX& GetModelMatrix() {
+    return m_model_matrix_;
+  }
+
+  void SetModelMatrixInverseTranspose(const DirectX::XMMATRIX& matrix) {
+    m_model_matrix_inverse_transpose_ = matrix;
+  }
+
+  const DirectX::XMMATRIX& GetModelMatrixInverseTranspose() const {
+    return m_model_matrix_inverse_transpose_;
+  }
+
+  DirectX::XMMATRIX& GetModelMatrixInverseTranspose() {
+    return m_model_matrix_inverse_transpose_;
+  }
+
+
 private:
   std::array<ID3D11Buffer*, D3D11_IA_VERTEX_INPUT_RESOURCE_SLOT_COUNT> m_vertex_buffers_;
   std::array<uint32_t, D3D11_IA_VERTEX_INPUT_RESOURCE_SLOT_COUNT> m_vertex_buffer_strides_;
@@ -157,6 +184,9 @@ private:
 
   Microsoft::WRL::ComPtr<ID3D11VertexShader> m_vs_ = nullptr;
   Microsoft::WRL::ComPtr<ID3D11PixelShader> m_ps_ = nullptr;
+
+  DirectX::XMMATRIX m_model_matrix_ = DirectX::XMMatrixIdentity();
+  DirectX::XMMATRIX m_model_matrix_inverse_transpose_ = DirectX::XMMatrixIdentity();
 };
 
 bool CreateDrawable(MeshHandle mesh, const Material& material, ID3D11Device* device, Drawable* drawable);

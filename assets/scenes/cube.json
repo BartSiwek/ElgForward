@@ -15,11 +15,16 @@
       "pixel_shader": "ps.cso"
     }
   ],
-  "scene" : [
+  "scene": [
     {
-      "name" : "cube_drawable",
-      "mesh_name" : "cube g cube",
-      "material_name" : "basic"
+      "name": "cube_drawable",
+      "mesh_name": "cube g cube",
+      "material_name": "basic",
+      "transform" : {
+        "translation": [0.0, 0.0, 0.0],
+        "rotation": [1.0, 1.0, 1.0, 90.0],
+        "scale": [0.5, 0.5, 0.5]
+      }
     }
   ],
   "camera": {

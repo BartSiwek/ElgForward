@@ -105,6 +105,84 @@ void ReadMaterials(const nlohmann::json& json_scene, const filesystem::path& bas
   }
 }
 
+void ReadDrawableTransform(const nlohmann::json& json_transform, Drawable* drawable) {
+  // Translation
+  DirectX::XMMATRIX translation = DirectX::XMMatrixIdentity();
+  DirectX::XMMATRIX translation_inverse = DirectX::XMMatrixIdentity();
+  const auto& json_translation = json_transform["translation"];
+  if (json_translation.is_array() && json_translation.size() == 3) {
+    const auto& translation_x = json_translation[0];
+    const auto& translation_y = json_translation[1];
+    const auto& translation_z = json_translation[2];
+    if (translation_x.is_number_float() && translation_y.is_number_float() && translation_z.is_number_float()) {
+      float translation_x_float = translation_x;
+      float translation_y_float = translation_y;
+      float translation_z_float = translation_z;
+      translation = DirectX::XMMatrixTranslation(translation_x_float, translation_y_float, translation_z_float);
+      translation_inverse = DirectX::XMMatrixTranslation(-translation_x_float, -translation_y_float, -translation_z_float);
+    } else {
+      DXFW_TRACE(__FILE__, __LINE__, false, "Invalid drawable translation %S", json_translation.dump().c_str());
+    }
+  } else {
+    DXFW_TRACE(__FILE__, __LINE__, false, "Invalid drawable translation %S", json_translation.dump().c_str());
+  }
+
+  // Rotation
+  DirectX::XMMATRIX rotation = DirectX::XMMatrixIdentity();
+  const auto& json_rotation = json_transform["rotation"];
+  if (json_rotation.is_array() && json_rotation.size() == 3) {
+    const auto& rotation_pitch = json_rotation[0];
+    const auto& rotation_yaw = json_rotation[1];
+    const auto& rotation_roll = json_rotation[2];
+    if (rotation_pitch.is_number_float() && rotation_yaw.is_number_float() && rotation_roll.is_number_float()) {
+      rotation = DirectX::XMMatrixRotationRollPitchYaw(rotation_pitch, rotation_yaw, rotation_roll);
+    } else {
+      DXFW_TRACE(__FILE__, __LINE__, false, "Invalid drawable rotation %S", json_rotation.dump().c_str());
+    }
+  } else if (json_rotation.is_array() && json_rotation.size() == 4) {
+    const auto& axis_x = json_rotation[0];
+    const auto& axis_y = json_rotation[1];
+    const auto& axis_z = json_rotation[2];
+    const auto& angle = json_rotation[3];
+    if (axis_x.is_number_float() && axis_y.is_number_float() && axis_z.is_number_float() && angle.is_number_float()) {
+      auto axis = DirectX::XMVectorSet(axis_x, axis_y, axis_z, 0.0f);
+      rotation = DirectX::XMMatrixRotationAxis(axis, DirectX::XMConvertToRadians(angle));
+    } else {
+      DXFW_TRACE(__FILE__, __LINE__, false, "Invalid drawable rotation %S", json_rotation.dump().c_str());
+    }
+  } else {
+    DXFW_TRACE(__FILE__, __LINE__, false, "Invalid drawable rotation %S", json_rotation.dump().c_str());
+  }
+
+  // Scaling
+  DirectX::XMMATRIX scaling = DirectX::XMMatrixIdentity();
+  DirectX::XMMATRIX scaling_inverse = DirectX::XMMatrixIdentity();
+  const auto& json_scale = json_transform["scale"];
+  if (json_scale.is_array() && json_scale.size() == 3) {
+    const auto& scale_x = json_scale[0];
+    const auto& scale_y = json_scale[1];
+    const auto& scale_z = json_scale[2];
+    if (scale_x.is_number_float() && scale_y.is_number_float() && scale_z.is_number_float()) {
+      float scale_x_float = scale_x;
+      float scale_y_float = scale_y;
+      float scale_z_float = scale_z;
+
+      scaling = DirectX::XMMatrixScaling(scale_x_float, scale_y_float, scale_z_float);
+      scaling_inverse = DirectX::XMMatrixScaling(1.0f / scale_x_float, 1.0f / scale_y_float, 1.0f / scale_z_float);
+    } else {
+      DXFW_TRACE(__FILE__, __LINE__, false, "Invalid drawable scaling %S", json_scale.dump().c_str());
+    }
+  } else {
+    DXFW_TRACE(__FILE__, __LINE__, false, "Invalid drawable scaling %S", json_scale.dump().c_str());
+  }
+
+  auto model_transform = scaling * rotation * translation;
+  drawable->SetModelMatrix(model_transform);
+
+  auto model_transform_inverse_transpose = scaling_inverse * rotation * DirectX::XMMatrixTranspose(translation_inverse);
+  drawable->SetModelMatrixInverseTranspose(model_transform_inverse_transpose);
+}
+
 void BuildDrawables(const nlohmann::json& json_scene, const std::vector<MeshIdentifier>& mesh_indetifiers, const std::vector<Material>& materials, ID3D11Device* device, std::vector<Drawable>* drawables) {
   auto json_drawables = json_scene["scene"];
 
@@ -139,6 +217,11 @@ void BuildDrawables(const nlohmann::json& json_scene, const std::vector<MeshIden
     if (!drawable_ok) {
       DXFW_TRACE(__FILE__, __LINE__, false, "Error creating drawable from mesh %S and material %S", mesh_name, material_name);
       continue;
+    }
+
+    const auto& json_transform = json_drawable["transform"];
+    if (json_transform.is_object()) {
+      ReadDrawableTransform(json_transform, &drawable);
     }
   }
 }
@@ -183,7 +266,7 @@ void ReadCamera(const nlohmann::json& json_scene, const filesystem::path& base_p
     auto path = base_path / json_camera_script;
     bool init_ok = script->init(path, camera, lens);
     if (!init_ok) {
-      DXFW_TRACE(__FILE__, __LINE__, false, "Error initializing camera from file %S", path.string());
+      DXFW_TRACE(__FILE__, __LINE__, false, "Error initializing camera script from file %S", path.string());
     }
   }
 }

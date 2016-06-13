@@ -211,7 +211,7 @@ bool CreateMeshes(const std::string& prefix, const filesystem::path& path, const
   }
 
   for (uint32_t i = 0; i < scene->mNumMeshes; ++i) {
-    auto imported_mesh = scene->mMeshes[i];
+    auto& imported_mesh = scene->mMeshes[i];
 
     std::string mesh_name = prefix + ' ' + imported_mesh->mName.C_Str();
     size_t mesh_hash = std::hash<std::string>()(mesh_name);

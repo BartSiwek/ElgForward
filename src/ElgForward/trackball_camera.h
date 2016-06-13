@@ -19,7 +19,7 @@ enum class TrackballCameraOperation : uint32_t {
 void TrackballCameraUpdate(TrackballCameraOperation desired_state, float frustum_width, float frustum_height,
                            TrackballCameraOperation* current_state, DirectX::XMFLOAT2* start_point, DirectX::XMFLOAT2* end_point,
                            DirectX::XMFLOAT3* center, DirectX::XMFLOAT4* rotation_quaterion, float* radius,
-                           DirectX::XMMATRIX* view_matrix, DirectX::XMMATRIX* inverse_view_matrix);
+                           DirectX::XMMATRIX* view_matrix, DirectX::XMMATRIX* view_matrix_inverse_transpose);
 
 class TrackballCamera {
 public:
@@ -31,7 +31,7 @@ public:
         m_rotation_quaterion_(0.0f, 0.0f, 0.0f, 1.0f),  // Quaternion identity
         m_radius_(1.0f),
         m_view_matrix_(DirectX::XMMatrixIdentity()),
-        m_inverse_view_matrix_(DirectX::XMMatrixIdentity()),
+        m_view_matrix_inverse_transpose_(DirectX::XMMatrixIdentity()),
         m_desired_state_(TrackballCameraOperation::None) {
   }
 
@@ -88,21 +88,21 @@ public:
   }
 
   void UpdateMatrices(float frustum_width, float frustum_height) {
-    TrackballCameraUpdate(m_desired_state_, frustum_width, frustum_height, &m_current_state_, &m_start_point_, &m_end_point_, &m_center_, &m_rotation_quaterion_, &m_radius_, &m_view_matrix_, &m_inverse_view_matrix_);
+    TrackballCameraUpdate(m_desired_state_, frustum_width, frustum_height, &m_current_state_, &m_start_point_, &m_end_point_, &m_center_, &m_rotation_quaterion_, &m_radius_, &m_view_matrix_, &m_view_matrix_inverse_transpose_);
   }
 
   const DirectX::XMMATRIX& GetViewMatrix() const {
     return m_view_matrix_;
   }
 
-  const DirectX::XMMATRIX& GetViewMatrixInverse() const {
-    return m_inverse_view_matrix_;
+  const DirectX::XMMATRIX& GetViewMatrixInverseTranspose() const {
+    return m_view_matrix_inverse_transpose_;
   }
 
 private:
   // Finished product
   DirectX::XMMATRIX m_view_matrix_;
-  DirectX::XMMATRIX m_inverse_view_matrix_;
+  DirectX::XMMATRIX m_view_matrix_inverse_transpose_;
 
   // View
   DirectX::XMFLOAT3 m_center_;

@@ -61,18 +61,17 @@ float GetCurrentRadius(const DirectX::XMFLOAT2& start_point, const DirectX::XMFL
   return delta * radius;
 }
 
-void UpdateViewMatrix(const DirectX::XMVECTOR& center, const DirectX::XMVECTOR& rotation_quaterion, float radius, DirectX::XMMATRIX* view_matrix, DirectX::XMMATRIX* inverse_view_matrix) {
+void UpdateViewMatrix(const DirectX::XMVECTOR& center, const DirectX::XMVECTOR& rotation_quaterion, float radius, DirectX::XMMATRIX* view_matrix, DirectX::XMMATRIX* view_matrix_inverse_transpose) {
   DirectX::XMMATRIX t = DirectX::XMMatrixTranslation(0, 0, radius);
-  DirectX::XMMATRIX t_inv = DirectX::XMMatrixTranslation(0, 0, -radius);
+  DirectX::XMMATRIX t_inv_trans = DirectX::XMMatrixTranspose(DirectX::XMMatrixTranslation(0, 0, -radius));
 
   DirectX::XMMATRIX r = DirectX::XMMatrixRotationQuaternion(rotation_quaterion);
-  DirectX::XMMATRIX r_inv = DirectX::XMMatrixRotationQuaternion(DirectX::XMQuaternionInverse(rotation_quaterion));
 
   DirectX::XMMATRIX c_t = DirectX::XMMatrixTranslationFromVector(DirectX::XMVectorNegate(center));
-  DirectX::XMMATRIX c_t_inv = DirectX::XMMatrixTranslationFromVector(center);
+  DirectX::XMMATRIX c_t_inv_trans = DirectX::XMMatrixTranspose(DirectX::XMMatrixTranslationFromVector(center));
 
   *view_matrix = c_t * r * t;
-  *inverse_view_matrix = t_inv * r_inv * c_t_inv;
+  *view_matrix_inverse_transpose = c_t_inv_trans * r * t_inv_trans;
 }
 
 /* STATE SWITCHING HELPERS */
@@ -205,7 +204,7 @@ constexpr TransitionHandlerTable g_transition_table_ = {{
 void TrackballCameraUpdate(TrackballCameraOperation desired_state, float frustum_width, float frustum_height,
                            TrackballCameraOperation* current_state, DirectX::XMFLOAT2* start_point, DirectX::XMFLOAT2* end_point,
                            DirectX::XMFLOAT3* center, DirectX::XMFLOAT4* rotation_quaterion, float* radius,
-                           DirectX::XMMATRIX* view_matrix, DirectX::XMMATRIX* inverse_view_matrix) {
+                           DirectX::XMMATRIX* view_matrix, DirectX::XMMATRIX* view_matrix_inverse_transpose) {
   auto frustum_size_v = DirectX::XMVectorSet(frustum_width, frustum_height, 0.0f, 0.0f);
 
   auto center_v = DirectX::XMLoadFloat3(center);
@@ -215,5 +214,5 @@ void TrackballCameraUpdate(TrackballCameraOperation desired_state, float frustum
   auto handler = g_transition_table_[static_cast<uint32_t>(*current_state)][static_cast<uint32_t>(desired_state)];
   (*handler)(frustum_size_v, current_state, start_point, end_point, center, rotation_quaterion, radius, &center_v, &rotation_quaterion_v, &radius_f);
 
-  UpdateViewMatrix(center_v, rotation_quaterion_v, radius_f, view_matrix, inverse_view_matrix);
+  UpdateViewMatrix(center_v, rotation_quaterion_v, radius_f, view_matrix, view_matrix_inverse_transpose);
 }

@@ -185,10 +185,28 @@ bool InitializeDirect3d11(DirectXState* state) {
   return true;
 }
 
-void Render(Scene* scene, ID3D11Buffer* perFrameConstantBuffer, DirectXState* state) {
-  state->device_context->VSSetConstantBuffers(0, 1, &perFrameConstantBuffer);
+void UpdateConstantBuffers(const Drawable& drawable, Scene* scene, PerFrameConstantBuffer* cpuPerFrameConstantBuffer, ID3D11Buffer* gpuPerFrameConstantBuffer, DirectXState* state) {
+  // Update constant buffers contents
+  cpuPerFrameConstantBuffer->ModelMatrix = drawable.GetModelMatrix();
+  cpuPerFrameConstantBuffer->ViewMatrix = scene->camera.GetViewMatrix();
+  cpuPerFrameConstantBuffer->ProjectionMatrix = scene->lens.GetProjectionMatrix();
+  cpuPerFrameConstantBuffer->NormalMatrix = drawable.GetModelMatrixInverseTranspose() * scene->camera.GetViewMatrixInverseTranspose();
+  cpuPerFrameConstantBuffer->ModelViewMatrix = cpuPerFrameConstantBuffer->ModelMatrix * cpuPerFrameConstantBuffer->ViewMatrix;
+  cpuPerFrameConstantBuffer->ModelViewProjectionMatrix = cpuPerFrameConstantBuffer->ModelViewMatrix * cpuPerFrameConstantBuffer->ProjectionMatrix;
 
+  // Update constant buffer
+  bool update_ok = UpdateConstantBuffer(cpuPerFrameConstantBuffer, state->device_context.Get(), gpuPerFrameConstantBuffer);
+  if (update_ok) {
+    state->device_context->VSSetConstantBuffers(0, 1, &gpuPerFrameConstantBuffer); 
+  } else {
+    DXFW_TRACE(__FILE__, __LINE__, false, "Error updating per frame constant buffer");
+  }
+}
+
+void Render(Scene* scene, PerFrameConstantBuffer* cpuPerFrameConstantBuffer, ID3D11Buffer* gpuPerFrameConstantBuffer, DirectXState* state) {
   for (auto& drawable : scene->drawables) {
+    UpdateConstantBuffers(drawable, scene, cpuPerFrameConstantBuffer, gpuPerFrameConstantBuffer, state);
+
     state->device_context->VSSetShader(drawable.GetVertexShader(), 0, 0);
     state->device_context->PSSetShader(drawable.GetPixelShader(), 0, 0);
 
@@ -224,6 +242,7 @@ int main(int /* argc */, char** /* argv */) {
   Scene scene;
   LoadScene(base_path / "assets/scenes/cube.json", base_path, &state, &scene);
 
+  // Constant buffers - fold into one struct
   Microsoft::WRL::ComPtr<ID3D11Buffer> constant_buffer;
   bool cb_ok = CrateConstantBuffer<PerFrameConstantBuffer>(nullptr, state.device.Get(), constant_buffer.GetAddressOf());
   if (!cb_ok) {
@@ -231,7 +250,8 @@ int main(int /* argc */, char** /* argv */) {
   }
 
   PerFrameConstantBuffer perFrameConstaneBuffer;
-  DirectX::XMVECTOR axis = { 1, 1, 1, 0 };
+  // ---------------------
+
   while (!Dxfw::ShouldWindowClose(state.window.get())) {
     // Update the camera
     auto t = static_cast<float>(dxfwGetTime());
@@ -246,29 +266,11 @@ int main(int /* argc */, char** /* argv */) {
     scene.lens.UpdateMatrices(aspect_ratio, &frustum_width, &frustum_height);
     scene.camera.UpdateMatrices(frustum_width, frustum_height);
 
-    // Update constant buffers contents
-    auto R = DirectX::XMMatrixRotationAxis(axis, DirectX::XM_PIDIV2);
-    auto S = DirectX::XMMatrixScaling(0.5f, 0.5f, 0.5f);
-    auto SInv = DirectX::XMMatrixScaling(2.0f, 2.0f, 2.0f);
-
-    perFrameConstaneBuffer.ModelMatrix = S * R;
-    perFrameConstaneBuffer.ViewMatrix = scene.camera.GetViewMatrix();
-    perFrameConstaneBuffer.ProjectionMatrix = scene.lens.GetProjectionMatrix();
-    perFrameConstaneBuffer.NormalMatrix = SInv * R * DirectX::XMMatrixTranspose(scene.camera.GetViewMatrixInverse());
-    perFrameConstaneBuffer.ModelViewMatrix = perFrameConstaneBuffer.ModelMatrix * perFrameConstaneBuffer.ViewMatrix;
-    perFrameConstaneBuffer.ModelViewProjectionMatrix = perFrameConstaneBuffer.ModelViewMatrix * perFrameConstaneBuffer.ProjectionMatrix;
-
-    // Update constant buffer
-    bool update_ok = UpdateConstantBuffer(&perFrameConstaneBuffer, state.device_context.Get(), constant_buffer.Get());
-    if (!update_ok) {
-      return -1;
-    }
-
     // Clear
     float bgColor[4] = { 0.0f, 0.0f, 0.0f, 0.0f };
     state.device_context->ClearRenderTargetView(state.render_target_view.Get(), bgColor);
 
-    Render(&scene, constant_buffer.Get(), &state);
+    Render(&scene, &perFrameConstaneBuffer, constant_buffer.Get(), &state);
 
     state.swap_chain->Present(0, 0);
 
