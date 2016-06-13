@@ -15,12 +15,18 @@ class CameraScript {
 
        // Setup camera
        m_script_.add(chaiscript::user_type<TrackballCamera>(), "TrackballCamera");
+       m_script_.add(chaiscript::fun(&TrackballCamera::GetLocation), "GetLocation");
+       m_script_.add(chaiscript::fun(&TrackballCamera::SetLocation), "SetLocation");
+       m_script_.add(chaiscript::fun(&TrackballCamera::GetRadius), "GetRadius");
+       m_script_.add(chaiscript::fun(&TrackballCamera::SetRadius), "SetRadius");
        m_script_.add(chaiscript::fun(&TrackballCamera::LookAt), "LookAt");
 
        m_script_.add_global(chaiscript::var(std::ref(*camera)), "camera");
 
        // Setup lens
        m_script_.add(chaiscript::user_type<PerspectiveLens>(), "PerspectiveLens");
+       m_script_.add(chaiscript::fun(&PerspectiveLens::GetZoomFactor), "GetZoomFactor");
+       m_script_.add(chaiscript::fun(&PerspectiveLens::SetZoomFactor), "SetZoomFactor");
 
        m_script_.add_global(chaiscript::var(std::ref(*lens)), "lens");
 
