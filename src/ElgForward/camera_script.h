@@ -1,27 +1,17 @@
 #pragma once
 
-#include <DirectXMath.h>
-
-#pragma warning(push)
-#pragma warning(disable: 4602)
-#include <chaiscript/chaiscript.hpp>
-#include <chaiscript/chaiscript_stdlib.hpp>
-#pragma warning(pop)
 
 #include "filesystem.h"
-#include "dxfw_helpers.h"
+#include "chaiscript_helpers.h"
 #include "perspective_lens.h"
 #include "trackball_camera.h"
 
 class CameraScript {
  public:
-   CameraScript() : m_script_(chaiscript::Std_Lib::library()) {
-   }
-
    bool init(const filesystem::path& path, TrackballCamera* camera, PerspectiveLens* lens) {
      try {
        // Prepare
-       prepare(&m_script_);
+       PrepareChaiscript(&m_script_);
 
        // Setup camera
        m_script_.add(chaiscript::user_type<TrackballCamera>(), "TrackballCamera");
@@ -60,19 +50,7 @@ class CameraScript {
    }
 
  private:
-  void prepare(chaiscript::ChaiScript* script) {
-    // DirectXMath
-    script->add(chaiscript::fun(static_cast<float(*)(float)>(&DirectX::XMScalarSin)), "sin");
-    script->add(chaiscript::fun(static_cast<float(*)(float)>(&DirectX::XMScalarCos)), "cos");
+  chaiscript::ChaiScript m_script_ = { chaiscript::Std_Lib::library() };
 
-    // Tracing
-    script->add(chaiscript::fun([](const std::string& msg) {
-      DXFW_TRACE(__FILE__, __LINE__, false, "%S", msg.c_str());
-    }), "dxfw_trace");
-
-  }
-
-  chaiscript::ChaiScript m_script_;
-
-  std::function<void(float)> m_update_fun_;
+  std::function<void(float)> m_update_fun_ = {};
 };
