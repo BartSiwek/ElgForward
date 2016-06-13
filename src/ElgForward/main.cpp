@@ -30,10 +30,12 @@
 
 struct PerFrameConstantBuffer {
   DirectX::XMMATRIX ModelMatrix;
+  DirectX::XMMATRIX ModelMatrixInverseTranspose;
   DirectX::XMMATRIX ViewMatrix;
+  DirectX::XMMATRIX ViewMatrixInverseTranspose;
   DirectX::XMMATRIX ProjectionMatrix;
-  DirectX::XMMATRIX NormalMatrix;
   DirectX::XMMATRIX ModelViewMatrix;
+  DirectX::XMMATRIX ModelViewMatrixInverseTranspose;
   DirectX::XMMATRIX ModelViewProjectionMatrix;
 
   void* operator new(size_t size) {
@@ -196,10 +198,12 @@ bool InitializeDirect3d11(DirectXState* state) {
 void UpdateConstantBuffers(const Drawable& drawable, Scene* scene, DirectXState* state, ConstantBuffer<PerFrameConstantBuffer>* per_frame_constant_buffer) {
   // Update constant buffers contents
   per_frame_constant_buffer->CpuBuffer->ModelMatrix = drawable.GetModelMatrix();
+  per_frame_constant_buffer->CpuBuffer->ModelMatrixInverseTranspose = drawable.GetModelMatrixInverseTranspose();
   per_frame_constant_buffer->CpuBuffer->ViewMatrix = scene->camera.GetViewMatrix();
+  per_frame_constant_buffer->CpuBuffer->ViewMatrixInverseTranspose = scene->camera.GetViewMatrixInverseTranspose();
   per_frame_constant_buffer->CpuBuffer->ProjectionMatrix = scene->lens.GetProjectionMatrix();
-  per_frame_constant_buffer->CpuBuffer->NormalMatrix = drawable.GetModelMatrixInverseTranspose() * scene->camera.GetViewMatrixInverseTranspose();
   per_frame_constant_buffer->CpuBuffer->ModelViewMatrix = per_frame_constant_buffer->CpuBuffer->ModelMatrix * per_frame_constant_buffer->CpuBuffer->ViewMatrix;
+  per_frame_constant_buffer->CpuBuffer->ModelViewMatrixInverseTranspose = per_frame_constant_buffer->CpuBuffer->ModelMatrixInverseTranspose * per_frame_constant_buffer->CpuBuffer->ViewMatrixInverseTranspose;
   per_frame_constant_buffer->CpuBuffer->ModelViewProjectionMatrix = per_frame_constant_buffer->CpuBuffer->ModelViewMatrix * per_frame_constant_buffer->CpuBuffer->ProjectionMatrix;
 
   // Update constant buffer

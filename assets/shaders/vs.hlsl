@@ -2,10 +2,12 @@
 
 cbuffer PerFrameConstants  : register(b0) {
   float4x4 ModelMatrix;
+  float4x4 ModelMatrixInverseTranspose;
   float4x4 ViewMatrix;
+  float4x4 ViewMatrixInverseTranspose;
   float4x4 ProjectionMatrix;
-  float4x4 NormalMatrix;
   float4x4 ModelViewMatrix;
+  float4x4 ModelViewMatrixInverseTranspose;
   float4x4 ModelViewProjectionMatrix;
 };
 
@@ -36,7 +38,7 @@ VertexShaderOutput main(VertexShaderInput input) {
   float3 lu = (lightPositionVs - positionVs).xyz;
   float3 l = normalize(lu);
 
-  float3 nu = mul(input.NormalMs, (float3x3)NormalMatrix);
+  float3 nu = mul(input.NormalMs, (float3x3)ModelViewMatrixInverseTranspose);
   float3 n = normalize(nu);
 
   float nDotL = dot(l, n);
