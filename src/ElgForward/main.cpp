@@ -47,6 +47,16 @@ struct PerFrameConstantBuffer {
   }
 };
 
+struct LightConstantBuffer {
+  void* operator new(size_t size) {
+    return _aligned_malloc(size, alignof(PerFrameConstantBuffer));
+  }
+
+  void operator delete(void* ptr) {
+    _aligned_free(ptr);
+  }
+};
+
 bool InitializeDeviceAndSwapChain(DirectXState* state) {
   // Device settings
   UINT create_device_flags = 0;
@@ -216,6 +226,9 @@ void UpdateConstantBuffers(const Drawable& drawable, Scene* scene, DirectXState*
 }
 
 void Render(Scene* scene, ConstantBuffer<PerFrameConstantBuffer>* per_frame_constant_buffer, DirectXState* state) {
+  float bgColor[4] = { 0.0f, 0.0f, 0.0f, 0.0f };
+  state->device_context->ClearRenderTargetView(state->render_target_view.Get(), bgColor);
+
   for (auto& drawable : scene->drawables) {
     UpdateConstantBuffers(drawable, scene, state, per_frame_constant_buffer);
 
@@ -237,6 +250,32 @@ void Render(Scene* scene, ConstantBuffer<PerFrameConstantBuffer>* per_frame_cons
   }
 }
 
+void Update(Scene* scene, DirectXState* state) {
+  // Update the camera
+  auto t = static_cast<float>(dxfwGetTime());
+  scene->camera_script.update(t);
+
+  float aspect_ratio = static_cast<float>(state->viewport.Width) / static_cast<float>(state->viewport.Height);
+
+  float frustum_width;
+  float frustum_height;
+  scene->lens.UpdateMatrices(aspect_ratio, &frustum_width, &frustum_height);
+  scene->camera.UpdateMatrices(frustum_width, frustum_height);
+
+  // Update the scene
+  for (auto& point_light : scene->point_lights) {
+    point_light.Update(scene->camera.GetViewMatrix());
+  }
+
+  for (auto& spot_light : scene->spot_lights) {
+    spot_light.Update(scene->camera.GetViewMatrix());
+  }
+
+  for (auto& directional_light : scene->directional_lights) {
+    directional_light.Update(scene->camera.GetViewMatrix());
+  }
+}
+
 int main(int /* argc */, char** /* argv */) {
   DxfwGuard dxfw_guard;
   if (!dxfw_guard.IsInitialized()) {
@@ -254,29 +293,21 @@ int main(int /* argc */, char** /* argv */) {
   Scene scene;
   LoadScene(base_path / "assets/scenes/cube.json", base_path, &state, &scene);
 
+  // ----> Rework this
+  scene.point_lights.emplace_back(0.0f, 0.0f, 0.0f,
+                                  0.8f, 0.8f, 0.8f, 1.0f,
+                                  0.8f, 0.8f, 0.8f, 1.0f,
+                                  100.0f, 1.0f, true);
+
   ConstantBuffer<PerFrameConstantBuffer> per_frame_constant_buffer;
   bool cb_ok = per_frame_constant_buffer.Initialize(state.device.Get());
   if (!cb_ok) {
     return -1;
   }
+  // ----> Rework this
 
   while (!Dxfw::ShouldWindowClose(state.window.get())) {
-    // Update the camera
-    auto t = static_cast<float>(dxfwGetTime());
-    scene.camera_script.update(t);
-
-    // Get aspect ratio
-    float aspect_ratio = static_cast<float>(state.viewport.Width) / static_cast<float>(state.viewport.Height);
-
-    // Update the scene
-    float frustum_width;
-    float frustum_height;
-    scene.lens.UpdateMatrices(aspect_ratio, &frustum_width, &frustum_height);
-    scene.camera.UpdateMatrices(frustum_width, frustum_height);
-
-    // Clear
-    float bgColor[4] = { 0.0f, 0.0f, 0.0f, 0.0f };
-    state.device_context->ClearRenderTargetView(state.render_target_view.Get(), bgColor);
+    Update(&scene, &state);
 
     Render(&scene, &per_frame_constant_buffer, &state);
 
