@@ -58,6 +58,7 @@ set(TARGET_SOURCES
   ${TARGET_SOURCE_DIR}/shader.cpp
   ${TARGET_SOURCE_DIR}/shader.h
   ${TARGET_SOURCE_DIR}/spot_light.h
+  ${TARGET_SOURCE_DIR}/structured_buffer.h
   ${TARGET_SOURCE_DIR}/trackball_camera.cpp
   ${TARGET_SOURCE_DIR}/trackball_camera.h
   ${TARGET_SOURCE_DIR}/vertex_buffer.cpp
