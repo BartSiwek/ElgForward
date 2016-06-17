@@ -45,6 +45,7 @@ set(TARGET_SOURCES
   ${TARGET_SOURCE_DIR}/index_buffer.h
   ${TARGET_SOURCE_DIR}/main.cpp
   ${TARGET_SOURCE_DIR}/material.h
+  ${TARGET_SOURCE_DIR}/memory_helpers.h
   ${TARGET_SOURCE_DIR}/mesh.cpp
   ${TARGET_SOURCE_DIR}/mesh.h
   ${TARGET_SOURCE_DIR}/perspective_lens.cpp

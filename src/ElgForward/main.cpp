@@ -28,35 +28,6 @@
 #include "trackball_camera.h"
 #include "scene_loader.h"
 
-struct PerFrameConstantBuffer {
-  DirectX::XMMATRIX ModelMatrix;
-  DirectX::XMMATRIX ModelMatrixInverseTranspose;
-  DirectX::XMMATRIX ViewMatrix;
-  DirectX::XMMATRIX ViewMatrixInverseTranspose;
-  DirectX::XMMATRIX ProjectionMatrix;
-  DirectX::XMMATRIX ModelViewMatrix;
-  DirectX::XMMATRIX ModelViewMatrixInverseTranspose;
-  DirectX::XMMATRIX ModelViewProjectionMatrix;
-
-  void* operator new(size_t size) {
-    return _aligned_malloc(size, alignof(PerFrameConstantBuffer));
-  }
-
-  void operator delete(void* ptr) {
-    _aligned_free(ptr);
-  }
-};
-
-struct LightConstantBuffer {
-  void* operator new(size_t size) {
-    return _aligned_malloc(size, alignof(PerFrameConstantBuffer));
-  }
-
-  void operator delete(void* ptr) {
-    _aligned_free(ptr);
-  }
-};
-
 bool InitializeDeviceAndSwapChain(DirectXState* state) {
   // Device settings
   UINT create_device_flags = 0;
@@ -205,32 +176,32 @@ bool InitializeDirect3d11(DirectXState* state) {
   return true;
 }
 
-void UpdateConstantBuffers(const Drawable& drawable, Scene* scene, DirectXState* state, ConstantBuffer<PerFrameConstantBuffer>* per_frame_constant_buffer) {
-  // Update constant buffers contents
-  per_frame_constant_buffer->CpuBuffer->ModelMatrix = drawable.GetModelMatrix();
-  per_frame_constant_buffer->CpuBuffer->ModelMatrixInverseTranspose = drawable.GetModelMatrixInverseTranspose();
-  per_frame_constant_buffer->CpuBuffer->ViewMatrix = scene->camera.GetViewMatrix();
-  per_frame_constant_buffer->CpuBuffer->ViewMatrixInverseTranspose = scene->camera.GetViewMatrixInverseTranspose();
-  per_frame_constant_buffer->CpuBuffer->ProjectionMatrix = scene->lens.GetProjectionMatrix();
-  per_frame_constant_buffer->CpuBuffer->ModelViewMatrix = per_frame_constant_buffer->CpuBuffer->ModelMatrix * per_frame_constant_buffer->CpuBuffer->ViewMatrix;
-  per_frame_constant_buffer->CpuBuffer->ModelViewMatrixInverseTranspose = per_frame_constant_buffer->CpuBuffer->ModelMatrixInverseTranspose * per_frame_constant_buffer->CpuBuffer->ViewMatrixInverseTranspose;
-  per_frame_constant_buffer->CpuBuffer->ModelViewProjectionMatrix = per_frame_constant_buffer->CpuBuffer->ModelViewMatrix * per_frame_constant_buffer->CpuBuffer->ProjectionMatrix;
+void UpdateDrawableBuffers(const Drawable& drawable, Scene* scene, DirectXState* state) {
+  // Transforms
+  auto buffer = scene->TransformsConstantBuffer.GetCpuBuffer();
+  buffer->ModelMatrix = drawable.GetModelMatrix();
+  buffer->ModelMatrixInverseTranspose = drawable.GetModelMatrixInverseTranspose();
+  buffer->ViewMatrix = scene->Camera.GetViewMatrix();
+  buffer->ViewMatrixInverseTranspose = scene->Camera.GetViewMatrixInverseTranspose();
+  buffer->ProjectionMatrix = scene->Lens.GetProjectionMatrix();
+  buffer->ModelViewMatrix = buffer->ModelMatrix * buffer->ViewMatrix;
+  buffer->ModelViewMatrixInverseTranspose = buffer->ModelMatrixInverseTranspose * buffer->ViewMatrixInverseTranspose;
+  buffer->ModelViewProjectionMatrix = buffer->ModelViewMatrix * buffer->ProjectionMatrix;
 
-  // Update constant buffer
-  bool update_ok = per_frame_constant_buffer->Update(state->device_context.Get());
+  bool update_ok = scene->TransformsConstantBuffer.SendToGpu(state->device_context.Get());
   if (update_ok) {
-    state->device_context->VSSetConstantBuffers(0, 1, per_frame_constant_buffer->GpuBuffer.GetAddressOf());
+    state->device_context->VSSetConstantBuffers(0, 1, scene->TransformsConstantBuffer.GetAddressOfGpuBuffer());
   } else {
     DXFW_TRACE(__FILE__, __LINE__, false, "Error updating per frame constant buffer");
   }
 }
 
-void Render(Scene* scene, ConstantBuffer<PerFrameConstantBuffer>* per_frame_constant_buffer, DirectXState* state) {
+void Render(Scene* scene, DirectXState* state) {
   float bgColor[4] = { 0.0f, 0.0f, 0.0f, 0.0f };
   state->device_context->ClearRenderTargetView(state->render_target_view.Get(), bgColor);
 
-  for (auto& drawable : scene->drawables) {
-    UpdateConstantBuffers(drawable, scene, state, per_frame_constant_buffer);
+  for (auto& drawable : scene->Drawables) {
+    UpdateDrawableBuffers(drawable, scene, state);
 
     state->device_context->VSSetShader(drawable.GetVertexShader(), 0, 0);
     state->device_context->PSSetShader(drawable.GetPixelShader(), 0, 0);
@@ -250,30 +221,54 @@ void Render(Scene* scene, ConstantBuffer<PerFrameConstantBuffer>* per_frame_cons
   }
 }
 
+void UpdateFrameBuffers(Scene* scene, DirectXState* state) {
+  for (auto& point_light : scene->PointLightsStructuredBuffer) {
+    point_light.Update(scene->Camera.GetViewMatrix());
+  }
+  
+  bool point_update_ok = scene->PointLightsStructuredBuffer.SendToGpu(state->device_context.Get());
+  if (point_update_ok) {
+    // state->device_context->VSSetShaderResources(0, 1, ???);
+  } else {
+    DXFW_TRACE(__FILE__, __LINE__, false, "Error updating point light buffer");
+  }
+
+  for (auto& spot_light : scene->SpotLightsStructuredBuffer) {
+    spot_light.Update(scene->Camera.GetViewMatrix());
+  }
+
+  bool spot_update_ok = scene->SpotLightsStructuredBuffer.SendToGpu(state->device_context.Get());
+  if (spot_update_ok) {
+    // state->device_context->VSSetShaderResources(0, 1, ???);
+  } else {
+    DXFW_TRACE(__FILE__, __LINE__, false, "Error updating spot light buffer");
+  }
+
+  for (auto& directional_light : scene->DirectionalLightsStructuredBuffer) {
+    directional_light.Update(scene->Camera.GetViewMatrix());
+  }
+
+  bool dir_update_ok = scene->DirectionalLightsStructuredBuffer.SendToGpu(state->device_context.Get());
+  if (dir_update_ok) {
+    // state->device_context->VSSetShaderResources(0, 1, ???);
+  } else {
+    DXFW_TRACE(__FILE__, __LINE__, false, "Error updating directional light buffer");
+  }
+}
+
 void Update(Scene* scene, DirectXState* state) {
   // Update the camera
   auto t = static_cast<float>(dxfwGetTime());
-  scene->camera_script.update(t);
+  scene->CameraScript.update(t);
 
   float aspect_ratio = static_cast<float>(state->viewport.Width) / static_cast<float>(state->viewport.Height);
 
   float frustum_width;
   float frustum_height;
-  scene->lens.UpdateMatrices(aspect_ratio, &frustum_width, &frustum_height);
-  scene->camera.UpdateMatrices(frustum_width, frustum_height);
+  scene->Lens.UpdateMatrices(aspect_ratio, &frustum_width, &frustum_height);
+  scene->Camera.UpdateMatrices(frustum_width, frustum_height);
 
-  // Update the scene
-  for (auto& point_light : scene->point_lights) {
-    point_light.Update(scene->camera.GetViewMatrix());
-  }
-
-  for (auto& spot_light : scene->spot_lights) {
-    spot_light.Update(scene->camera.GetViewMatrix());
-  }
-
-  for (auto& directional_light : scene->directional_lights) {
-    directional_light.Update(scene->camera.GetViewMatrix());
-  }
+  UpdateFrameBuffers(scene, state);
 }
 
 int main(int /* argc */, char** /* argv */) {
@@ -290,18 +285,33 @@ int main(int /* argc */, char** /* argv */) {
     return -1;
   }
 
-  Scene scene;
+  Scene scene(1000, 1000, 1000);
   LoadScene(base_path / "assets/scenes/cube.json", base_path, &state, &scene);
+  bool cb_ok = scene.TransformsConstantBuffer.Initialize(state.device.Get());
+  if (!cb_ok) {
+    return -1;
+  }
 
   // ----> Rework this
-  scene.point_lights.emplace_back(0.0f, 0.0f, 0.0f,
-                                  0.8f, 0.8f, 0.8f, 1.0f,
-                                  0.8f, 0.8f, 0.8f, 1.0f,
-                                  100.0f, 1.0f, true);
+  scene.PointLightsStructuredBuffer.Resize(1);
+  auto light_buffer = scene.PointLightsStructuredBuffer.GetCpuBuffer();
+  light_buffer[0] = { 0.0f, 0.0f, 0.0f,
+                      0.8f, 0.8f, 0.8f, 1.0f,
+                      0.8f, 0.8f, 0.8f, 1.0f,
+                      100.0f, 1.0f, true };
 
-  ConstantBuffer<PerFrameConstantBuffer> per_frame_constant_buffer;
-  bool cb_ok = per_frame_constant_buffer.Initialize(state.device.Get());
-  if (!cb_ok) {
+  bool dir_ok = scene.DirectionalLightsStructuredBuffer.Initialize(state.device.Get());
+  if (!dir_ok) {
+    return -1;
+  }
+
+  bool spot_ok = scene.SpotLightsStructuredBuffer.Initialize(state.device.Get());
+  if (!spot_ok) {
+    return -1;
+  }
+
+  bool point_ok = scene.PointLightsStructuredBuffer.Initialize(state.device.Get());
+  if (!point_ok) {
     return -1;
   }
   // ----> Rework this
@@ -309,7 +319,7 @@ int main(int /* argc */, char** /* argv */) {
   while (!Dxfw::ShouldWindowClose(state.window.get())) {
     Update(&scene, &state);
 
-    Render(&scene, &per_frame_constant_buffer, &state);
+    Render(&scene, &state);
 
     state.swap_chain->Present(0, 0);
 

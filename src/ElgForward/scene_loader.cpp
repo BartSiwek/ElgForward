@@ -319,11 +319,11 @@ bool LoadScene(const filesystem::path& path, const filesystem::path& base_path, 
   std::vector<Material> materials;
   ReadMaterials(json_scene, base_path, state->device.Get(), &materials);
   
-  BuildDrawables(json_scene, mesh_identifiers, materials, state->device.Get(), &scene->drawables);
+  BuildDrawables(json_scene, mesh_identifiers, materials, state->device.Get(), &scene->Drawables);
   
-  ReadCamera(json_scene, base_path, state, &scene->camera, &scene->lens, &scene->camera_script);
+  ReadCamera(json_scene, base_path, state, &scene->Camera, &scene->Lens, &scene->CameraScript);
 
-  ConnectCameraToInput(state, &scene->camera, &scene->lens);
+  ConnectCameraToInput(state, &scene->Camera, &scene->Lens);
 
   return true;
 }
