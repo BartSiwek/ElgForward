@@ -11,9 +11,19 @@ cbuffer PerFrameConstants  : register(b0) {
   float4x4 ModelViewProjectionMatrix;
 };
 
-static float4 LightPositionWs = float4(0, 0, -5, 1);
+struct PointLight {
+  float4 PositionViewSpace;
+  float4 PositionWorldSpace;
+  float4 DiffuseColor;
+  float4 SpecularColor;
+  float Range;
+  float Intensity;
+  bool Enabled;
+  float pad;
+};
 
-static float4 LightDiffuseColor = float4(0.8, 0.8, 0.8, 1);
+StructuredBuffer <PointLight> PointLights : register(t0);
+
 static float4 MaterialDiffuseColor = float4(0.2, 0.4, 0.8, 1);
 
 struct VertexShaderInput {
@@ -33,7 +43,7 @@ VertexShaderOutput main(VertexShaderInput input) {
   float4 positionMs = float4(input.PositionMs, 1.0);
   float4 positionVs = mul(positionMs, ModelViewMatrix);
 
-  float4 lightPositionVs = mul(LightPositionWs, ViewMatrix);
+  float4 lightPositionVs = mul(PointLights[0].PositionWorldSpace, ViewMatrix);
 
   float3 lu = (lightPositionVs - positionVs).xyz;
   float3 l = normalize(lu);
@@ -43,7 +53,7 @@ VertexShaderOutput main(VertexShaderInput input) {
 
   float nDotL = dot(l, n);
 
-  float4 finalColor = LightDiffuseColor * MaterialDiffuseColor * max(nDotL, 0);
+  float4 finalColor = PointLights[0].DiffuseColor * MaterialDiffuseColor * max(nDotL, 0);
 
   output.Position = mul(positionMs, ModelViewProjectionMatrix);
   output.Color = finalColor;

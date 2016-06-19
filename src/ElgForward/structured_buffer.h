@@ -43,6 +43,18 @@ class StructuredBuffer {
       return false;
     }
 
+    D3D11_SHADER_RESOURCE_VIEW_DESC srv_desc = {};
+    srv_desc.Format = DXGI_FORMAT_UNKNOWN;
+    srv_desc.ViewDimension = D3D11_SRV_DIMENSION_BUFFER;
+    srv_desc.Buffer.FirstElement = 0;
+    srv_desc.Buffer.NumElements = m_max_size_;
+
+    auto srv_result = device->CreateShaderResourceView(m_gpu_buffer_.Get(), &srv_desc, m_srv_.GetAddressOf());
+    if (FAILED(srv_result)) {
+      DXFW_DIRECTX_TRACE(__FILE__, __LINE__, true, srv_result);
+      return false;
+    }
+
     return true;
   }
 
@@ -121,9 +133,26 @@ class StructuredBuffer {
     return m_cpu_buffer_.get() + m_current_size_;
   }
 
+  const ID3D11ShaderResourceView* GetShaderResourceView() const {
+    return m_srv_.Get();
+  }
+
+  ID3D11ShaderResourceView* GetShaderResourceView() {
+    return m_srv_.Get();
+  }
+
+  const ID3D11ShaderResourceView** GetAddressOfShaderResourceView() const {
+    return m_srv_.GetAddressOf();
+  }
+
+  ID3D11ShaderResourceView** GetAddressOfShaderResourceView() {
+    return m_srv_.GetAddressOf();
+  }
+
  private:
   size_t m_max_size_ = 0;
   size_t m_current_size_ = 0;
   std::unique_ptr<BufferEntryType[]> m_cpu_buffer_ = {};
   Microsoft::WRL::ComPtr<ID3D11Buffer> m_gpu_buffer_ = {};
+  Microsoft::WRL::ComPtr<ID3D11ShaderResourceView> m_srv_ = {};
 };

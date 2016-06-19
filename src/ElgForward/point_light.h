@@ -49,4 +49,5 @@ struct PointLight {
   float Range;
   float Intensity;
   bool Enabled;
+  float pad;
 };

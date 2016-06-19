@@ -228,7 +228,7 @@ void UpdateFrameBuffers(Scene* scene, DirectXState* state) {
   
   bool point_update_ok = scene->PointLightsStructuredBuffer.SendToGpu(state->device_context.Get());
   if (point_update_ok) {
-    // state->device_context->VSSetShaderResources(0, 1, ???);
+    state->device_context->VSSetShaderResources(0, 1, scene->PointLightsStructuredBuffer.GetAddressOfShaderResourceView());
   } else {
     DXFW_TRACE(__FILE__, __LINE__, false, "Error updating point light buffer");
   }
@@ -239,7 +239,7 @@ void UpdateFrameBuffers(Scene* scene, DirectXState* state) {
 
   bool spot_update_ok = scene->SpotLightsStructuredBuffer.SendToGpu(state->device_context.Get());
   if (spot_update_ok) {
-    // state->device_context->VSSetShaderResources(0, 1, ???);
+    state->device_context->VSSetShaderResources(1, 1, scene->SpotLightsStructuredBuffer.GetAddressOfShaderResourceView());
   } else {
     DXFW_TRACE(__FILE__, __LINE__, false, "Error updating spot light buffer");
   }
@@ -250,7 +250,7 @@ void UpdateFrameBuffers(Scene* scene, DirectXState* state) {
 
   bool dir_update_ok = scene->DirectionalLightsStructuredBuffer.SendToGpu(state->device_context.Get());
   if (dir_update_ok) {
-    // state->device_context->VSSetShaderResources(0, 1, ???);
+    state->device_context->VSSetShaderResources(2, 1, scene->DirectionalLightsStructuredBuffer.GetAddressOfShaderResourceView());
   } else {
     DXFW_TRACE(__FILE__, __LINE__, false, "Error updating directional light buffer");
   }
@@ -295,7 +295,7 @@ int main(int /* argc */, char** /* argv */) {
   // ----> Rework this
   scene.PointLightsStructuredBuffer.Resize(1);
   auto light_buffer = scene.PointLightsStructuredBuffer.GetCpuBuffer();
-  light_buffer[0] = { 0.0f, 0.0f, 0.0f,
+  light_buffer[0] = { 0.0f, 0.0f, -5.0f,
                       0.8f, 0.8f, 0.8f, 1.0f,
                       0.8f, 0.8f, 0.8f, 1.0f,
                       100.0f, 1.0f, true };
