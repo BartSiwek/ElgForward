@@ -4,6 +4,8 @@
 
 #include <new>
 
+#define PAD(n) char pad__LINE__[n]
+
 template<typename T>
 inline void* aligned_new(size_t size) {
   auto mem = _aligned_malloc(size, alignof(T));
