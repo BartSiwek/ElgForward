@@ -28,9 +28,12 @@ Current agenda:
 - Scene loading
   - ~~JSON Format~~
   - ~~Loading of json~~
-  - Loading of transforms for drawables
+  - ~~Loading of transforms for drawables~~
   - Loading of lights
   - Loading of textures
+  - Change the camera update script to a general update script and expose buffers to it
 - Shader reflection
   - Mapping of textures
-  - Mapping of constant buffers
+  - Mapping of constant buffers and structured buffers
+- General TODO:
+  - Add mapping of custom shader input semantics to mesh channels 
