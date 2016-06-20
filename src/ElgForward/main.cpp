@@ -222,6 +222,7 @@ void Render(Scene* scene, DirectXState* state) {
 }
 
 void UpdateFrameBuffers(Scene* scene, DirectXState* state) {
+  // Point lights
   for (auto& point_light : scene->PointLightsStructuredBuffer) {
     point_light.Update(scene->Camera.GetViewMatrix());
   }
@@ -233,6 +234,7 @@ void UpdateFrameBuffers(Scene* scene, DirectXState* state) {
     DXFW_TRACE(__FILE__, __LINE__, false, "Error updating point light buffer");
   }
 
+  // Spot lights
   for (auto& spot_light : scene->SpotLightsStructuredBuffer) {
     spot_light.Update(scene->Camera.GetViewMatrix());
   }
@@ -244,6 +246,7 @@ void UpdateFrameBuffers(Scene* scene, DirectXState* state) {
     DXFW_TRACE(__FILE__, __LINE__, false, "Error updating spot light buffer");
   }
 
+  // Directional lights
   for (auto& directional_light : scene->DirectionalLightsStructuredBuffer) {
     directional_light.Update(scene->Camera.GetViewMatrix());
   }
@@ -253,6 +256,19 @@ void UpdateFrameBuffers(Scene* scene, DirectXState* state) {
     state->device_context->VSSetShaderResources(2, 1, scene->DirectionalLightsStructuredBuffer.GetAddressOfShaderResourceView());
   } else {
     DXFW_TRACE(__FILE__, __LINE__, false, "Error updating directional light buffer");
+  }
+
+  // Light data buffer
+  auto light_data_buffer = scene->LightDataConstantBuffer.GetCpuBuffer();
+  light_data_buffer->PointLightCount = scene->PointLightsStructuredBuffer.GetCurrentSize();
+  light_data_buffer->SpotLightCount = scene->SpotLightsStructuredBuffer.GetCurrentSize();
+  light_data_buffer->DirectionalLightCount = scene->DirectionalLightsStructuredBuffer.GetCurrentSize();
+
+  bool light_data_buffer_update_ok = scene->LightDataConstantBuffer.SendToGpu(state->device_context.Get());
+  if (light_data_buffer_update_ok) {
+    state->device_context->VSSetConstantBuffers(1, 1, scene->LightDataConstantBuffer.GetAddressOfGpuBuffer());
+  } else {
+    DXFW_TRACE(__FILE__, __LINE__, false, "Error updating the light data buffer");
   }
 }
 
@@ -287,8 +303,12 @@ int main(int /* argc */, char** /* argv */) {
 
   Scene scene(1000, 1000, 1000);
   LoadScene(base_path / "assets/scenes/cube.json", base_path, &state, &scene);
-  bool cb_ok = scene.TransformsConstantBuffer.Initialize(state.device.Get());
-  if (!cb_ok) {
+  bool transform_cb_ok = scene.TransformsConstantBuffer.Initialize(state.device.Get());
+  if (!transform_cb_ok) {
+    return -1;
+  }
+  bool light_cb_ok = scene.LightDataConstantBuffer.Initialize(state.device.Get());
+  if (!light_cb_ok) {
     return -1;
   }
 

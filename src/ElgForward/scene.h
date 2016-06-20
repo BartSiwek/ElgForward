@@ -42,6 +42,13 @@ struct Transforms {
   }
 };
 
+struct LightData {
+  int DirectionalLightCount = 0;
+  int SpotLightCount = 0;
+  int PointLightCount = 0;
+  PAD(4);
+};
+
 struct Scene {
   Scene(size_t max_directional_lights, size_t max_spot_lights, size_t max_point_lights)
       : DirectionalLightsStructuredBuffer(max_directional_lights),
@@ -55,6 +62,7 @@ struct Scene {
   CameraScript CameraScript;
 
   ConstantBuffer<Transforms> TransformsConstantBuffer;
+  ConstantBuffer<LightData> LightDataConstantBuffer;
   StructuredBuffer<DirectionalLight> DirectionalLightsStructuredBuffer;
   StructuredBuffer<SpotLight> SpotLightsStructuredBuffer;
   StructuredBuffer<PointLight> PointLightsStructuredBuffer;

@@ -4,7 +4,9 @@
 
 #include <new>
 
-#define PAD(n) char pad__LINE__[n]
+#define PADVARNAME1(x,y) x##y
+#define PADVARNAME2(x,y) PADVARNAME1(x,y)
+#define PAD(n) char PADVARNAME2(pad,__LINE__) [n]
 
 template<typename T>
 inline void* aligned_new(size_t size) {

@@ -11,6 +11,13 @@ cbuffer PerFrameConstants  : register(b0) {
   float4x4 ModelViewProjectionMatrix;
 };
 
+cbuffer LightData  : register(b1) {
+  int DirectionalLightCount;
+  int SpotLightCount;
+  int PointLightCount;
+  float pad;
+};
+
 struct PointLight {
   float4 PositionViewSpace;
   float4 PositionWorldSpace;
@@ -43,17 +50,20 @@ VertexShaderOutput main(VertexShaderInput input) {
   float4 positionMs = float4(input.PositionMs, 1.0);
   float4 positionVs = mul(positionMs, ModelViewMatrix);
 
-  float4 lightPositionVs = mul(PointLights[0].PositionWorldSpace, ViewMatrix);
-
-  float3 lu = (lightPositionVs - positionVs).xyz;
-  float3 l = normalize(lu);
-
   float3 nu = mul(input.NormalMs, (float3x3)ModelViewMatrixInverseTranspose);
   float3 n = normalize(nu);
 
-  float nDotL = dot(l, n);
+  float4 finalColor = float4(0.0, 0.0, 0.0, 1.0);
+  for (int i = 0; i < PointLightCount; ++i) {
+    float4 lightPositionVs = mul(PointLights[i].PositionWorldSpace, ViewMatrix);
 
-  float4 finalColor = PointLights[0].DiffuseColor * MaterialDiffuseColor * max(nDotL, 0);
+    float3 lu = (lightPositionVs - positionVs).xyz;
+    float3 l = normalize(lu);
+
+    float nDotL = dot(l, n);
+
+    finalColor += PointLights[i].DiffuseColor * MaterialDiffuseColor * max(nDotL, 0);
+  }
 
   output.Position = mul(positionMs, ModelViewProjectionMatrix);
   output.Color = finalColor;

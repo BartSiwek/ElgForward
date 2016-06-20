@@ -82,6 +82,14 @@ class StructuredBuffer {
     }
   }
 
+  size_t GetMaxSize() const {
+    return m_max_size_;
+  }
+
+  size_t GetCurrentSize() const {
+    return m_current_size_;
+  }
+
   const BufferEntryType& operator[](size_t index) const {
     return m_cpu_buffer_[index];
   }
