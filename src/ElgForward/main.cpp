@@ -194,6 +194,8 @@ void UpdateDrawableBuffers(const Drawable& drawable, Scene* scene, DirectXState*
   } else {
     DXFW_TRACE(__FILE__, __LINE__, false, "Error updating per frame constant buffer");
   }
+
+  // Material
 }
 
 void Render(Scene* scene, DirectXState* state) {
