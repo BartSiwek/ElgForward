@@ -119,7 +119,10 @@ VertexShaderHandle CreateVertexShader(const filesystem::path& path, const std::u
     return cached_handle;
   }
 
-  auto vertex_shader = VertexShader();
+  auto new_handle = g_vertex_shader_storage_.Add();
+  g_vertex_shader_cache_.Set(path_hash, new_handle);
+
+  auto& vertex_shader = 
   
   HRESULT load_result = D3DReadFileToBlob(path.c_str(), vertex_shader.Buffer.GetAddressOf());
   if (FAILED(load_result)) {
@@ -137,13 +140,11 @@ VertexShaderHandle CreateVertexShader(const filesystem::path& path, const std::u
     return {};
   }
 
-  bool relfection_ok = ReflectShader(&vertex_shader, custom_channel_map);
+  bool relfection_ok = ReflectShader(vertex_shader.get(), custom_channel_map);
   if (!relfection_ok) {
     return {};
   }
 
-  auto new_handle = g_vertex_shader_storage_.Add(std::move(vertex_shader));
-  g_vertex_shader_cache_.Set(path_hash, new_handle);
   return new_handle;
 }
 
@@ -160,17 +161,17 @@ PixelShaderHandle CreatePixelShader(const filesystem::path& path, ID3D11Device* 
     return cached_handle;
   }
   
-  auto pixel_shader = PixelShader();
-  HRESULT load_result = D3DReadFileToBlob(path.c_str(), pixel_shader.Buffer.GetAddressOf());
+  auto pixel_shader = std::make_unique<PixelShader>();
+  HRESULT load_result = D3DReadFileToBlob(path.c_str(), pixel_shader->Buffer.GetAddressOf());
   if (FAILED(load_result)) {
     DXFW_DIRECTX_TRACE(__FILE__, __LINE__, true, load_result);
     return {};
   }
 
-  HRESULT shader_creation_result = device->CreatePixelShader(pixel_shader.Buffer->GetBufferPointer(),
-                                                             pixel_shader.Buffer->GetBufferSize(),
+  HRESULT shader_creation_result = device->CreatePixelShader(pixel_shader->Buffer->GetBufferPointer(),
+                                                             pixel_shader->Buffer->GetBufferSize(),
                                                              nullptr,
-                                                             pixel_shader.Shader.GetAddressOf());
+                                                             pixel_shader->Shader.GetAddressOf());
 
   if (FAILED(shader_creation_result)) {
     DXFW_DIRECTX_TRACE(__FILE__, __LINE__, true, shader_creation_result);
