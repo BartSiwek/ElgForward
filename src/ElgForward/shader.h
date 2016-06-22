@@ -27,12 +27,30 @@ struct VertexShaderInputDescription {
 };
 
 struct VertexShader {
+  VertexShader() = default;
+  ~VertexShader() = default;
+
+  VertexShader(const VertexShader&) = delete;
+  VertexShader& operator=(const VertexShader&) = delete;
+
+  VertexShader(VertexShader&&) = default;
+  VertexShader& operator=(VertexShader&&) = default;
+
   Microsoft::WRL::ComPtr<ID3DBlob> Buffer = nullptr;
   Microsoft::WRL::ComPtr<ID3D11VertexShader> Shader = nullptr;
   std::vector<VertexShaderInputDescription> InputDescription = {};
 };
 
 struct PixelShader {
+  PixelShader() = default;
+  ~PixelShader() = default;
+
+  PixelShader(const PixelShader&) = delete;
+  PixelShader& operator=(const PixelShader&) = delete;
+
+  PixelShader(PixelShader&&) = default;
+  PixelShader& operator=(PixelShader&&) = default;
+
   Microsoft::WRL::ComPtr<ID3DBlob> Buffer = nullptr;
   Microsoft::WRL::ComPtr<ID3D11PixelShader> Shader = nullptr;
 };
