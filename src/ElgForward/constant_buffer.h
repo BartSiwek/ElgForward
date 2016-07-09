@@ -1,88 +1,50 @@
 #pragma once
 
+#include <string>
+
 #include <d3d11.h>
 
-#include <dxfw/dxfw.h>
+#include "handle.h"
 
-template<typename BackingBufferType>
-struct ConstantBuffer {
- public:
-  ConstantBuffer() : m_cpu_buffer_(std::make_unique<BackingBufferType>()) {
-  }
+struct ConstantBufferTag {};
 
-  ConstantBuffer(std::unique_ptr<BackingBufferType>&& cpu_buffer) : m_cpu_buffer_(std::move(cpu_buffer)) {
-  }
+using ConstantBufferHandle = Handle<8, 24, ConstantBufferTag>;
 
-  bool Initialize(ID3D11Device* device) {
-    D3D11_BUFFER_DESC desc;
-    desc.ByteWidth = sizeof(BackingBufferType);
-    desc.Usage = D3D11_USAGE_DYNAMIC;
-    desc.BindFlags = D3D11_BIND_CONSTANT_BUFFER;
-    desc.CPUAccessFlags = D3D11_CPU_ACCESS_WRITE;
-    desc.MiscFlags = 0;
-    desc.StructureByteStride = 0;
+ConstantBufferHandle CreateConstantBuffer(size_t name_hash, size_t type_hash, size_t type_size, size_t type_alignment, void* initial_data, ID3D11Device* device);
 
-    HRESULT cb_result;
-    if (m_cpu_buffer_) {
-      D3D11_SUBRESOURCE_DATA data;
-      data.pSysMem = m_cpu_buffer_.get();
-      data.SysMemPitch = 0;
-      data.SysMemSlicePitch = 0;
+inline ConstantBufferHandle CreateConstantBuffer(const std::string& name, size_t type_hash, size_t type_size, size_t type_alignment, void* initial_data, ID3D11Device* device) {
+  std::hash<std::string> hasher;
+  return CreateConstantBuffer(hasher(name), type_hash, type_size, type_alignment, initial_data, device);
+}
 
-      cb_result = device->CreateBuffer(&desc, &data, m_gpu_buffer_.GetAddressOf());
-    } else {
-      cb_result = device->CreateBuffer(&desc, nullptr, m_gpu_buffer_.GetAddressOf());
-    }
+template<typename T>
+inline ConstantBufferHandle CreateConstantBuffer(size_t name_hash, T* initial_data, ID3D11Device* device) {
+  const auto& t_info = typeid(T);
+  
+  size_t type_hash = t_info.hash_code();
+  size_t type_size = sizeof(T);
+  size_t type_alignment = alignof(T);
 
-    if (FAILED(cb_result)) {
-      DXFW_DIRECTX_TRACE(__FILE__, __LINE__, true, cb_result);
-      return false;
-    }
+  return CreateConstantBuffer(name_hash, type_hash, type_size, type_alignment, initial_data, device);
+}
 
-    return true;
-  }
+template<typename T>
+inline ConstantBufferHandle CreateConstantBuffer(const std::string& name, T* initial_data, ID3D11Device* device) {
+  std::hash<std::string> hasher;
+  return CreateConstantBuffer(hasher(name), initial_data, device);
+}
 
-  bool SendToGpu(ID3D11DeviceContext* device_context) {
-    D3D11_MAPPED_SUBRESOURCE mapped_subresource;
+bool InitializeConstantBuffer(ConstantBufferHandle handle, ID3D11Device* device);
 
-    auto map_result = device_context->Map(m_gpu_buffer_.Get(), 0, D3D11_MAP::D3D11_MAP_WRITE_DISCARD, 0, &mapped_subresource);
-    if (FAILED(map_result)) {
-      DXFW_DIRECTX_TRACE(__FILE__, __LINE__, true, map_result);
-      return false;
-    }
+void* GetCpuBuffer(ConstantBufferHandle handle);
 
-    memcpy(mapped_subresource.pData, m_cpu_buffer_.get(), sizeof(BackingBufferType));
+template<typename T>
+inline T* GetCpuBuffer(ConstantBufferHandle handle) {
+  return static_cast<T*>(GetCpuBuffer(handle));
+}
 
-    device_context->Unmap(m_gpu_buffer_.Get(), 0);
+ID3D11Buffer* GetGpuBuffer(ConstantBufferHandle handle);
 
-    return true;
-  }
+ID3D11Buffer** GetAddressOfGpuBuffer(ConstantBufferHandle handle);
 
-  const BackingBufferType* GetCpuBuffer() const {
-    return m_cpu_buffer_.get();
-  }
-
-  BackingBufferType* GetCpuBuffer() {
-    return m_cpu_buffer_.get();
-  }
-
-  const ID3D11Buffer* GetGpuBuffer() const {
-    return m_gpu_buffer_.Get();
-  }
-
-  ID3D11Buffer* GetGpuBuffer() {
-    return m_gpu_buffer_.Get();
-  }
-
-  const ID3D11Buffer** GetAddressOfGpuBuffer() const {
-    return m_gpu_buffer_.GetAddressOf();
-  }
-
-  ID3D11Buffer** GetAddressOfGpuBuffer() {
-    return m_gpu_buffer_.GetAddressOf();
-  }
-
- private:
-  std::unique_ptr<BackingBufferType> m_cpu_buffer_ = {};
-  Microsoft::WRL::ComPtr<ID3D11Buffer> m_gpu_buffer_ = {};
-};
+bool SendToGpu(ConstantBufferHandle handle, ID3D11DeviceContext* device_context);

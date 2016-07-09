@@ -178,7 +178,7 @@ bool InitializeDirect3d11(DirectXState* state) {
 
 void UpdateDrawableBuffers(const Drawable& drawable, Scene* scene, DirectXState* state) {
   // Transforms
-  auto buffer = scene->TransformsConstantBuffer.GetCpuBuffer();
+  auto buffer = GetCpuBuffer<Transforms>(scene->TransformsConstantBuffer);
   buffer->ModelMatrix = drawable.GetModelMatrix();
   buffer->ModelMatrixInverseTranspose = drawable.GetModelMatrixInverseTranspose();
   buffer->ViewMatrix = scene->Camera.GetViewMatrix();
@@ -188,9 +188,9 @@ void UpdateDrawableBuffers(const Drawable& drawable, Scene* scene, DirectXState*
   buffer->ModelViewMatrixInverseTranspose = buffer->ModelMatrixInverseTranspose * buffer->ViewMatrixInverseTranspose;
   buffer->ModelViewProjectionMatrix = buffer->ModelViewMatrix * buffer->ProjectionMatrix;
 
-  bool update_ok = scene->TransformsConstantBuffer.SendToGpu(state->device_context.Get());
+  bool update_ok = SendToGpu(scene->TransformsConstantBuffer, state->device_context.Get());
   if (update_ok) {
-    state->device_context->VSSetConstantBuffers(0, 1, scene->TransformsConstantBuffer.GetAddressOfGpuBuffer());
+    state->device_context->VSSetConstantBuffers(0, 1, GetAddressOfGpuBuffer(scene->TransformsConstantBuffer));
   } else {
     DXFW_TRACE(__FILE__, __LINE__, false, "Error updating per frame constant buffer");
   }
@@ -261,14 +261,14 @@ void UpdateFrameBuffers(Scene* scene, DirectXState* state) {
   }
 
   // Light data buffer
-  auto light_data_buffer = scene->LightDataConstantBuffer.GetCpuBuffer();
+  auto light_data_buffer = GetCpuBuffer<LightData>(scene->LightDataConstantBuffer);
   light_data_buffer->PointLightCount = scene->PointLightsStructuredBuffer.GetCurrentSize();
   light_data_buffer->SpotLightCount = scene->SpotLightsStructuredBuffer.GetCurrentSize();
   light_data_buffer->DirectionalLightCount = scene->DirectionalLightsStructuredBuffer.GetCurrentSize();
 
-  bool light_data_buffer_update_ok = scene->LightDataConstantBuffer.SendToGpu(state->device_context.Get());
+  bool light_data_buffer_update_ok = SendToGpu(scene->LightDataConstantBuffer, state->device_context.Get());
   if (light_data_buffer_update_ok) {
-    state->device_context->VSSetConstantBuffers(1, 1, scene->LightDataConstantBuffer.GetAddressOfGpuBuffer());
+    state->device_context->VSSetConstantBuffers(1, 1, GetAddressOfGpuBuffer(scene->LightDataConstantBuffer));
   } else {
     DXFW_TRACE(__FILE__, __LINE__, false, "Error updating the light data buffer");
   }
@@ -305,11 +305,23 @@ int main(int /* argc */, char** /* argv */) {
 
   Scene scene(1000, 1000, 1000);
   LoadScene(base_path / "assets/scenes/cube.json", base_path, &state, &scene);
-  bool transform_cb_ok = scene.TransformsConstantBuffer.Initialize(state.device.Get());
+
+  scene.TransformsConstantBuffer = CreateConstantBuffer<Transforms>("Transforms", nullptr, state.device.Get());
+  if (!scene.TransformsConstantBuffer.IsValid()) {
+    return -1;
+  }
+
+  bool transform_cb_ok = InitializeConstantBuffer(scene.TransformsConstantBuffer, state.device.Get());
   if (!transform_cb_ok) {
     return -1;
   }
-  bool light_cb_ok = scene.LightDataConstantBuffer.Initialize(state.device.Get());
+
+  scene.LightDataConstantBuffer = CreateConstantBuffer<LightData>("LightData", nullptr, state.device.Get());
+  if (!scene.TransformsConstantBuffer.IsValid()) {
+    return -1;
+  }
+
+  bool light_cb_ok = InitializeConstantBuffer(scene.LightDataConstantBuffer, state.device.Get());
   if (!light_cb_ok) {
     return -1;
   }

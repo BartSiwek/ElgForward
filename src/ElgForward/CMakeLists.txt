@@ -27,6 +27,7 @@ set(TARGET_SOURCES
   ${TARGET_SOURCE_DIR}/chaiscript_helpers.cpp
   ${TARGET_SOURCE_DIR}/chaiscript_helpers.h
   ${TARGET_SOURCE_DIR}/com_helpers.h
+  ${TARGET_SOURCE_DIR}/constant_buffer.cpp
   ${TARGET_SOURCE_DIR}/constant_buffer.h
   ${TARGET_SOURCE_DIR}/directional_light.h
   ${TARGET_SOURCE_DIR}/directx_state.h
