@@ -1,166 +1,90 @@
 #pragma once
 
-#include <memory>
+#include <string>
 
 #include <d3d11.h>
 
-#include <dxfw/dxfw.h>
+#include "handle.h"
 
-template<typename BufferEntryType>
-class StructuredBuffer {
- public:
-  StructuredBuffer(size_t max_size)
-      : m_max_size_(max_size), m_current_size_(0), m_cpu_buffer_(std::make_unique<BufferEntryType[]>(max_size)) {
-  }
+struct StructuredBufferTag {};
 
-  StructuredBuffer(size_t max_size, size_t current_elements, std::unique_ptr<BufferEntryType[]>&& cpu_buffer)
-      : m_max_size_(max_size), m_current_size_(current_elements), m_cpu_buffer_(std::move(cpu_buffer)) {
-  }
+using StructuredBufferHandle = Handle<8, 24, StructuredBufferTag>;
 
-  bool Initialize(ID3D11Device* device) {
-    D3D11_BUFFER_DESC desc;
-    desc.ByteWidth = m_max_size_ * sizeof(BufferEntryType);
-    desc.Usage = D3D11_USAGE_DYNAMIC;
-    desc.BindFlags = D3D11_BIND_SHADER_RESOURCE;
-    desc.CPUAccessFlags = D3D11_CPU_ACCESS_WRITE;
-    desc.MiscFlags = D3D11_RESOURCE_MISC_BUFFER_STRUCTURED;
-    desc.StructureByteStride = sizeof(BufferEntryType);
+StructuredBufferHandle CreateStructuredBuffer(
+    size_t name_hash,
+    size_t type_hash,
+    size_t type_size,
+    size_t type_alignment,
+    size_t max_size,
+    void* initial_data,
+    size_t initial_count,
+    ID3D11Device* device);
 
-    HRESULT cb_result;
-    if (m_cpu_buffer_) {
-      D3D11_SUBRESOURCE_DATA data;
-      data.pSysMem = m_cpu_buffer_.get();
-      data.SysMemPitch = 0;
-      data.SysMemSlicePitch = 0;
+inline StructuredBufferHandle CreateStructuredBuffer(
+    const std::string& name,
+    size_t type_hash,
+    size_t type_size,
+    size_t type_alignment,
+    size_t max_size,
+    void* initial_data,
+    size_t initial_count,
+    ID3D11Device* device) {
+  std::hash<std::string> hasher;
+  return CreateStructuredBuffer(hasher(name), type_hash, type_size, type_alignment, max_size, initial_data, initial_count, device);
+}
 
-      cb_result = device->CreateBuffer(&desc, &data, m_gpu_buffer_.GetAddressOf());
-    } else {
-      cb_result = device->CreateBuffer(&desc, nullptr, m_gpu_buffer_.GetAddressOf());
-    }
+template<typename T>
+inline StructuredBufferHandle CreateStructuredBuffer(
+    size_t name_hash,
+    size_t max_size,
+    T* initial_data,
+    size_t initial_count,
+    ID3D11Device* device) {
+  const auto& t_info = typeid(T);
 
-    if (FAILED(cb_result)) {
-      DXFW_DIRECTX_TRACE(__FILE__, __LINE__, true, cb_result);
-      return false;
-    }
+  size_t type_hash = t_info.hash_code();
+  size_t type_size = sizeof(T);
+  size_t type_alignment = alignof(T);
 
-    D3D11_SHADER_RESOURCE_VIEW_DESC srv_desc = {};
-    srv_desc.Format = DXGI_FORMAT_UNKNOWN;
-    srv_desc.ViewDimension = D3D11_SRV_DIMENSION_BUFFER;
-    srv_desc.Buffer.FirstElement = 0;
-    srv_desc.Buffer.NumElements = m_max_size_;
+  return CreateStructuredBuffer(name_hash, type_hash, type_size, type_alignment, max_size, initial_data, initial_count, device);
+}
 
-    auto srv_result = device->CreateShaderResourceView(m_gpu_buffer_.Get(), &srv_desc, m_srv_.GetAddressOf());
-    if (FAILED(srv_result)) {
-      DXFW_DIRECTX_TRACE(__FILE__, __LINE__, true, srv_result);
-      return false;
-    }
+template<typename T>
+inline StructuredBufferHandle CreateStructuredBuffer(
+    const std::string& name,
+    size_t max_size,
+    T* initial_data,
+    size_t initial_count,
+    ID3D11Device* device) {
+  std::hash<std::string> hasher;
+  return CreateStructuredBuffer(hasher(name), max_size, initial_data, initial_count, device);
+}
 
-    return true;
-  }
+void* GetCpuBuffer(StructuredBufferHandle handle);
 
-  bool SendToGpu(ID3D11DeviceContext* device_context) {
-    D3D11_MAPPED_SUBRESOURCE mapped_subresource;
+template<typename T>
+inline T* GetCpuBuffer(StructuredBufferHandle handle) {
+  return static_cast<T*>(GetCpuBuffer(handle));
+}
 
-    auto map_result = device_context->Map(m_gpu_buffer_.Get(), 0, D3D11_MAP::D3D11_MAP_WRITE_DISCARD, 0, &mapped_subresource);
-    if (FAILED(map_result)) {
-      DXFW_DIRECTX_TRACE(__FILE__, __LINE__, true, map_result);
-      return false;
-    }
+void* GetElementAt(StructuredBufferHandle handle, size_t index);
 
-    memcpy(mapped_subresource.pData, m_cpu_buffer_.get(), m_current_size_ * sizeof(BufferEntryType));
+template<typename T>
+inline void* GetElementAt(StructuredBufferHandle handle, size_t index) {
+  return static_cast<T*>(GetElementAt(handle, index));
+}
 
-    device_context->Unmap(m_gpu_buffer_.Get(), 0);
+ID3D11Buffer* GetGpuBuffer(StructuredBufferHandle handle);
 
-    return true;
-  }
+ID3D11Buffer** GetAddressOfGpuBuffer(StructuredBufferHandle handle);
 
-  void Resize(size_t new_size) {
-    if (new_size < m_max_size_) {
-      m_current_size_ = new_size;
-    } else {
-      DXFW_TRACE(__FILE__, __LINE__, true, "Attempted to resize to %d elements on a structured buffer with max size %d", new_size, m_max_size_);
-    }
-  }
+ID3D11ShaderResourceView* GetShaderResourceView(StructuredBufferHandle handle);
 
-  size_t GetMaxSize() const {
-    return m_max_size_;
-  }
+ID3D11ShaderResourceView** GetAddressOfShaderResourceView(StructuredBufferHandle handle);
 
-  size_t GetCurrentSize() const {
-    return m_current_size_;
-  }
+void ResizeStructuredBuffer(StructuredBufferHandle handle, size_t new_size);
 
-  const BufferEntryType& operator[](size_t index) const {
-    return m_cpu_buffer_[index];
-  }
+size_t GetCurrentSize(StructuredBufferHandle handle);
 
-  BufferEntryType& operator[](size_t index) {
-    return m_cpu_buffer_[index];
-  }
+bool SendToGpu(StructuredBufferHandle handle, ID3D11DeviceContext* device_context);
 
-  const BufferEntryType* GetCpuBuffer() const {
-    return m_cpu_buffer_.get();
-  }
-
-  BufferEntryType* GetCpuBuffer() {
-    return m_cpu_buffer_.get();
-  }
-
-  const ID3D11Buffer* GetGpuBuffer() const {
-    return m_gpu_buffer_.Get();
-  }
-
-  ID3D11Buffer* GetGpuBuffer() {
-    return m_gpu_buffer_.Get();
-  }
-
-  const ID3D11Buffer** GetAddressOfGpuBuffer() const {
-    return m_gpu_buffer_.GetAddressOf();
-  }
-
-  ID3D11Buffer** GetAddressOfGpuBuffer() {
-    return m_gpu_buffer_.GetAddressOf();
-  }
-
-  BufferEntryType* begin() {
-    return m_cpu_buffer_.get();
-  }
-
-  BufferEntryType* end() {
-    return m_cpu_buffer_.get() + m_current_size_;
-  }
-
-  const BufferEntryType* cbegin() const {
-    return m_cpu_buffer_.get();
-  }
-
-  const BufferEntryType* cend() const {
-    std::vector<int> x;
-    x.emplace_back(1);
-
-    return m_cpu_buffer_.get() + m_current_size_;
-  }
-
-  const ID3D11ShaderResourceView* GetShaderResourceView() const {
-    return m_srv_.Get();
-  }
-
-  ID3D11ShaderResourceView* GetShaderResourceView() {
-    return m_srv_.Get();
-  }
-
-  const ID3D11ShaderResourceView** GetAddressOfShaderResourceView() const {
-    return m_srv_.GetAddressOf();
-  }
-
-  ID3D11ShaderResourceView** GetAddressOfShaderResourceView() {
-    return m_srv_.GetAddressOf();
-  }
-
- private:
-  size_t m_max_size_ = 0;
-  size_t m_current_size_ = 0;
-  std::unique_ptr<BufferEntryType[]> m_cpu_buffer_ = {};
-  Microsoft::WRL::ComPtr<ID3D11Buffer> m_gpu_buffer_ = {};
-  Microsoft::WRL::ComPtr<ID3D11ShaderResourceView> m_srv_ = {};
-};

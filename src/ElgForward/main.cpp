@@ -225,46 +225,55 @@ void Render(Scene* scene, DirectXState* state) {
 
 void UpdateFrameBuffers(Scene* scene, DirectXState* state) {
   // Point lights
-  for (auto& point_light : scene->PointLightsStructuredBuffer) {
-    point_light.Update(scene->Camera.GetViewMatrix());
+  for (auto point_light = GetCpuBuffer<PointLight>(scene->PointLightsStructuredBuffer),
+       point_light_end = GetCpuBuffer<PointLight>(scene->PointLightsStructuredBuffer) + GetCurrentSize(scene->PointLightsStructuredBuffer);
+       point_light != point_light_end;
+       ++point_light) {
+    point_light->Update(scene->Camera.GetViewMatrix());
   }
   
-  bool point_update_ok = scene->PointLightsStructuredBuffer.SendToGpu(state->device_context.Get());
+  bool point_update_ok = SendToGpu(scene->PointLightsStructuredBuffer, state->device_context.Get());
   if (point_update_ok) {
-    state->device_context->VSSetShaderResources(0, 1, scene->PointLightsStructuredBuffer.GetAddressOfShaderResourceView());
+    state->device_context->VSSetShaderResources(0, 1, GetAddressOfShaderResourceView(scene->PointLightsStructuredBuffer));
   } else {
     DXFW_TRACE(__FILE__, __LINE__, false, "Error updating point light buffer");
   }
 
   // Spot lights
-  for (auto& spot_light : scene->SpotLightsStructuredBuffer) {
-    spot_light.Update(scene->Camera.GetViewMatrix());
+  for (auto spot_light = GetCpuBuffer<SpotLight>(scene->SpotLightsStructuredBuffer),
+       spot_light_end = GetCpuBuffer<SpotLight>(scene->SpotLightsStructuredBuffer) + GetCurrentSize(scene->SpotLightsStructuredBuffer);
+       spot_light != spot_light_end;
+       ++spot_light) {
+    spot_light->Update(scene->Camera.GetViewMatrix());
   }
 
-  bool spot_update_ok = scene->SpotLightsStructuredBuffer.SendToGpu(state->device_context.Get());
+  bool spot_update_ok = SendToGpu(scene->SpotLightsStructuredBuffer, state->device_context.Get());
   if (spot_update_ok) {
-    state->device_context->VSSetShaderResources(1, 1, scene->SpotLightsStructuredBuffer.GetAddressOfShaderResourceView());
+    state->device_context->VSSetShaderResources(1, 1, GetAddressOfShaderResourceView(scene->SpotLightsStructuredBuffer));
   } else {
     DXFW_TRACE(__FILE__, __LINE__, false, "Error updating spot light buffer");
   }
 
   // Directional lights
-  for (auto& directional_light : scene->DirectionalLightsStructuredBuffer) {
-    directional_light.Update(scene->Camera.GetViewMatrix());
+  for (auto directional_light = GetCpuBuffer<DirectionalLight>(scene->DirectionalLightsStructuredBuffer),
+       directional_light_end = GetCpuBuffer<DirectionalLight>(scene->DirectionalLightsStructuredBuffer) + GetCurrentSize(scene->DirectionalLightsStructuredBuffer);
+       directional_light != directional_light_end;
+       ++directional_light) {
+    directional_light->Update(scene->Camera.GetViewMatrix());
   }
 
-  bool dir_update_ok = scene->DirectionalLightsStructuredBuffer.SendToGpu(state->device_context.Get());
+  bool dir_update_ok = SendToGpu(scene->DirectionalLightsStructuredBuffer, state->device_context.Get());
   if (dir_update_ok) {
-    state->device_context->VSSetShaderResources(2, 1, scene->DirectionalLightsStructuredBuffer.GetAddressOfShaderResourceView());
+    state->device_context->VSSetShaderResources(2, 1, GetAddressOfShaderResourceView(scene->DirectionalLightsStructuredBuffer));
   } else {
     DXFW_TRACE(__FILE__, __LINE__, false, "Error updating directional light buffer");
   }
 
   // Light data buffer
   auto light_data_buffer = GetCpuBuffer<LightData>(scene->LightDataConstantBuffer);
-  light_data_buffer->PointLightCount = scene->PointLightsStructuredBuffer.GetCurrentSize();
-  light_data_buffer->SpotLightCount = scene->SpotLightsStructuredBuffer.GetCurrentSize();
-  light_data_buffer->DirectionalLightCount = scene->DirectionalLightsStructuredBuffer.GetCurrentSize();
+  light_data_buffer->PointLightCount = GetCurrentSize(scene->PointLightsStructuredBuffer);
+  light_data_buffer->SpotLightCount = GetCurrentSize(scene->SpotLightsStructuredBuffer);
+  light_data_buffer->DirectionalLightCount = GetCurrentSize(scene->DirectionalLightsStructuredBuffer);
 
   bool light_data_buffer_update_ok = SendToGpu(scene->LightDataConstantBuffer, state->device_context.Get());
   if (light_data_buffer_update_ok) {
@@ -303,16 +312,11 @@ int main(int /* argc */, char** /* argv */) {
     return -1;
   }
 
-  Scene scene(1000, 1000, 1000);
+  Scene scene;
   LoadScene(base_path / "assets/scenes/cube.json", base_path, &state, &scene);
 
   scene.TransformsConstantBuffer = CreateConstantBuffer<Transforms>("Transforms", nullptr, state.device.Get());
   if (!scene.TransformsConstantBuffer.IsValid()) {
-    return -1;
-  }
-
-  bool transform_cb_ok = InitializeConstantBuffer(scene.TransformsConstantBuffer, state.device.Get());
-  if (!transform_cb_ok) {
     return -1;
   }
 
@@ -321,33 +325,28 @@ int main(int /* argc */, char** /* argv */) {
     return -1;
   }
 
-  bool light_cb_ok = InitializeConstantBuffer(scene.LightDataConstantBuffer, state.device.Get());
-  if (!light_cb_ok) {
+  scene.DirectionalLightsStructuredBuffer = CreateStructuredBuffer<DirectionalLight>("DirectionalLights", 1000, nullptr, 0, state.device.Get());
+  if (!scene.DirectionalLightsStructuredBuffer.IsValid()) {
+    return -1;
+  }
+
+  scene.SpotLightsStructuredBuffer = CreateStructuredBuffer<SpotLight>("SpotLights", 1000, nullptr, 0, state.device.Get());
+  if (!scene.SpotLightsStructuredBuffer.IsValid()) {
+    return -1;
+  }
+
+  scene.PointLightsStructuredBuffer = CreateStructuredBuffer<PointLight>("PointLights", 1000, nullptr, 0, state.device.Get());
+  if (!scene.PointLightsStructuredBuffer.IsValid()) {
     return -1;
   }
 
   // ----> Rework this
-  scene.PointLightsStructuredBuffer.Resize(1);
-  auto light_buffer = scene.PointLightsStructuredBuffer.GetCpuBuffer();
+  ResizeStructuredBuffer(scene.PointLightsStructuredBuffer, 1);
+  auto light_buffer = GetCpuBuffer<PointLight>(scene.PointLightsStructuredBuffer);
   light_buffer[0] = { 0.0f, 0.0f, -5.0f,
                       0.8f, 0.8f, 0.8f, 1.0f,
                       0.8f, 0.8f, 0.8f, 1.0f,
                       100.0f, 1.0f, true };
-
-  bool dir_ok = scene.DirectionalLightsStructuredBuffer.Initialize(state.device.Get());
-  if (!dir_ok) {
-    return -1;
-  }
-
-  bool spot_ok = scene.SpotLightsStructuredBuffer.Initialize(state.device.Get());
-  if (!spot_ok) {
-    return -1;
-  }
-
-  bool point_ok = scene.PointLightsStructuredBuffer.Initialize(state.device.Get());
-  if (!point_ok) {
-    return -1;
-  }
   // ----> Rework this
 
   while (!Dxfw::ShouldWindowClose(state.window.get())) {

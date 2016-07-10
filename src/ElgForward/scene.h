@@ -50,12 +50,6 @@ struct LightData {
 };
 
 struct Scene {
-  Scene(size_t max_directional_lights, size_t max_spot_lights, size_t max_point_lights)
-      : DirectionalLightsStructuredBuffer(max_directional_lights),
-        SpotLightsStructuredBuffer(max_spot_lights),
-        PointLightsStructuredBuffer(max_point_lights) {
-  }
-
   std::vector<Drawable> Drawables;
   PerspectiveLens Lens;
   TrackballCamera Camera;
@@ -63,7 +57,7 @@ struct Scene {
 
   ConstantBufferHandle TransformsConstantBuffer;
   ConstantBufferHandle LightDataConstantBuffer;
-  StructuredBuffer<DirectionalLight> DirectionalLightsStructuredBuffer;
-  StructuredBuffer<SpotLight> SpotLightsStructuredBuffer;
-  StructuredBuffer<PointLight> PointLightsStructuredBuffer;
+  StructuredBufferHandle DirectionalLightsStructuredBuffer;
+  StructuredBufferHandle SpotLightsStructuredBuffer;
+  StructuredBufferHandle PointLightsStructuredBuffer;
 };

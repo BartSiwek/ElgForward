@@ -16,12 +16,6 @@ public:
   ConstantBufferStorage(size_t size, size_t align) : m_size_(size), m_align_(align), m_cpu_buffer_(_aligned_malloc(size, align)) {
   }
 
-  ConstantBufferStorage(size_t size, size_t align, void* initial_data) : ConstantBufferStorage(size, align) {
-    if (initial_data != nullptr) {
-      std::memcpy(m_cpu_buffer_.get(), initial_data, size);
-    }
-  }
-
   ~ConstantBufferStorage() = default;
 
   ConstantBufferStorage(const ConstantBufferStorage&) = delete;
@@ -30,7 +24,7 @@ public:
   ConstantBufferStorage(ConstantBufferStorage&&) = default;
   ConstantBufferStorage& operator=(ConstantBufferStorage&&) = default;
 
-  bool Initialize(ID3D11Device* device) {
+  bool Initialize(void* initial_data, ID3D11Device* device) {
     D3D11_BUFFER_DESC desc;
     desc.ByteWidth = m_size_;
     desc.Usage = D3D11_USAGE_DYNAMIC;
@@ -39,13 +33,20 @@ public:
     desc.MiscFlags = 0;
     desc.StructureByteStride = 0;
 
-    D3D11_SUBRESOURCE_DATA data;
-    data.pSysMem = m_cpu_buffer_.get();
-    data.SysMemPitch = 0;
-    data.SysMemSlicePitch = 0;
+    HRESULT cb_result;
+    if (initial_data != nullptr) {
+      std::memcpy(m_cpu_buffer_.get(), initial_data, m_size_);
 
-    HRESULT cb_result = device->CreateBuffer(&desc, &data, m_gpu_buffer_.GetAddressOf());
+      D3D11_SUBRESOURCE_DATA data;
+      data.pSysMem = m_cpu_buffer_.get();
+      data.SysMemPitch = 0;
+      data.SysMemSlicePitch = 0;
 
+      cb_result = device->CreateBuffer(&desc, &data, m_gpu_buffer_.GetAddressOf());
+    } else {
+      cb_result = device->CreateBuffer(&desc, nullptr, m_gpu_buffer_.GetAddressOf());
+    }
+    
     if (FAILED(cb_result)) {
       DXFW_DIRECTX_TRACE(__FILE__, __LINE__, true, cb_result);
       return false;
@@ -93,8 +94,8 @@ private:
     }
   };
 
-  size_t m_size_;
-  size_t m_align_;
+  size_t m_size_ = 0;
+  size_t m_align_ = 0;
   std::unique_ptr<void, CpuBufferDeleter> m_cpu_buffer_ = {};
   Microsoft::WRL::ComPtr<ID3D11Buffer> m_gpu_buffer_ = {};
 };
@@ -111,8 +112,8 @@ ConstantBufferHandle CreateConstantBuffer(size_t name_hash, size_t type_hash, si
     return cached_handle;
   }
 
-  ConstantBufferStorage storage(type_size, type_alignment, initial_data);
-  bool init_ok = storage.Initialize(device);
+  ConstantBufferStorage storage(type_size, type_alignment);
+  bool init_ok = storage.Initialize(initial_data, device);
   if (!init_ok) {
     return {};
   }
@@ -120,10 +121,6 @@ ConstantBufferHandle CreateConstantBuffer(size_t name_hash, size_t type_hash, si
   auto new_handle = g_storage_.Add(std::move(storage));
   g_cache_.Set(cache_key, new_handle);
   return new_handle;
-}
-
-bool InitializeConstantBuffer(ConstantBufferHandle handle, ID3D11Device* device) {
-  return g_storage_.Get(handle).Initialize(device);
 }
 
 void* GetCpuBuffer(ConstantBufferHandle handle) {

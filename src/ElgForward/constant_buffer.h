@@ -10,15 +10,30 @@ struct ConstantBufferTag {};
 
 using ConstantBufferHandle = Handle<8, 24, ConstantBufferTag>;
 
-ConstantBufferHandle CreateConstantBuffer(size_t name_hash, size_t type_hash, size_t type_size, size_t type_alignment, void* initial_data, ID3D11Device* device);
+ConstantBufferHandle CreateConstantBuffer(
+    size_t name_hash,
+    size_t type_hash,
+    size_t type_size,
+    size_t type_alignment,
+    void* initial_data,
+    ID3D11Device* device);
 
-inline ConstantBufferHandle CreateConstantBuffer(const std::string& name, size_t type_hash, size_t type_size, size_t type_alignment, void* initial_data, ID3D11Device* device) {
+inline ConstantBufferHandle CreateConstantBuffer(
+    const std::string& name,
+    size_t type_hash,
+    size_t type_size,
+    size_t type_alignment,
+    void* initial_data,
+    ID3D11Device* device) {
   std::hash<std::string> hasher;
   return CreateConstantBuffer(hasher(name), type_hash, type_size, type_alignment, initial_data, device);
 }
 
 template<typename T>
-inline ConstantBufferHandle CreateConstantBuffer(size_t name_hash, T* initial_data, ID3D11Device* device) {
+inline ConstantBufferHandle CreateConstantBuffer(
+    size_t name_hash,
+    T* initial_data,
+    ID3D11Device* device) {
   const auto& t_info = typeid(T);
   
   size_t type_hash = t_info.hash_code();
@@ -29,12 +44,13 @@ inline ConstantBufferHandle CreateConstantBuffer(size_t name_hash, T* initial_da
 }
 
 template<typename T>
-inline ConstantBufferHandle CreateConstantBuffer(const std::string& name, T* initial_data, ID3D11Device* device) {
+inline ConstantBufferHandle CreateConstantBuffer(
+    const std::string& name,
+    T* initial_data,
+    ID3D11Device* device) {
   std::hash<std::string> hasher;
   return CreateConstantBuffer(hasher(name), initial_data, device);
 }
-
-bool InitializeConstantBuffer(ConstantBufferHandle handle, ID3D11Device* device);
 
 void* GetCpuBuffer(ConstantBufferHandle handle);
 
