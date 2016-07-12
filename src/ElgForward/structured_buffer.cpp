@@ -144,13 +144,13 @@ ResourceArray<StructuredBufferHandle, Storage, 255> g_storage_;
 HandleCache<size_t, StructuredBufferHandle> g_cache_;
 
 StructuredBufferHandle Create(
-  size_t name_hash,
-  size_t type_hash,
-  size_t type_size,
-  size_t type_alignment,
-  size_t max_size,
-  void* initial_data,
-  size_t initial_size,
+    size_t name_hash,
+    size_t type_hash,
+    size_t type_size,
+    size_t type_alignment,
+    size_t max_size,
+    void* initial_data,
+    size_t initial_size,
   ID3D11Device* device) {
   auto cache_key = name_hash;
   hash_combine(cache_key, type_hash);
