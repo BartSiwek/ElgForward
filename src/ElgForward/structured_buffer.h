@@ -84,7 +84,7 @@ ID3D11ShaderResourceView* GetShaderResourceView(StructuredBufferHandle handle);
 
 ID3D11ShaderResourceView** GetAddressOfShaderResourceView(StructuredBufferHandle handle);
 
-void ResizeStructuredBuffer(StructuredBufferHandle handle, size_t new_size);
+void SetCurrentSize(StructuredBufferHandle handle, size_t new_size);
 
 size_t GetCurrentSize(StructuredBufferHandle handle);
 

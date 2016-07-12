@@ -343,15 +343,6 @@ int main(int /* argc */, char** /* argv */) {
     return -1;
   }
 
-  // ----> Rework this
-  ResizeStructuredBuffer(scene.PointLightsStructuredBuffer, 1);
-  auto light_buffer = StructuredBuffer::GetCpuBuffer<PointLight>(scene.PointLightsStructuredBuffer);
-  light_buffer[0] = { 0.0f, 0.0f, -5.0f,
-                      0.8f, 0.8f, 0.8f, 1.0f,
-                      0.8f, 0.8f, 0.8f, 1.0f,
-                      100.0f, 1.0f, true };
-  // ----> Rework this
-
   while (!Dxfw::ShouldWindowClose(state.window.get())) {
     Update(&scene, &state);
 

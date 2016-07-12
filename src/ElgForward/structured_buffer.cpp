@@ -92,7 +92,7 @@ public:
     return m_srv_.GetAddressOf();
   }
 
-  void Resize(size_t new_size) {
+  void SetCurrentSize(size_t new_size) {
     if (new_size < m_max_size_) {
       m_current_size_ = new_size;
     } else {
@@ -196,7 +196,7 @@ ID3D11ShaderResourceView** GetAddressOfShaderResourceView(StructuredBufferHandle
   return g_storage_.Get(handle).GetAddressOfShaderResourceView();
 }
 
-void ResizeStructuredBuffer(StructuredBufferHandle handle, size_t new_size) {
+void SetCurrentSize(StructuredBufferHandle handle, size_t new_size) {
   g_storage_.Get(handle).Resize(new_size);
 }
 

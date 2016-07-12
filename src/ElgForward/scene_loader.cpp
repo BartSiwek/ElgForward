@@ -77,7 +77,7 @@ void ReadMeshes(const nlohmann::json& json_scene, const filesystem::path& base_p
 }
 
 void ReadMaterials(const nlohmann::json& json_scene, const filesystem::path& base_path, ID3D11Device* device, std::vector<Material>* materials) {
-  auto json_materials = json_scene["materials"];
+  auto& json_materials = json_scene["materials"];
 
   for (const auto& json_material : json_materials) {
     bool is_valid_material_entry = json_material["name"].is_string()
@@ -102,6 +102,114 @@ void ReadMaterials(const nlohmann::json& json_scene, const filesystem::path& bas
     if (!material_ok) {
       DXFW_TRACE(__FILE__, __LINE__, false, "Error loading material from [%S] and [%S]", full_vs_path.string().c_str(), full_ps_path.string().c_str());
     }
+  }
+}
+
+bool ReadDirectionalLight(const nlohmann::json& /* json_light*/, DirectionalLight* /* directional_light */) {
+  // TODO
+  return true;
+}
+
+bool ReadSpotLight(const nlohmann::json& /* json_light */, SpotLight* /* spot_light */ ) {
+  // TODO
+  return true;
+}
+
+bool ReadPointLight(const nlohmann::json& /* json_light */, PointLight* point_light) {
+  // TODO
+  *point_light = { 0.0f, 0.0f, -5.0f,
+                   0.8f, 0.8f, 0.8f, 1.0f,
+                   0.8f, 0.8f, 0.8f, 1.0f,
+                   100.0f, 1.0f, true };
+
+  return true;
+}
+
+void ReadLightsFromJson(const nlohmann::json& json_lights,
+                        StructuredBuffer::StructuredBufferHandle directional_lights,
+                        StructuredBuffer::StructuredBufferHandle spot_lights,
+                        StructuredBuffer::StructuredBufferHandle point_lights) {
+  auto& json_lights_array = json_lights["lights"];
+  if (!json_lights_array.is_array()) {
+    DXFW_TRACE(__FILE__, __LINE__, false, "Invalid lights JSON %S", json_lights.dump().c_str());
+    return;
+  }
+
+  size_t directional_light_index = 0;
+  size_t spot_light_index = 0;
+  size_t point_light_index = 0;
+
+  for (size_t light_index = 0; light_index < json_lights_array.size(); ++light_index) {
+    auto& json_light = json_lights_array[light_index];
+    if (!json_light.is_object()) {
+      DXFW_TRACE(__FILE__, __LINE__, false, "Invalid lights entry %S", json_light.dump().c_str());
+      continue;
+    }
+
+    auto& json_light_type = json_light["type"];
+    if (!json_light_type.is_string()) {
+      DXFW_TRACE(__FILE__, __LINE__, false, "Invalid light type %S", json_light_type.dump().c_str());
+      continue;
+    }
+
+    const std::string& light_type = json_light_type;
+    if (light_type == "directional") {
+      if (directional_light_index >= max_directional_lights) {
+        DXFW_TRACE(__FILE__, __LINE__, false, "Reached max directional lights %d", max_directional_lights);
+        continue;
+      }
+
+      if (ReadDirectionalLight(json_light, directional_lights + directional_light_index)) {
+        ++directional_light_index;
+      }
+    } else if (light_type == "spot") {
+      if (spot_light_index >= max_spot_lights) {
+        DXFW_TRACE(__FILE__, __LINE__, false, "Reached max spot lights %d", max_spot_lights);
+        continue;
+      }
+
+      if (ReadSpotLight(json_light, spot_lights + spot_light_index)) {
+        ++spot_light_index;
+      }
+    } else if (light_type == "point") {
+      if (point_light_index >= max_point_lights) {
+        DXFW_TRACE(__FILE__, __LINE__, false, "Reached max point lights %d", max_point_lights);
+        continue;
+      }
+
+      if (ReadPointLight(json_light, point_lights + point_light_index)) {
+        ++point_light_index;
+      }
+    } else {
+      DXFW_TRACE(__FILE__, __LINE__, false, "Invalid light type %S", light_type.c_str());
+    }
+  }
+}
+
+void ReadLightsFromFile(const filesystem::path& lights_path,
+                        StructuredBuffer::StructuredBufferHandle directional_lights,
+                        StructuredBuffer::StructuredBufferHandle spot_lights,
+                        StructuredBuffer::StructuredBufferHandle point_lights) {
+  nlohmann::json json_lights;
+
+  bool load_ok = ReadJsonFile(lights_path, &json_lights);
+  if (!load_ok) {
+    DXFW_TRACE(__FILE__, __LINE__, false, "Error reading lights file from %s", lights_path.string());
+    return;
+  }
+
+  ReadLightsFromJson(json_lights, directional_lights, spot_lights, point_lights);
+}
+
+void ReadLights(const nlohmann::json& json_scene, const filesystem::path& base_path,
+                StructuredBuffer::StructuredBufferHandle directional_lights,
+                StructuredBuffer::StructuredBufferHandle spot_lights,
+                StructuredBuffer::StructuredBufferHandle point_lights) {
+  auto& json_lights = json_scene["lights"];
+
+  if (json_lights.is_string()) {
+    const std::string& lights_path = json_lights;
+    ReadLightsFromFile(base_path / lights_path, directional_lights, spot_lights, point_lights);
   }
 }
 
@@ -319,6 +427,9 @@ bool LoadScene(const filesystem::path& path, const filesystem::path& base_path, 
   std::vector<Material> materials;
   ReadMaterials(json_scene, base_path, state->device.Get(), &materials);
   
+  ReadLights(json_scene, base_path, scene->DirectionalLightsStructuredBuffer,
+             scene->SpotLightsStructuredBuffer, scene->PointLightsStructuredBuffer);
+
   BuildDrawables(json_scene, mesh_identifiers, materials, state->device.Get(), &scene->Drawables);
   
   ReadCamera(json_scene, base_path, state, &scene->Camera, &scene->Lens, &scene->CameraScript);
