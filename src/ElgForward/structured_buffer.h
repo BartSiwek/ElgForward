@@ -6,11 +6,13 @@
 
 #include "handle.h"
 
+namespace StructuredBuffer {
+
 struct StructuredBufferTag {};
 
 using StructuredBufferHandle = Handle<8, 24, StructuredBufferTag>;
 
-StructuredBufferHandle CreateStructuredBuffer(
+StructuredBufferHandle Create(
     size_t name_hash,
     size_t type_hash,
     size_t type_size,
@@ -20,7 +22,7 @@ StructuredBufferHandle CreateStructuredBuffer(
     size_t initial_count,
     ID3D11Device* device);
 
-inline StructuredBufferHandle CreateStructuredBuffer(
+inline StructuredBufferHandle Create(
     const std::string& name,
     size_t type_hash,
     size_t type_size,
@@ -30,11 +32,11 @@ inline StructuredBufferHandle CreateStructuredBuffer(
     size_t initial_count,
     ID3D11Device* device) {
   std::hash<std::string> hasher;
-  return CreateStructuredBuffer(hasher(name), type_hash, type_size, type_alignment, max_size, initial_data, initial_count, device);
+  return Create(hasher(name), type_hash, type_size, type_alignment, max_size, initial_data, initial_count, device);
 }
 
 template<typename T>
-inline StructuredBufferHandle CreateStructuredBuffer(
+inline StructuredBufferHandle Create(
     size_t name_hash,
     size_t max_size,
     T* initial_data,
@@ -46,18 +48,18 @@ inline StructuredBufferHandle CreateStructuredBuffer(
   size_t type_size = sizeof(T);
   size_t type_alignment = alignof(T);
 
-  return CreateStructuredBuffer(name_hash, type_hash, type_size, type_alignment, max_size, initial_data, initial_count, device);
+  return Create(name_hash, type_hash, type_size, type_alignment, max_size, initial_data, initial_count, device);
 }
 
 template<typename T>
-inline StructuredBufferHandle CreateStructuredBuffer(
+inline StructuredBufferHandle Create(
     const std::string& name,
     size_t max_size,
     T* initial_data,
     size_t initial_count,
     ID3D11Device* device) {
   std::hash<std::string> hasher;
-  return CreateStructuredBuffer(hasher(name), max_size, initial_data, initial_count, device);
+  return Create(hasher(name), max_size, initial_data, initial_count, device);
 }
 
 void* GetCpuBuffer(StructuredBufferHandle handle);
@@ -86,5 +88,8 @@ void ResizeStructuredBuffer(StructuredBufferHandle handle, size_t new_size);
 
 size_t GetCurrentSize(StructuredBufferHandle handle);
 
+size_t GetMaxSize(StructuredBufferHandle handle);
+
 bool SendToGpu(StructuredBufferHandle handle, ID3D11DeviceContext* device_context);
 
+}  // namespace StructuredBuffer

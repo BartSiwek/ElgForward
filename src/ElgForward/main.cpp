@@ -178,7 +178,7 @@ bool InitializeDirect3d11(DirectXState* state) {
 
 void UpdateDrawableBuffers(const Drawable& drawable, Scene* scene, DirectXState* state) {
   // Transforms
-  auto buffer = GetCpuBuffer<Transforms>(scene->TransformsConstantBuffer);
+  auto buffer = ConstantBuffer::GetCpuBuffer<Transforms>(scene->TransformsConstantBuffer);
   buffer->ModelMatrix = drawable.GetModelMatrix();
   buffer->ModelMatrixInverseTranspose = drawable.GetModelMatrixInverseTranspose();
   buffer->ViewMatrix = scene->Camera.GetViewMatrix();
@@ -190,7 +190,7 @@ void UpdateDrawableBuffers(const Drawable& drawable, Scene* scene, DirectXState*
 
   bool update_ok = SendToGpu(scene->TransformsConstantBuffer, state->device_context.Get());
   if (update_ok) {
-    state->device_context->VSSetConstantBuffers(0, 1, GetAddressOfGpuBuffer(scene->TransformsConstantBuffer));
+    state->device_context->VSSetConstantBuffers(0, 1, ConstantBuffer::GetAddressOfGpuBuffer(scene->TransformsConstantBuffer));
   } else {
     DXFW_TRACE(__FILE__, __LINE__, false, "Error updating per frame constant buffer");
   }
@@ -225,8 +225,9 @@ void Render(Scene* scene, DirectXState* state) {
 
 void UpdateFrameBuffers(Scene* scene, DirectXState* state) {
   // Point lights
-  for (auto point_light = GetCpuBuffer<PointLight>(scene->PointLightsStructuredBuffer),
-       point_light_end = GetCpuBuffer<PointLight>(scene->PointLightsStructuredBuffer) + GetCurrentSize(scene->PointLightsStructuredBuffer);
+  auto point_light_cpu_buffer = StructuredBuffer::GetCpuBuffer<PointLight>(scene->PointLightsStructuredBuffer);
+  for (auto point_light = point_light_cpu_buffer,
+       point_light_end = point_light_cpu_buffer + StructuredBuffer::GetCurrentSize(scene->PointLightsStructuredBuffer);
        point_light != point_light_end;
        ++point_light) {
     point_light->Update(scene->Camera.GetViewMatrix());
@@ -240,8 +241,9 @@ void UpdateFrameBuffers(Scene* scene, DirectXState* state) {
   }
 
   // Spot lights
-  for (auto spot_light = GetCpuBuffer<SpotLight>(scene->SpotLightsStructuredBuffer),
-       spot_light_end = GetCpuBuffer<SpotLight>(scene->SpotLightsStructuredBuffer) + GetCurrentSize(scene->SpotLightsStructuredBuffer);
+  auto spot_light_cpu_buffer = StructuredBuffer::GetCpuBuffer<SpotLight>(scene->SpotLightsStructuredBuffer);
+  for (auto spot_light = spot_light_cpu_buffer,
+       spot_light_end = spot_light_cpu_buffer + StructuredBuffer::GetCurrentSize(scene->SpotLightsStructuredBuffer);
        spot_light != spot_light_end;
        ++spot_light) {
     spot_light->Update(scene->Camera.GetViewMatrix());
@@ -255,8 +257,9 @@ void UpdateFrameBuffers(Scene* scene, DirectXState* state) {
   }
 
   // Directional lights
-  for (auto directional_light = GetCpuBuffer<DirectionalLight>(scene->DirectionalLightsStructuredBuffer),
-       directional_light_end = GetCpuBuffer<DirectionalLight>(scene->DirectionalLightsStructuredBuffer) + GetCurrentSize(scene->DirectionalLightsStructuredBuffer);
+  auto directional_light_cpu_buffer = StructuredBuffer::GetCpuBuffer<DirectionalLight>(scene->DirectionalLightsStructuredBuffer);
+  for (auto directional_light = directional_light_cpu_buffer,
+       directional_light_end = directional_light_cpu_buffer + StructuredBuffer::GetCurrentSize(scene->DirectionalLightsStructuredBuffer);
        directional_light != directional_light_end;
        ++directional_light) {
     directional_light->Update(scene->Camera.GetViewMatrix());
@@ -270,7 +273,7 @@ void UpdateFrameBuffers(Scene* scene, DirectXState* state) {
   }
 
   // Light data buffer
-  auto light_data_buffer = GetCpuBuffer<LightData>(scene->LightDataConstantBuffer);
+  auto light_data_buffer = ConstantBuffer::GetCpuBuffer<LightData>(scene->LightDataConstantBuffer);
   light_data_buffer->PointLightCount = GetCurrentSize(scene->PointLightsStructuredBuffer);
   light_data_buffer->SpotLightCount = GetCurrentSize(scene->SpotLightsStructuredBuffer);
   light_data_buffer->DirectionalLightCount = GetCurrentSize(scene->DirectionalLightsStructuredBuffer);
@@ -315,34 +318,34 @@ int main(int /* argc */, char** /* argv */) {
   Scene scene;
   LoadScene(base_path / "assets/scenes/cube.json", base_path, &state, &scene);
 
-  scene.TransformsConstantBuffer = CreateConstantBuffer<Transforms>("Transforms", nullptr, state.device.Get());
+  scene.TransformsConstantBuffer = ConstantBuffer::Create<Transforms>("Transforms", nullptr, state.device.Get());
   if (!scene.TransformsConstantBuffer.IsValid()) {
     return -1;
   }
 
-  scene.LightDataConstantBuffer = CreateConstantBuffer<LightData>("LightData", nullptr, state.device.Get());
+  scene.LightDataConstantBuffer = ConstantBuffer::Create<LightData>("LightData", nullptr, state.device.Get());
   if (!scene.TransformsConstantBuffer.IsValid()) {
     return -1;
   }
 
-  scene.DirectionalLightsStructuredBuffer = CreateStructuredBuffer<DirectionalLight>("DirectionalLights", 1000, nullptr, 0, state.device.Get());
+  scene.DirectionalLightsStructuredBuffer = StructuredBuffer::Create<DirectionalLight>("DirectionalLights", 1000, nullptr, 0, state.device.Get());
   if (!scene.DirectionalLightsStructuredBuffer.IsValid()) {
     return -1;
   }
 
-  scene.SpotLightsStructuredBuffer = CreateStructuredBuffer<SpotLight>("SpotLights", 1000, nullptr, 0, state.device.Get());
+  scene.SpotLightsStructuredBuffer = StructuredBuffer::Create<SpotLight>("SpotLights", 1000, nullptr, 0, state.device.Get());
   if (!scene.SpotLightsStructuredBuffer.IsValid()) {
     return -1;
   }
 
-  scene.PointLightsStructuredBuffer = CreateStructuredBuffer<PointLight>("PointLights", 1000, nullptr, 0, state.device.Get());
+  scene.PointLightsStructuredBuffer = StructuredBuffer::Create<PointLight>("PointLights", 1000, nullptr, 0, state.device.Get());
   if (!scene.PointLightsStructuredBuffer.IsValid()) {
     return -1;
   }
 
   // ----> Rework this
   ResizeStructuredBuffer(scene.PointLightsStructuredBuffer, 1);
-  auto light_buffer = GetCpuBuffer<PointLight>(scene.PointLightsStructuredBuffer);
+  auto light_buffer = StructuredBuffer::GetCpuBuffer<PointLight>(scene.PointLightsStructuredBuffer);
   light_buffer[0] = { 0.0f, 0.0f, -5.0f,
                       0.8f, 0.8f, 0.8f, 1.0f,
                       0.8f, 0.8f, 0.8f, 1.0f,

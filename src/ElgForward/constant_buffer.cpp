@@ -11,18 +11,20 @@
 #include "resource_array.h"
 #include "handle_cache.h"
 
-struct ConstantBufferStorage {
+namespace ConstantBuffer {
+
+struct Storage {
 public:
-  ConstantBufferStorage(size_t size, size_t align) : m_size_(size), m_align_(align), m_cpu_buffer_(_aligned_malloc(size, align)) {
+  Storage(size_t size, size_t align) : m_size_(size), m_align_(align), m_cpu_buffer_(_aligned_malloc(size, align)) {
   }
 
-  ~ConstantBufferStorage() = default;
+  ~Storage() = default;
 
-  ConstantBufferStorage(const ConstantBufferStorage&) = delete;
-  ConstantBufferStorage& operator=(const ConstantBufferStorage&) = delete;
+  Storage(const Storage&) = delete;
+  Storage& operator=(const Storage&) = delete;
 
-  ConstantBufferStorage(ConstantBufferStorage&&) = default;
-  ConstantBufferStorage& operator=(ConstantBufferStorage&&) = default;
+  Storage(Storage&&) = default;
+  Storage& operator=(Storage&&) = default;
 
   bool Initialize(void* initial_data, ID3D11Device* device) {
     D3D11_BUFFER_DESC desc;
@@ -46,13 +48,25 @@ public:
     } else {
       cb_result = device->CreateBuffer(&desc, nullptr, m_gpu_buffer_.GetAddressOf());
     }
-    
+
     if (FAILED(cb_result)) {
       DXFW_DIRECTX_TRACE(__FILE__, __LINE__, true, cb_result);
       return false;
     }
 
     return true;
+  }
+
+  void* GetCpuBuffer() {
+    return m_cpu_buffer_.get();
+  }
+
+  ID3D11Buffer* GetGpuBuffer() {
+    return m_gpu_buffer_.Get();
+  }
+
+  ID3D11Buffer** GetAddressOfGpuBuffer() {
+    return m_gpu_buffer_.GetAddressOf();
   }
 
   bool SendToGpu(ID3D11DeviceContext* device_context) {
@@ -75,18 +89,6 @@ public:
     return true;
   }
 
-  void* GetCpuBuffer() {
-    return m_cpu_buffer_.get();
-  }
-
-  ID3D11Buffer* GetGpuBuffer() {
-    return m_gpu_buffer_.Get();
-  }
-
-  ID3D11Buffer** GetAddressOfGpuBuffer() {
-    return m_gpu_buffer_.GetAddressOf();
-  }
-
 private:
   struct CpuBufferDeleter {
     void operator()(void* ptr) {
@@ -100,10 +102,10 @@ private:
   Microsoft::WRL::ComPtr<ID3D11Buffer> m_gpu_buffer_ = {};
 };
 
-ResourceArray<ConstantBufferHandle, ConstantBufferStorage, 255> g_storage_;
+ResourceArray<ConstantBufferHandle, Storage, 255> g_storage_;
 HandleCache<size_t, ConstantBufferHandle> g_cache_;
 
-ConstantBufferHandle CreateConstantBuffer(size_t name_hash, size_t type_hash, size_t type_size, size_t type_alignment, void* initial_data, ID3D11Device* device) {
+ConstantBufferHandle Create(size_t name_hash, size_t type_hash, size_t type_size, size_t type_alignment, void* initial_data, ID3D11Device* device) {
   auto cache_key = name_hash;
   hash_combine(cache_key, type_hash);
 
@@ -112,10 +114,10 @@ ConstantBufferHandle CreateConstantBuffer(size_t name_hash, size_t type_hash, si
     return cached_handle;
   }
 
-  ConstantBufferStorage storage(type_size, type_alignment);
+  Storage storage(type_size, type_alignment);
   bool init_ok = storage.Initialize(initial_data, device);
   if (!init_ok) {
-    return {};
+    return{};
   }
 
   auto new_handle = g_storage_.Add(std::move(storage));
@@ -137,3 +139,5 @@ ID3D11Buffer** GetAddressOfGpuBuffer(ConstantBufferHandle handle) {
 bool SendToGpu(ConstantBufferHandle handle, ID3D11DeviceContext* device_context) {
   return g_storage_.Get(handle).SendToGpu(device_context);
 }
+
+}  // namespace ConstantBuffer
