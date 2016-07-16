@@ -1,7 +1,5 @@
 #include "scene_loader.h"
 
-#include <fstream>
-
 #pragma warning(push)
 #pragma warning(disable: 4706)
 #include <json.hpp>
@@ -9,117 +7,12 @@
 
 #include <dxfw/dxfw.h>
 
+#include "json_helpers.h"
+#include "light_loader.h"
+#include "camera_loader.h"
 #include "mesh.h"
 #include "material.h"
 #include "screen.h"
-
-bool ReadJsonFile(const filesystem::path& path, nlohmann::json* json_scene) {
-  std::ifstream input(path);
-
-  if (!input.good()) {
-    return false;
-  }
-
-  input >> *json_scene;
-
-  return true;
-}
-
-bool ReadFloat(const nlohmann::json& json_value, float* output) {
-  if (json_value.is_number_float()) {
-    *output = json_value;
-    return true;
-  }
-
-  if (!json_value.is_array() || json_value.size() != 1) {
-    return false;
-  }
-
-  if (!json_value[0].is_number_float()) {
-    return false;
-  }
-
-  *output = json_value[0];
-  return true;
-}
-
-bool ReadFloat2(const nlohmann::json& json_value, float* output) {
-  if (!json_value.is_array() || json_value.size() != 2) {
-    return false;
-  }
-
-  if (!json_value[0].is_number_float()) {
-    return false;
-  }
-
-  if (!json_value[1].is_number_float()) {
-    return false;
-  }
-
-  output[0] = json_value[0];
-  output[1] = json_value[1];
-  return true;
-}
-
-bool ReadFloat3(const nlohmann::json& json_value, float* output) {
-  if (!json_value.is_array() || json_value.size() != 3) {
-    return false;
-  }
-
-  if (!json_value[0].is_number_float()) {
-    return false;
-  }
-
-  if (!json_value[1].is_number_float()) {
-    return false;
-  }
-
-  if (!json_value[2].is_number_float()) {
-    return false;
-  }
-
-  output[0] = json_value[0];
-  output[1] = json_value[1];
-  output[2] = json_value[2];
-  return true;
-}
-
-bool ReadFloat4(const nlohmann::json& json_value, float* output) {
-  if (!json_value.is_array() || json_value.size() != 4) {
-    return false;
-  }
-
-  if (!json_value[0].is_number_float()) {
-    return false;
-  }
-
-  if (!json_value[1].is_number_float()) {
-    return false;
-  }
-
-  if (!json_value[2].is_number_float()) {
-    return false;
-  }
-
-  if (!json_value[3].is_number_float()) {
-    return false;
-  }
-
-  output[0] = json_value[0];
-  output[1] = json_value[1];
-  output[2] = json_value[2];
-  output[3] = json_value[3];
-  return true;
-}
-
-bool ReadBool(const nlohmann::json& json_value, bool* value) {
-  if (!json_value.is_boolean()) {
-    return false;
-  }
-
-  *value = json_value;
-  return true;
-}
 
 bool ReadOptions(const nlohmann::json& json_options, MeshLoadOptions* options) {
   bool are_valid_options = json_options["index_buffer_format"].is_string();
@@ -178,8 +71,7 @@ void ReadMaterials(const nlohmann::json& json_scene, const filesystem::path& bas
 
   for (const auto& json_material : json_materials) {
     bool is_valid_material_entry = json_material["name"].is_string()
-                                && json_material["vertex_shader"].is_string()
-                                && json_material["pixel_shader"].is_string();
+                                && json_material["type"].is_string();
 
     if (!is_valid_material_entry) {
       DXFW_TRACE(__FILE__, __LINE__, false, "Invalid material entry %S", json_material.dump().c_str());
@@ -187,199 +79,15 @@ void ReadMaterials(const nlohmann::json& json_scene, const filesystem::path& bas
     }
 
     const std::string& name = json_material["name"];
-    const std::string& vs_path = json_material["vertex_shader"];
-    const std::string& ps_path = json_material["pixel_shader"];
-
-    auto full_vs_path = base_path / vs_path;
-    auto full_ps_path = base_path / ps_path;
+    const std::string& type = json_material["type"];
 
     materials->emplace_back();
     auto& new_material = materials->back();
-    bool material_ok = CreateMaterial(name, full_vs_path, full_ps_path, device, &new_material);
+    bool material_ok = CreateMaterial(name, type, base_path, device, &new_material);
     if (!material_ok) {
-      DXFW_TRACE(__FILE__, __LINE__, false, "Error loading material from [%S] and [%S]", full_vs_path.string().c_str(), full_ps_path.string().c_str());
+      DXFW_TRACE(__FILE__, __LINE__, false, "Error loading material from [%S] with type [%S]", name.c_str(), type.c_str());
     }
   }
-}
-
-bool ReadDirectionalLight(const nlohmann::json& json_light, StructuredBuffer::StructuredBufferHandle directional_lights) {
-  DirectionalLight directional_light;
-
-  float direction[3];
-  if (!ReadFloat3(json_light["direction"], direction)) {
-    return false;
-  }
-  directional_light.DirectionWorldSpace = DirectX::XMVectorSet(direction[0], direction[1], direction[2], 0.0f);
-
-  float diffuse[4];
-  if (ReadFloat4(json_light["diffuse"], diffuse)) {
-    directional_light.DiffuseColor = DirectX::XMVectorSet(diffuse[0], diffuse[1], diffuse[2], diffuse[3]);
-  }
-
-  float specular[4];
-  if (ReadFloat4(json_light["specular"], specular)) {
-    directional_light.SpecularColor = DirectX::XMVectorSet(specular[0], specular[1], specular[2], specular[3]);
-  }
-
-  float intensity;
-  if (ReadFloat(json_light["intensity"], &intensity)) {
-    directional_light.Intensity = intensity;
-  }
-
-  bool enabled;
-  if (ReadBool(json_light["enabled"], &enabled)) {
-    directional_light.Enabled = enabled;
-  }
-
-  return StructuredBuffer::Add(directional_lights, &directional_light);
-}
-
-bool ReadSpotLight(const nlohmann::json& json_light, StructuredBuffer::StructuredBufferHandle spot_lights) {
-  SpotLight spot_light;
-
-  float position[3];
-  if (!ReadFloat3(json_light["position"], position)) {
-    return false;
-  }
-  spot_light.PositionWorldSpace = DirectX::XMVectorSet(position[0], position[1], position[2], 1.0f);
-
-  float direction[3];
-  if (!ReadFloat3(json_light["direction"], direction)) {
-    return false;
-  }
-  spot_light.DirectionWorldSpace = DirectX::XMVectorSet(direction[0], direction[1], direction[2], 0.0f);
-
-  float diffuse[4];
-  if (ReadFloat4(json_light["diffuse"], diffuse)) {
-    spot_light.DiffuseColor = DirectX::XMVectorSet(diffuse[0], diffuse[1], diffuse[2], diffuse[3]);
-  }
-
-  float specular[4];
-  if (ReadFloat4(json_light["specular"], specular)) {
-    spot_light.SpecularColor = DirectX::XMVectorSet(specular[0], specular[1], specular[2], specular[3]);
-  }
-
-  float angle;
-  if (ReadFloat(json_light["angle"], &angle)) {
-    spot_light.SpotlightAngle = angle;
-  }
-
-  float range;
-  if (ReadFloat(json_light["range"], &range)) {
-    spot_light.Range = range;
-  }
-
-  float intensity;
-  if (ReadFloat(json_light["intensity"], &intensity)) {
-    spot_light.Intensity = intensity;
-  }
-
-  bool enabled;
-  if (ReadBool(json_light["enabled"], &enabled)) {
-    spot_light.Enabled = enabled;
-  }
-
-  return StructuredBuffer::Add(spot_lights, &spot_light);
-}
-
-bool ReadPointLight(const nlohmann::json& json_light, StructuredBuffer::StructuredBufferHandle point_lights) {
-  PointLight point_light;
-
-  float position[3];
-  if (!ReadFloat3(json_light["position"], position)) {
-    return false;
-  }
-  point_light.PositionWorldSpace = DirectX::XMVectorSet(position[0], position[1], position[2], 1.0f);
-
-  float diffuse[4];
-  if (ReadFloat4(json_light["diffuse"], diffuse)) {
-    point_light.DiffuseColor = DirectX::XMVectorSet(diffuse[0], diffuse[1], diffuse[2], diffuse[3]);
-  }
-  
-  float specular[4];
-  if (ReadFloat4(json_light["specular"], specular)) {
-    point_light.SpecularColor = DirectX::XMVectorSet(specular[0], specular[1], specular[2], specular[3]);
-  }
-
-  float range;
-  if (ReadFloat(json_light["range"], &range)) {
-    point_light.Range = range;
-  }
-
-  float intensity;
-  if (ReadFloat(json_light["intensity"], &intensity)) {
-    point_light.Intensity = intensity;
-  }
-
-  bool enabled;
-  if (ReadBool(json_light["enabled"], &enabled)) {
-    point_light.Enabled = enabled;
-  }
-
-  return StructuredBuffer::Add(point_lights, &point_light);
-}
-
-void ReadLightsFromJson(const nlohmann::json& json_lights,
-                        StructuredBuffer::StructuredBufferHandle directional_lights,
-                        StructuredBuffer::StructuredBufferHandle spot_lights,
-                        StructuredBuffer::StructuredBufferHandle point_lights) {
-  const auto& json_lights_array = json_lights["lights"];
-  if (!json_lights_array.is_array()) {
-    DXFW_TRACE(__FILE__, __LINE__, false, "Invalid lights JSON %S", json_lights.dump().c_str());
-    return;
-  }
-
-  for (const auto& json_light : json_lights_array) {
-    if (!json_light.is_object()) {
-      DXFW_TRACE(__FILE__, __LINE__, false, "Invalid lights entry %S", json_light.dump().c_str());
-      continue;
-    }
-
-    const auto& json_light_type = json_light["type"];
-    if (!json_light_type.is_string()) {
-      DXFW_TRACE(__FILE__, __LINE__, false, "Invalid light type %S", json_light_type.dump().c_str());
-      continue;
-    }
-
-    const std::string& light_type = json_light_type;
-    if (light_type == "directional") {
-      if (!ReadDirectionalLight(json_light, directional_lights)) {
-        DXFW_TRACE(__FILE__, __LINE__, false, "Reached max directional lights");
-      }
-      continue;
-    }
-    
-    if (light_type == "spot") {
-      if (!ReadSpotLight(json_light, spot_lights)) {
-        DXFW_TRACE(__FILE__, __LINE__, false, "Reached max spot lights");
-      }
-      continue;
-    }
-    
-    if (light_type == "point") {
-      if (!ReadPointLight(json_light, point_lights)) {
-        DXFW_TRACE(__FILE__, __LINE__, false, "Reached max point lights");
-      }
-      continue;
-    }
-
-    DXFW_TRACE(__FILE__, __LINE__, false, "Invalid light type %S", light_type.c_str());
-  }
-}
-
-void ReadLightsFromFile(const filesystem::path& lights_path,
-                        StructuredBuffer::StructuredBufferHandle directional_lights,
-                        StructuredBuffer::StructuredBufferHandle spot_lights,
-                        StructuredBuffer::StructuredBufferHandle point_lights) {
-  nlohmann::json json_lights;
-
-  bool load_ok = ReadJsonFile(lights_path, &json_lights);
-  if (!load_ok) {
-    DXFW_TRACE(__FILE__, __LINE__, false, "Error reading lights file from %s", lights_path.string());
-    return;
-  }
-
-  ReadLightsFromJson(json_lights, directional_lights, spot_lights, point_lights);
 }
 
 void ReadLights(const nlohmann::json& json_scene, const filesystem::path& base_path,
@@ -488,84 +196,6 @@ void BuildDrawables(const nlohmann::json& json_scene, const std::vector<MeshIden
   }
 }
 
-void ReadCamera(const nlohmann::json& json_scene, const filesystem::path& base_path, DirectXState* state, TrackballCamera* camera, PerspectiveLens* lens, CameraScript* script) {
-  const auto& json_camera = json_scene["camera"];
-  
-  const auto& json_lens = json_camera["prespective_lens"];
-  if (json_lens.is_object()) {
-    const auto& near_plane = json_lens["near_plane"];
-    const auto& far_plane = json_lens["far_plane"];
-    const auto& fov = json_lens["fov"];
-
-    bool is_valid_lens_entry = near_plane.is_number_float()
-                            && far_plane.is_number_float()
-                            && fov.is_number_float();
-    if (is_valid_lens_entry) {
-      lens->SetFrustum(near_plane, far_plane, state->viewport.Width / state->viewport.Height, DirectX::XMConvertToRadians(fov));
-    }
-  }
-
-  const auto& json_trackball_camera = json_camera["trackball_camera"];
-  if (json_trackball_camera.is_object()) {
-    const auto& radius = json_trackball_camera["radius"];
-    if (radius.is_number_float()) {
-      camera->SetRadius(radius);
-    }
-    
-    const auto& json_position = json_trackball_camera["position"];
-    if (json_position.is_array() && json_position.size() == 3) {
-      const auto& x = json_position[0];
-      const auto& y = json_position[1];
-      const auto& z = json_position[2];
-      if (x.is_number_float() && y.is_number_float() && z.is_number_float()) {
-        camera->SetLocation(x, y, z);
-      }
-    } 
-  }
-
-  const auto& json_camera_script = json_camera["script"];
-  if (json_camera_script.is_string()) {
-    auto path = base_path / json_camera_script;
-    bool init_ok = script->init(path, camera, lens);
-    if (!init_ok) {
-      DXFW_TRACE(__FILE__, __LINE__, false, "Error initializing camera script from file %S", path.string());
-    }
-  }
-}
-
-void ConnectCameraToInput(DirectXState* state, TrackballCamera* camera, PerspectiveLens* lens) {
-  Dxfw::RegisterMouseButtonCallback(state->window.get(), [camera, viewport = &state->viewport](dxfwWindow*, dxfwMouseButton button, dxfwMouseButtonAction action, int16_t x, int16_t y) {
-    if (button == DXFW_RIGHT_MOUSE_BUTTON && action == DXFW_MOUSE_BUTTON_DOWN) {
-      camera->SetDesiredState(TrackballCameraOperation::Panning);
-      camera->SetEndPoint(GetNormalizedScreenCoordinates(viewport->Width, viewport->Height, x, y));
-    } else if (button == DXFW_RIGHT_MOUSE_BUTTON && action == DXFW_MOUSE_BUTTON_UP) {
-      camera->SetDesiredState(TrackballCameraOperation::None);
-    } else if (button == DXFW_LEFT_MOUSE_BUTTON && action == DXFW_MOUSE_BUTTON_DOWN) {
-      camera->SetDesiredState(TrackballCameraOperation::Rotating);
-      camera->SetEndPoint(GetNormalizedScreenCoordinates(viewport->Width, viewport->Height, x, y));
-    } else if (button == DXFW_LEFT_MOUSE_BUTTON && action == DXFW_MOUSE_BUTTON_UP) {
-      camera->SetDesiredState(TrackballCameraOperation::None);
-    } else if (button == DXFW_MIDDLE_MOUSE_BUTTON && action == DXFW_MOUSE_BUTTON_DOWN) {
-      camera->SetDesiredState(TrackballCameraOperation::Zooming);
-      camera->SetEndPoint(GetNormalizedScreenCoordinates(viewport->Width, viewport->Height, x, y));
-    } else if (button == DXFW_MIDDLE_MOUSE_BUTTON && action == DXFW_MOUSE_BUTTON_UP) {
-      camera->SetDesiredState(TrackballCameraOperation::None);
-    }
-  });
-
-  Dxfw::RegisterMouseMoveCallback(state->window.get(), [camera, viewport = &state->viewport](dxfwWindow*, int16_t x, int16_t y) {
-    camera->SetEndPoint(GetNormalizedScreenCoordinates(viewport->Width, viewport->Height, x, y));
-  });
-
-  Dxfw::RegisterMouseWheelCallback(state->window.get(), [lens](dxfwWindow*, int16_t, int16_t, int16_t delta) {
-    if (delta > 0) {
-      lens->SetZoomFactor(1.1f * lens->GetZoomFactor());
-    } else {
-      lens->SetZoomFactor(0.9f * lens->GetZoomFactor());
-    }
-  });
-}
-
 bool LoadScene(const filesystem::path& path, const filesystem::path& base_path, DirectXState* state, Scene* scene) {
   nlohmann::json json_scene;
   
@@ -587,8 +217,6 @@ bool LoadScene(const filesystem::path& path, const filesystem::path& base_path, 
   BuildDrawables(json_scene, mesh_identifiers, materials, state->device.Get(), &scene->Drawables);
   
   ReadCamera(json_scene, base_path, state, &scene->Camera, &scene->Lens, &scene->CameraScript);
-
-  ConnectCameraToInput(state, &scene->Camera, &scene->Lens);
 
   return true;
 }

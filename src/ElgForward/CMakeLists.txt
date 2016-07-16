@@ -23,6 +23,8 @@ set(TARGET_ASSETS_DIR "${ROOT_DIR}/assets")
 
 # Sources
 set(TARGET_SOURCES
+  ${TARGET_SOURCE_DIR}/camera_loader.cpp
+  ${TARGET_SOURCE_DIR}/camera_loader.h
   ${TARGET_SOURCE_DIR}/camera_script.h
   ${TARGET_SOURCE_DIR}/chaiscript_helpers.cpp
   ${TARGET_SOURCE_DIR}/chaiscript_helpers.h
@@ -44,6 +46,10 @@ set(TARGET_SOURCES
   ${TARGET_SOURCE_DIR}/hash.h
   ${TARGET_SOURCE_DIR}/index_buffer.cpp
   ${TARGET_SOURCE_DIR}/index_buffer.h
+  ${TARGET_SOURCE_DIR}/json_helpers.cpp
+  ${TARGET_SOURCE_DIR}/json_helpers.h
+  ${TARGET_SOURCE_DIR}/light_loader.cpp
+  ${TARGET_SOURCE_DIR}/light_loader.h
   ${TARGET_SOURCE_DIR}/main.cpp
   ${TARGET_SOURCE_DIR}/material.h
   ${TARGET_SOURCE_DIR}/memory_helpers.h

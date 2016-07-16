@@ -11,12 +11,12 @@
   "materials": [
     {
       "name": "basic",
+      "type": "basic",
       "diffuse": [0.2, 0.4, 0.8, 1],
-      "specular": [0.2, 0.4, 0.8, 1],
-      "vertex_shader": "vs.cso",
-      "pixel_shader": "ps.cso"
+      "specular": [0.2, 0.4, 0.8, 1]
     }
   ],
+  "lights": "assets/lights/cube_lights.json",
   "scene": [
     {
       "name": "cube_drawable",
@@ -40,6 +40,5 @@
       "position": [0.0, 0.0, 0.0]
     },
     "script": "assets/scripts/camera.chai"
-  },
-  "lights": "assets/lights/cube_lights.json"
+  }
 }
