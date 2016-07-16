@@ -176,6 +176,35 @@ bool InitializeDirect3d11(DirectXState* state) {
   return true;
 }
 
+bool InitializeScene(DirectXState* state, Scene* scene) {
+  scene->TransformsConstantBuffer = ConstantBuffer::Create<Transforms>("Transforms", nullptr, state->device.Get());
+  if (!scene->TransformsConstantBuffer.IsValid()) {
+    return false;
+  }
+
+  scene->LightDataConstantBuffer = ConstantBuffer::Create<LightData>("LightData", nullptr, state->device.Get());
+  if (!scene->TransformsConstantBuffer.IsValid()) {
+    return false;
+  }
+
+  scene->DirectionalLightsStructuredBuffer = StructuredBuffer::Create<DirectionalLight>("DirectionalLights", 1000, nullptr, 0, state->device.Get());
+  if (!scene->DirectionalLightsStructuredBuffer.IsValid()) {
+    return false;
+  }
+
+  scene->SpotLightsStructuredBuffer = StructuredBuffer::Create<SpotLight>("SpotLights", 1000, nullptr, 0, state->device.Get());
+  if (!scene->SpotLightsStructuredBuffer.IsValid()) {
+    return false;
+  }
+
+  scene->PointLightsStructuredBuffer = StructuredBuffer::Create<PointLight>("PointLights", 1000, nullptr, 0, state->device.Get());
+  if (!scene->PointLightsStructuredBuffer.IsValid()) {
+    return false;
+  }
+
+  return true;
+}
+
 void UpdateDrawableBuffers(const Drawable& drawable, Scene* scene, DirectXState* state) {
   // Transforms
   auto buffer = ConstantBuffer::GetCpuBuffer<Transforms>(scene->TransformsConstantBuffer);
@@ -316,32 +345,8 @@ int main(int /* argc */, char** /* argv */) {
   }
 
   Scene scene;
+  InitializeScene(&state, &scene);
   LoadScene(base_path / "assets/scenes/cube.json", base_path, &state, &scene);
-
-  scene.TransformsConstantBuffer = ConstantBuffer::Create<Transforms>("Transforms", nullptr, state.device.Get());
-  if (!scene.TransformsConstantBuffer.IsValid()) {
-    return -1;
-  }
-
-  scene.LightDataConstantBuffer = ConstantBuffer::Create<LightData>("LightData", nullptr, state.device.Get());
-  if (!scene.TransformsConstantBuffer.IsValid()) {
-    return -1;
-  }
-
-  scene.DirectionalLightsStructuredBuffer = StructuredBuffer::Create<DirectionalLight>("DirectionalLights", 1000, nullptr, 0, state.device.Get());
-  if (!scene.DirectionalLightsStructuredBuffer.IsValid()) {
-    return -1;
-  }
-
-  scene.SpotLightsStructuredBuffer = StructuredBuffer::Create<SpotLight>("SpotLights", 1000, nullptr, 0, state.device.Get());
-  if (!scene.SpotLightsStructuredBuffer.IsValid()) {
-    return -1;
-  }
-
-  scene.PointLightsStructuredBuffer = StructuredBuffer::Create<PointLight>("PointLights", 1000, nullptr, 0, state.device.Get());
-  if (!scene.PointLightsStructuredBuffer.IsValid()) {
-    return -1;
-  }
 
   while (!Dxfw::ShouldWindowClose(state.window.get())) {
     Update(&scene, &state);

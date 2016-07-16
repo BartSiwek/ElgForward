@@ -12,6 +12,7 @@ struct StructuredBufferTag {};
 
 using StructuredBufferHandle = Handle<8, 24, StructuredBufferTag>;
 
+/* Basic interface */
 StructuredBufferHandle Create(
     size_t name_hash,
     size_t type_hash,
@@ -22,6 +23,29 @@ StructuredBufferHandle Create(
     size_t initial_count,
     ID3D11Device* device);
 
+void* GetCpuBuffer(StructuredBufferHandle handle);
+
+void* GetElementAt(StructuredBufferHandle handle, size_t index);
+
+ID3D11Buffer* GetGpuBuffer(StructuredBufferHandle handle);
+
+ID3D11Buffer** GetAddressOfGpuBuffer(StructuredBufferHandle handle);
+
+ID3D11ShaderResourceView* GetShaderResourceView(StructuredBufferHandle handle);
+
+ID3D11ShaderResourceView** GetAddressOfShaderResourceView(StructuredBufferHandle handle);
+
+void SetCurrentSize(StructuredBufferHandle handle, size_t new_size);
+
+size_t GetCurrentSize(StructuredBufferHandle handle);
+
+bool Add(StructuredBufferHandle handle, void* value);
+
+size_t GetMaxSize(StructuredBufferHandle handle);
+
+bool SendToGpu(StructuredBufferHandle handle, ID3D11DeviceContext* device_context);
+
+/* Extended interface */
 inline StructuredBufferHandle Create(
     const std::string& name,
     size_t type_hash,
@@ -62,34 +86,14 @@ inline StructuredBufferHandle Create(
   return Create(hasher(name), max_size, initial_data, initial_count, device);
 }
 
-void* GetCpuBuffer(StructuredBufferHandle handle);
-
 template<typename T>
 inline T* GetCpuBuffer(StructuredBufferHandle handle) {
   return static_cast<T*>(GetCpuBuffer(handle));
 }
 
-void* GetElementAt(StructuredBufferHandle handle, size_t index);
-
 template<typename T>
-inline void* GetElementAt(StructuredBufferHandle handle, size_t index) {
+inline T* GetElementAt(StructuredBufferHandle handle, size_t index) {
   return static_cast<T*>(GetElementAt(handle, index));
 }
-
-ID3D11Buffer* GetGpuBuffer(StructuredBufferHandle handle);
-
-ID3D11Buffer** GetAddressOfGpuBuffer(StructuredBufferHandle handle);
-
-ID3D11ShaderResourceView* GetShaderResourceView(StructuredBufferHandle handle);
-
-ID3D11ShaderResourceView** GetAddressOfShaderResourceView(StructuredBufferHandle handle);
-
-void SetCurrentSize(StructuredBufferHandle handle, size_t new_size);
-
-size_t GetCurrentSize(StructuredBufferHandle handle);
-
-size_t GetMaxSize(StructuredBufferHandle handle);
-
-bool SendToGpu(StructuredBufferHandle handle, ID3D11DeviceContext* device_context);
 
 }  // namespace StructuredBuffer

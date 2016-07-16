@@ -30,22 +30,6 @@ struct SpotLight {
     DirectionViewSpace = DirectX::XMVector4Transform(DirectionWorldSpace, view_matrix);
   }
 
-  void* operator new(size_t size) {
-    return aligned_new<SpotLight>(size);
-  }
-
-  void operator delete(void* ptr) {
-    return aligned_delete(ptr);
-  }
-
-  void* operator new[](size_t size) {
-    return aligned_new_array<SpotLight>(size);
-  }
-
-  void operator delete[](void* ptr) {
-    return aligned_delete_array(ptr);
-  }
-
   DirectX::XMVECTOR PositionViewSpace;
   DirectX::XMVECTOR PositionWorldSpace;
   DirectX::XMVECTOR DirectionViewSpace;

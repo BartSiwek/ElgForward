@@ -3,9 +3,17 @@
     {
       "type": "point",
       "position": [0.0, 0.0, -5.0],
-      "diffuse": [0.8, 0.8, 0.8, 1],
-      "specular": [0.8, 0.8, 0.8, 1],
+      "diffuse": [0.8, 0.8, 0.8, 1.0],
+      "specular": [0.8, 0.8, 0.8, 1.0],
       "range": 10.0,
+      "intensity": 1.0,
+      "enabled": true
+    },
+    {
+      "type": "directional",
+      "direction": [-1.0, 0.0, 0.0],
+      "diffuse": [1.0, 1.0, 1.0, 1.0],
+      "specular": [0.0, 0.0, 0.0, 1.0],
       "intensity": 1.0,
       "enabled": true
     }

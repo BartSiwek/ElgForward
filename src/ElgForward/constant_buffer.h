@@ -12,6 +12,7 @@ struct ConstantBufferTag {};
 
 using ConstantBufferHandle = Handle<8, 24, ConstantBufferTag>;
 
+/* Basic interface */
 ConstantBufferHandle Create(
     size_t name_hash,
     size_t type_hash,
@@ -20,6 +21,15 @@ ConstantBufferHandle Create(
     void* initial_data,
     ID3D11Device* device);
 
+void* GetCpuBuffer(ConstantBufferHandle handle);
+
+ID3D11Buffer* GetGpuBuffer(ConstantBufferHandle handle);
+
+ID3D11Buffer** GetAddressOfGpuBuffer(ConstantBufferHandle handle);
+
+bool SendToGpu(ConstantBufferHandle handle, ID3D11DeviceContext* device_context);
+
+/* Extended interface */
 inline ConstantBufferHandle Create(
     const std::string& name,
     size_t type_hash,
@@ -54,17 +64,9 @@ inline ConstantBufferHandle Create(
   return Create(hasher(name), initial_data, device);
 }
 
-void* GetCpuBuffer(ConstantBufferHandle handle);
-
 template<typename T>
 inline T* GetCpuBuffer(ConstantBufferHandle handle) {
   return static_cast<T*>(GetCpuBuffer(handle));
 }
-
-ID3D11Buffer* GetGpuBuffer(ConstantBufferHandle handle);
-
-ID3D11Buffer** GetAddressOfGpuBuffer(ConstantBufferHandle handle);
-
-bool SendToGpu(ConstantBufferHandle handle, ID3D11DeviceContext* device_context);
 
 }  // namespace ConstantBuffer

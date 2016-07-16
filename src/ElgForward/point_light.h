@@ -7,9 +7,9 @@
 struct PointLight {
   PointLight()
       : Range(1.0f), Intensity(1.0f), Enabled(true) {
-    PositionWorldSpace = DirectX::XMVectorSet(0.0f, 0.0f, 0.0f, 1.0f);
-    DiffuseColor = DirectX::XMVectorSet(0.0f, 0.0f, 0.0f, 1.0f);
-    SpecularColor = DirectX::XMVectorSet(0.0f, 0.0f, 0.0f, 1.0f);
+        PositionWorldSpace = DirectX::XMVectorSet(0.0f, 0.0f, 0.0f, 1.0f);
+        DiffuseColor = DirectX::XMVectorSet(0.0f, 0.0f, 0.0f, 1.0f);
+        SpecularColor = DirectX::XMVectorSet(0.0f, 0.0f, 0.0f, 1.0f);
   }
 
   PointLight(float world_x, float world_y, float world_z,
@@ -24,22 +24,6 @@ struct PointLight {
 
   void Update(const DirectX::XMMATRIX& view_matrix) {
     PositionViewSpace = DirectX::XMVector4Transform(PositionWorldSpace, view_matrix);
-  }
-
-  void* operator new(size_t size) {
-    return aligned_new<PointLight>(size);
-  }
-
-  void operator delete(void* ptr) {
-    return aligned_delete(ptr);
-  }
-
-  void* operator new[](size_t size) {
-    return aligned_new_array<PointLight>(size);
-  }
-
-  void operator delete[](void* ptr) {
-    return aligned_delete_array(ptr);
   }
 
   DirectX::XMVECTOR PositionViewSpace;

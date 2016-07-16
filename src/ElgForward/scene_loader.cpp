@@ -24,6 +24,103 @@ bool ReadJsonFile(const filesystem::path& path, nlohmann::json* json_scene) {
 
   return true;
 }
+
+bool ReadFloat(const nlohmann::json& json_value, float* output) {
+  if (json_value.is_number_float()) {
+    *output = json_value;
+    return true;
+  }
+
+  if (!json_value.is_array() || json_value.size() != 1) {
+    return false;
+  }
+
+  if (!json_value[0].is_number_float()) {
+    return false;
+  }
+
+  *output = json_value[0];
+  return true;
+}
+
+bool ReadFloat2(const nlohmann::json& json_value, float* output) {
+  if (!json_value.is_array() || json_value.size() != 2) {
+    return false;
+  }
+
+  if (!json_value[0].is_number_float()) {
+    return false;
+  }
+
+  if (!json_value[1].is_number_float()) {
+    return false;
+  }
+
+  output[0] = json_value[0];
+  output[1] = json_value[1];
+  return true;
+}
+
+bool ReadFloat3(const nlohmann::json& json_value, float* output) {
+  if (!json_value.is_array() || json_value.size() != 3) {
+    return false;
+  }
+
+  if (!json_value[0].is_number_float()) {
+    return false;
+  }
+
+  if (!json_value[1].is_number_float()) {
+    return false;
+  }
+
+  if (!json_value[2].is_number_float()) {
+    return false;
+  }
+
+  output[0] = json_value[0];
+  output[1] = json_value[1];
+  output[2] = json_value[2];
+  return true;
+}
+
+bool ReadFloat4(const nlohmann::json& json_value, float* output) {
+  if (!json_value.is_array() || json_value.size() != 4) {
+    return false;
+  }
+
+  if (!json_value[0].is_number_float()) {
+    return false;
+  }
+
+  if (!json_value[1].is_number_float()) {
+    return false;
+  }
+
+  if (!json_value[2].is_number_float()) {
+    return false;
+  }
+
+  if (!json_value[3].is_number_float()) {
+    return false;
+  }
+
+  output[0] = json_value[0];
+  output[1] = json_value[1];
+  output[2] = json_value[2];
+  output[3] = json_value[3];
+  return true;
+}
+
+bool ReadBool(const nlohmann::json& json_value, bool* value) {
+  if (!json_value.is_boolean()) {
+    return false;
+  }
+
+  *value = json_value;
+  return true;
+}
+
 bool ReadOptions(const nlohmann::json& json_options, MeshLoadOptions* options) {
   bool are_valid_options = json_options["index_buffer_format"].is_string();
   if (!are_valid_options) {
@@ -43,7 +140,7 @@ bool ReadOptions(const nlohmann::json& json_options, MeshLoadOptions* options) {
 }
 
 void ReadMeshes(const nlohmann::json& json_scene, const filesystem::path& base_path, ID3D11Device* device, std::vector<MeshIdentifier>* mesh_identifiers) {
-  auto& json_meshes = json_scene["meshes"];
+  const auto& json_meshes = json_scene["meshes"];
 
   for (const auto& json_mesh : json_meshes) {
     bool is_valid_mesh_entry = json_mesh["prefix"].is_string()
@@ -55,7 +152,7 @@ void ReadMeshes(const nlohmann::json& json_scene, const filesystem::path& base_p
       continue;
     }
 
-    auto& json_options = json_mesh["options"];
+    const auto& json_options = json_mesh["options"];
 
     MeshLoadOptions options;
     bool options_ok = ReadOptions(json_options, &options);
@@ -77,7 +174,7 @@ void ReadMeshes(const nlohmann::json& json_scene, const filesystem::path& base_p
 }
 
 void ReadMaterials(const nlohmann::json& json_scene, const filesystem::path& base_path, ID3D11Device* device, std::vector<Material>* materials) {
-  auto& json_materials = json_scene["materials"];
+  const auto& json_materials = json_scene["materials"];
 
   for (const auto& json_material : json_materials) {
     bool is_valid_material_entry = json_material["name"].is_string()
@@ -105,48 +202,140 @@ void ReadMaterials(const nlohmann::json& json_scene, const filesystem::path& bas
   }
 }
 
-bool ReadDirectionalLight(const nlohmann::json& /* json_light*/, DirectionalLight* /* directional_light */) {
-  // TODO
-  return true;
+bool ReadDirectionalLight(const nlohmann::json& json_light, StructuredBuffer::StructuredBufferHandle directional_lights) {
+  DirectionalLight directional_light;
+
+  float direction[3];
+  if (!ReadFloat3(json_light["direction"], direction)) {
+    return false;
+  }
+  directional_light.DirectionWorldSpace = DirectX::XMVectorSet(direction[0], direction[1], direction[2], 0.0f);
+
+  float diffuse[4];
+  if (ReadFloat4(json_light["diffuse"], diffuse)) {
+    directional_light.DiffuseColor = DirectX::XMVectorSet(diffuse[0], diffuse[1], diffuse[2], diffuse[3]);
+  }
+
+  float specular[4];
+  if (ReadFloat4(json_light["specular"], specular)) {
+    directional_light.SpecularColor = DirectX::XMVectorSet(specular[0], specular[1], specular[2], specular[3]);
+  }
+
+  float intensity;
+  if (ReadFloat(json_light["intensity"], &intensity)) {
+    directional_light.Intensity = intensity;
+  }
+
+  bool enabled;
+  if (ReadBool(json_light["enabled"], &enabled)) {
+    directional_light.Enabled = enabled;
+  }
+
+  return StructuredBuffer::Add(directional_lights, &directional_light);
 }
 
-bool ReadSpotLight(const nlohmann::json& /* json_light */, SpotLight* /* spot_light */ ) {
-  // TODO
-  return true;
+bool ReadSpotLight(const nlohmann::json& json_light, StructuredBuffer::StructuredBufferHandle spot_lights) {
+  SpotLight spot_light;
+
+  float position[3];
+  if (!ReadFloat3(json_light["position"], position)) {
+    return false;
+  }
+  spot_light.PositionWorldSpace = DirectX::XMVectorSet(position[0], position[1], position[2], 1.0f);
+
+  float direction[3];
+  if (!ReadFloat3(json_light["direction"], direction)) {
+    return false;
+  }
+  spot_light.DirectionWorldSpace = DirectX::XMVectorSet(direction[0], direction[1], direction[2], 0.0f);
+
+  float diffuse[4];
+  if (ReadFloat4(json_light["diffuse"], diffuse)) {
+    spot_light.DiffuseColor = DirectX::XMVectorSet(diffuse[0], diffuse[1], diffuse[2], diffuse[3]);
+  }
+
+  float specular[4];
+  if (ReadFloat4(json_light["specular"], specular)) {
+    spot_light.SpecularColor = DirectX::XMVectorSet(specular[0], specular[1], specular[2], specular[3]);
+  }
+
+  float angle;
+  if (ReadFloat(json_light["angle"], &angle)) {
+    spot_light.SpotlightAngle = angle;
+  }
+
+  float range;
+  if (ReadFloat(json_light["range"], &range)) {
+    spot_light.Range = range;
+  }
+
+  float intensity;
+  if (ReadFloat(json_light["intensity"], &intensity)) {
+    spot_light.Intensity = intensity;
+  }
+
+  bool enabled;
+  if (ReadBool(json_light["enabled"], &enabled)) {
+    spot_light.Enabled = enabled;
+  }
+
+  return StructuredBuffer::Add(spot_lights, &spot_light);
 }
 
-bool ReadPointLight(const nlohmann::json& /* json_light */, PointLight* point_light) {
-  // TODO
-  *point_light = { 0.0f, 0.0f, -5.0f,
-                   0.8f, 0.8f, 0.8f, 1.0f,
-                   0.8f, 0.8f, 0.8f, 1.0f,
-                   100.0f, 1.0f, true };
+bool ReadPointLight(const nlohmann::json& json_light, StructuredBuffer::StructuredBufferHandle point_lights) {
+  PointLight point_light;
 
-  return true;
+  float position[3];
+  if (!ReadFloat3(json_light["position"], position)) {
+    return false;
+  }
+  point_light.PositionWorldSpace = DirectX::XMVectorSet(position[0], position[1], position[2], 1.0f);
+
+  float diffuse[4];
+  if (ReadFloat4(json_light["diffuse"], diffuse)) {
+    point_light.DiffuseColor = DirectX::XMVectorSet(diffuse[0], diffuse[1], diffuse[2], diffuse[3]);
+  }
+  
+  float specular[4];
+  if (ReadFloat4(json_light["specular"], specular)) {
+    point_light.SpecularColor = DirectX::XMVectorSet(specular[0], specular[1], specular[2], specular[3]);
+  }
+
+  float range;
+  if (ReadFloat(json_light["range"], &range)) {
+    point_light.Range = range;
+  }
+
+  float intensity;
+  if (ReadFloat(json_light["intensity"], &intensity)) {
+    point_light.Intensity = intensity;
+  }
+
+  bool enabled;
+  if (ReadBool(json_light["enabled"], &enabled)) {
+    point_light.Enabled = enabled;
+  }
+
+  return StructuredBuffer::Add(point_lights, &point_light);
 }
 
 void ReadLightsFromJson(const nlohmann::json& json_lights,
                         StructuredBuffer::StructuredBufferHandle directional_lights,
                         StructuredBuffer::StructuredBufferHandle spot_lights,
                         StructuredBuffer::StructuredBufferHandle point_lights) {
-  auto& json_lights_array = json_lights["lights"];
+  const auto& json_lights_array = json_lights["lights"];
   if (!json_lights_array.is_array()) {
     DXFW_TRACE(__FILE__, __LINE__, false, "Invalid lights JSON %S", json_lights.dump().c_str());
     return;
   }
 
-  size_t directional_light_index = 0;
-  size_t spot_light_index = 0;
-  size_t point_light_index = 0;
-
-  for (size_t light_index = 0; light_index < json_lights_array.size(); ++light_index) {
-    auto& json_light = json_lights_array[light_index];
+  for (const auto& json_light : json_lights_array) {
     if (!json_light.is_object()) {
       DXFW_TRACE(__FILE__, __LINE__, false, "Invalid lights entry %S", json_light.dump().c_str());
       continue;
     }
 
-    auto& json_light_type = json_light["type"];
+    const auto& json_light_type = json_light["type"];
     if (!json_light_type.is_string()) {
       DXFW_TRACE(__FILE__, __LINE__, false, "Invalid light type %S", json_light_type.dump().c_str());
       continue;
@@ -154,35 +343,27 @@ void ReadLightsFromJson(const nlohmann::json& json_lights,
 
     const std::string& light_type = json_light_type;
     if (light_type == "directional") {
-      if (directional_light_index >= max_directional_lights) {
-        DXFW_TRACE(__FILE__, __LINE__, false, "Reached max directional lights %d", max_directional_lights);
-        continue;
+      if (!ReadDirectionalLight(json_light, directional_lights)) {
+        DXFW_TRACE(__FILE__, __LINE__, false, "Reached max directional lights");
       }
-
-      if (ReadDirectionalLight(json_light, directional_lights + directional_light_index)) {
-        ++directional_light_index;
-      }
-    } else if (light_type == "spot") {
-      if (spot_light_index >= max_spot_lights) {
-        DXFW_TRACE(__FILE__, __LINE__, false, "Reached max spot lights %d", max_spot_lights);
-        continue;
-      }
-
-      if (ReadSpotLight(json_light, spot_lights + spot_light_index)) {
-        ++spot_light_index;
-      }
-    } else if (light_type == "point") {
-      if (point_light_index >= max_point_lights) {
-        DXFW_TRACE(__FILE__, __LINE__, false, "Reached max point lights %d", max_point_lights);
-        continue;
-      }
-
-      if (ReadPointLight(json_light, point_lights + point_light_index)) {
-        ++point_light_index;
-      }
-    } else {
-      DXFW_TRACE(__FILE__, __LINE__, false, "Invalid light type %S", light_type.c_str());
+      continue;
     }
+    
+    if (light_type == "spot") {
+      if (!ReadSpotLight(json_light, spot_lights)) {
+        DXFW_TRACE(__FILE__, __LINE__, false, "Reached max spot lights");
+      }
+      continue;
+    }
+    
+    if (light_type == "point") {
+      if (!ReadPointLight(json_light, point_lights)) {
+        DXFW_TRACE(__FILE__, __LINE__, false, "Reached max point lights");
+      }
+      continue;
+    }
+
+    DXFW_TRACE(__FILE__, __LINE__, false, "Invalid light type %S", light_type.c_str());
   }
 }
 
@@ -205,7 +386,7 @@ void ReadLights(const nlohmann::json& json_scene, const filesystem::path& base_p
                 StructuredBuffer::StructuredBufferHandle directional_lights,
                 StructuredBuffer::StructuredBufferHandle spot_lights,
                 StructuredBuffer::StructuredBufferHandle point_lights) {
-  auto& json_lights = json_scene["lights"];
+  const auto& json_lights = json_scene["lights"];
 
   if (json_lights.is_string()) {
     const std::string& lights_path = json_lights;
@@ -217,47 +398,28 @@ void ReadDrawableTransform(const nlohmann::json& json_transform, Drawable* drawa
   // Translation
   DirectX::XMMATRIX translation = DirectX::XMMatrixIdentity();
   DirectX::XMMATRIX translation_inverse = DirectX::XMMatrixIdentity();
+
   const auto& json_translation = json_transform["translation"];
-  if (json_translation.is_array() && json_translation.size() == 3) {
-    const auto& translation_x = json_translation[0];
-    const auto& translation_y = json_translation[1];
-    const auto& translation_z = json_translation[2];
-    if (translation_x.is_number_float() && translation_y.is_number_float() && translation_z.is_number_float()) {
-      float translation_x_float = translation_x;
-      float translation_y_float = translation_y;
-      float translation_z_float = translation_z;
-      translation = DirectX::XMMatrixTranslation(translation_x_float, translation_y_float, translation_z_float);
-      translation_inverse = DirectX::XMMatrixTranslation(-translation_x_float, -translation_y_float, -translation_z_float);
-    } else {
-      DXFW_TRACE(__FILE__, __LINE__, false, "Invalid drawable translation %S", json_translation.dump().c_str());
-    }
+
+  float translation_values[3];
+  if (ReadFloat3(json_translation, translation_values)) {
+    translation = DirectX::XMMatrixTranslation(translation_values[0], translation_values[1], translation_values[2]);
+    translation_inverse = DirectX::XMMatrixTranslation(-translation_values[0], -translation_values[1], -translation_values[2]);
   } else {
     DXFW_TRACE(__FILE__, __LINE__, false, "Invalid drawable translation %S", json_translation.dump().c_str());
   }
 
   // Rotation
   DirectX::XMMATRIX rotation = DirectX::XMMatrixIdentity();
+  
   const auto& json_rotation = json_transform["rotation"];
-  if (json_rotation.is_array() && json_rotation.size() == 3) {
-    const auto& rotation_pitch = json_rotation[0];
-    const auto& rotation_yaw = json_rotation[1];
-    const auto& rotation_roll = json_rotation[2];
-    if (rotation_pitch.is_number_float() && rotation_yaw.is_number_float() && rotation_roll.is_number_float()) {
-      rotation = DirectX::XMMatrixRotationRollPitchYaw(rotation_pitch, rotation_yaw, rotation_roll);
-    } else {
-      DXFW_TRACE(__FILE__, __LINE__, false, "Invalid drawable rotation %S", json_rotation.dump().c_str());
-    }
-  } else if (json_rotation.is_array() && json_rotation.size() == 4) {
-    const auto& axis_x = json_rotation[0];
-    const auto& axis_y = json_rotation[1];
-    const auto& axis_z = json_rotation[2];
-    const auto& angle = json_rotation[3];
-    if (axis_x.is_number_float() && axis_y.is_number_float() && axis_z.is_number_float() && angle.is_number_float()) {
-      auto axis = DirectX::XMVectorSet(axis_x, axis_y, axis_z, 0.0f);
-      rotation = DirectX::XMMatrixRotationAxis(axis, DirectX::XMConvertToRadians(angle));
-    } else {
-      DXFW_TRACE(__FILE__, __LINE__, false, "Invalid drawable rotation %S", json_rotation.dump().c_str());
-    }
+
+  float rotation_values[4];
+  if (ReadFloat3(json_rotation, rotation_values)) {
+    rotation = DirectX::XMMatrixRotationRollPitchYaw(rotation_values[0], rotation_values[1], rotation_values[2]);
+  } else if (ReadFloat4(json_rotation, rotation_values)) {
+    auto axis = DirectX::XMVectorSet(rotation_values[0], rotation_values[1], rotation_values[2], 0.0f);
+    rotation = DirectX::XMMatrixRotationAxis(axis, DirectX::XMConvertToRadians(rotation_values[3]));
   } else {
     DXFW_TRACE(__FILE__, __LINE__, false, "Invalid drawable rotation %S", json_rotation.dump().c_str());
   }
@@ -265,21 +427,13 @@ void ReadDrawableTransform(const nlohmann::json& json_transform, Drawable* drawa
   // Scaling
   DirectX::XMMATRIX scaling = DirectX::XMMatrixIdentity();
   DirectX::XMMATRIX scaling_inverse = DirectX::XMMatrixIdentity();
+  
   const auto& json_scale = json_transform["scale"];
-  if (json_scale.is_array() && json_scale.size() == 3) {
-    const auto& scale_x = json_scale[0];
-    const auto& scale_y = json_scale[1];
-    const auto& scale_z = json_scale[2];
-    if (scale_x.is_number_float() && scale_y.is_number_float() && scale_z.is_number_float()) {
-      float scale_x_float = scale_x;
-      float scale_y_float = scale_y;
-      float scale_z_float = scale_z;
 
-      scaling = DirectX::XMMatrixScaling(scale_x_float, scale_y_float, scale_z_float);
-      scaling_inverse = DirectX::XMMatrixScaling(1.0f / scale_x_float, 1.0f / scale_y_float, 1.0f / scale_z_float);
-    } else {
-      DXFW_TRACE(__FILE__, __LINE__, false, "Invalid drawable scaling %S", json_scale.dump().c_str());
-    }
+  float scale_values[3];
+  if (ReadFloat3(json_scale, scale_values)) {
+    scaling = DirectX::XMMatrixScaling(scale_values[0], scale_values[1], scale_values[2]);
+    scaling_inverse = DirectX::XMMatrixScaling(1.0f / scale_values[0], 1.0f / scale_values[1], 1.0f / scale_values[2]);
   } else {
     DXFW_TRACE(__FILE__, __LINE__, false, "Invalid drawable scaling %S", json_scale.dump().c_str());
   }
@@ -292,7 +446,7 @@ void ReadDrawableTransform(const nlohmann::json& json_transform, Drawable* drawa
 }
 
 void BuildDrawables(const nlohmann::json& json_scene, const std::vector<MeshIdentifier>& mesh_indetifiers, const std::vector<Material>& materials, ID3D11Device* device, std::vector<Drawable>* drawables) {
-  auto json_drawables = json_scene["scene"];
+  const auto& json_drawables = json_scene["scene"];
 
   for (const auto& json_drawable : json_drawables) {
     bool is_valid_drawable_entry = json_drawable["name"].is_string()

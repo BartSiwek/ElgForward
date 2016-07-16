@@ -92,16 +92,31 @@ public:
     return m_srv_.GetAddressOf();
   }
 
-  void SetCurrentSize(size_t new_size) {
-    if (new_size < m_max_size_) {
-      m_current_size_ = new_size;
-    } else {
+  bool SetCurrentSize(size_t new_size) {
+    if (new_size > m_max_size_) {
       DXFW_TRACE(__FILE__, __LINE__, true, "Attempted to resize to %d elements on a structured buffer with max size %d", new_size, m_max_size_);
+      return false;
     }
+
+    m_current_size_ = new_size;
+    return true;
   }
 
   size_t GetCurrentSize() const {
     return m_current_size_;
+  }
+
+  bool Add(void* value) {
+    size_t new_size = m_current_size_ + 1;
+    
+    if (new_size > m_max_size_) {
+      DXFW_TRACE(__FILE__, __LINE__, true, "Attempted to add an element to a full structured buffer with max size %d", m_max_size_);
+      return false;
+    }
+
+    std::memcpy(GetElementAt(m_current_size_), value, m_element_size_);
+    m_current_size_ = new_size;
+    return true;
   }
 
   size_t GetMaxSize() const {
@@ -131,10 +146,12 @@ private:
     }
   };
 
-  size_t m_element_size_ = 0;
-  size_t m_element_align_ = 0;
-  size_t m_max_size_ = 0;
+  const size_t m_element_size_ = 0;
+  const size_t m_element_align_ = 0;
+  const size_t m_max_size_ = 0;
+
   size_t m_current_size_ = 0;
+
   std::unique_ptr<void, CpuBufferDeleter> m_cpu_buffer_ = {};
   Microsoft::WRL::ComPtr<ID3D11Buffer> m_gpu_buffer_ = {};
   Microsoft::WRL::ComPtr<ID3D11ShaderResourceView> m_srv_ = {};
@@ -197,11 +214,15 @@ ID3D11ShaderResourceView** GetAddressOfShaderResourceView(StructuredBufferHandle
 }
 
 void SetCurrentSize(StructuredBufferHandle handle, size_t new_size) {
-  g_storage_.Get(handle).Resize(new_size);
+  g_storage_.Get(handle).SetCurrentSize(new_size);
 }
 
 size_t GetCurrentSize(StructuredBufferHandle handle) {
   return g_storage_.Get(handle).GetCurrentSize();
+}
+
+bool Add(StructuredBufferHandle handle, void* value) {
+  return g_storage_.Get(handle).Add(value);
 }
 
 size_t GetMaxSize(StructuredBufferHandle handle) {

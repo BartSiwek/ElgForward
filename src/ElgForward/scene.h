@@ -24,22 +24,6 @@ struct Transforms {
   DirectX::XMMATRIX ModelViewMatrix;
   DirectX::XMMATRIX ModelViewMatrixInverseTranspose;
   DirectX::XMMATRIX ModelViewProjectionMatrix;
-
-  void* operator new(size_t size) {
-    return aligned_new<Transforms>(size);
-  }
-
-  void operator delete(void* ptr) {
-    return aligned_delete(ptr);
-  }
-
-  void* operator new[](size_t size) {
-    return aligned_new_array<Transforms>(size);
-  }
-
-  void operator delete[](void* ptr) {
-    return aligned_delete_array(ptr);
-  }
 };
 
 struct LightData {
