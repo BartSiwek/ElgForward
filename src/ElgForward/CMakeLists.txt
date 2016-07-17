@@ -80,20 +80,22 @@ set(TARGET_SOURCES
   ${TARGET_SOURCE_DIR}/vertex_layout.h
 )
 
-set(TARGET_ASSETS_SHADERS
-  ${TARGET_ASSETS_DIR}/shaders/vs.hlsl
-  ${TARGET_ASSETS_DIR}/shaders/ps.hlsl
+set(TARGET_SHADERS
+  ${TARGET_SOURCE_DIR}/shaders/basic.h
+  ${TARGET_SOURCE_DIR}/shaders/basic_vs.hlsl
+  ${TARGET_SOURCE_DIR}/shaders/basic_ps.hlsl
 )
-source_group(Shaders FILES ${TARGET_ASSETS_SHADERS})
+source_group(Shaders FILES ${TARGET_SHADERS})
 
-set_source_files_properties(${TARGET_ASSETS_DIR}/shaders/vs.hlsl PROPERTIES VS_SHADER_TYPE Vertex VS_SHADER_MODEL 5.0 VS_SHADER_ENTRYPOINT main)
-set_source_files_properties(${TARGET_ASSETS_DIR}/shaders/ps.hlsl PROPERTIES VS_SHADER_TYPE Pixel VS_SHADER_MODEL 5.0 VS_SHADER_ENTRYPOINT main)
+set_source_files_properties(${TARGET_SOURCE_DIR}/shaders/basic.h PROPERTIES VS_SHADER_MODEL 5.0)
+set_source_files_properties(${TARGET_SOURCE_DIR}/shaders/basic_vs.hlsl PROPERTIES VS_SHADER_TYPE Vertex VS_SHADER_MODEL 5.0 VS_SHADER_ENTRYPOINT main)
+set_source_files_properties(${TARGET_SOURCE_DIR}/shaders/basic_ps.hlsl PROPERTIES VS_SHADER_TYPE Pixel VS_SHADER_MODEL 5.0 VS_SHADER_ENTRYPOINT main)
 
 source_group(Sources FILES ${TARGET_SOURCES})
 
 include_directories("${TARGET_INCLUDE_DIR}")
 
-add_executable(ElgForward "${TARGET_SOURCES}" "${TARGET_ASSETS_SHADERS}")
+add_executable(ElgForward "${TARGET_SOURCES}" "${TARGET_SHADERS}")
 
 target_link_libraries(${TARGET_NAME} libdxfw libassimp libjson libchaiscript d3d11.lib D3DCompiler.lib dxguid.lib Shlwapi.lib)
 

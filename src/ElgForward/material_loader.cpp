@@ -22,8 +22,8 @@ bool MaterialTypeFromString(const std::string& /* type */, MaterialType* value) 
 bool ReadBasicMaterial(const nlohmann::json& json_material, const filesystem::path& base_path, DirectXState* state, Material* material) {
   const std::string& name = json_material["name"];
 
-  auto vs_path = base_path / "vs.cso";
-  auto ps_path = base_path / "ps.cso";
+  auto vs_path = base_path / "basic_vs.cso";
+  auto ps_path = base_path / "basic_ps.cso";
 
   return CreateMaterial(name, vs_path, ps_path, state->device.Get(), material);
 }

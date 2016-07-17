@@ -1,5 +1,7 @@
 #pragma pack_matrix(row_major)
 
+#include "basic.h"
+
 cbuffer PerFrameConstants  : register(b0) {
   float4x4 ModelMatrix;
   float4x4 ModelMatrixInverseTranspose;
@@ -37,11 +39,6 @@ struct VertexShaderInput {
   float3 PositionMs : POSITION;
   float3 NormalMs : NORMAL;
   float2 TexCoord : TEXCOORD0;
-};
-
-struct VertexShaderOutput {
-  float4 Position : SV_Position;
-  float4 Color : COLOR;
 };
 
 VertexShaderOutput main(VertexShaderInput input) {
