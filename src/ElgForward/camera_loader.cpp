@@ -45,7 +45,7 @@ void ConnectCameraToInput(DirectXState* state, TrackballCamera* camera, Perspect
   });
 }
 
-void ReadCamera(const nlohmann::json& json_camera, const filesystem::path& base_path, DirectXState* state, TrackballCamera* camera, PerspectiveLens* lens, CameraScript* script) {
+bool ReadCamera(const nlohmann::json& json_camera, const filesystem::path& base_path, DirectXState* state, TrackballCamera* camera, PerspectiveLens* lens, CameraScript* script) {
   const auto& json_lens = json_camera["prespective_lens"];
   if (json_lens.is_object()) {
     const auto& near_plane = json_lens["near_plane"];
@@ -88,4 +88,6 @@ void ReadCamera(const nlohmann::json& json_camera, const filesystem::path& base_
   }
 
   ConnectCameraToInput(state, camera, lens);
+
+  return true;
 }

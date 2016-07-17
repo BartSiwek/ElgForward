@@ -131,14 +131,14 @@ bool ReadPointLight(const nlohmann::json& json_light, StructuredBuffer::Structur
   return StructuredBuffer::Add(point_lights, &point_light);
 }
 
-void ReadLightsFromJson(const nlohmann::json& json_lights,
+bool ReadLightsFromJson(const nlohmann::json& json_lights,
                         StructuredBuffer::StructuredBufferHandle directional_lights,
                         StructuredBuffer::StructuredBufferHandle spot_lights,
                         StructuredBuffer::StructuredBufferHandle point_lights) {
   const auto& json_lights_array = json_lights["lights"];
   if (!json_lights_array.is_array()) {
     DXFW_TRACE(__FILE__, __LINE__, false, "Invalid lights JSON %S", json_lights.dump().c_str());
-    return;
+    return false;
   }
 
   for (const auto& json_light : json_lights_array) {
@@ -177,9 +177,11 @@ void ReadLightsFromJson(const nlohmann::json& json_lights,
 
     DXFW_TRACE(__FILE__, __LINE__, false, "Invalid light type %S", light_type.c_str());
   }
+
+  return true;
 }
 
-void ReadLightsFromFile(const filesystem::path& lights_path,
+bool ReadLightsFromFile(const filesystem::path& lights_path,
                         StructuredBuffer::StructuredBufferHandle directional_lights,
                         StructuredBuffer::StructuredBufferHandle spot_lights,
                         StructuredBuffer::StructuredBufferHandle point_lights) {
@@ -188,8 +190,8 @@ void ReadLightsFromFile(const filesystem::path& lights_path,
   bool load_ok = ReadJsonFile(lights_path, &json_lights);
   if (!load_ok) {
     DXFW_TRACE(__FILE__, __LINE__, false, "Error reading lights file from %s", lights_path.string());
-    return;
+    return false;
   }
 
-  ReadLightsFromJson(json_lights, directional_lights, spot_lights, point_lights);
+  return ReadLightsFromJson(json_lights, directional_lights, spot_lights, point_lights);
 }

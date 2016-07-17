@@ -11,4 +11,4 @@
 #include "perspective_lens.h"
 #include "camera_script.h"
 
-void ReadCamera(const nlohmann::json& json_camera, const filesystem::path& base_path, DirectXState* state, TrackballCamera* camera, PerspectiveLens* lens, CameraScript* script);
+bool ReadCamera(const nlohmann::json& json_camera, const filesystem::path& base_path, DirectXState* state, TrackballCamera* camera, PerspectiveLens* lens, CameraScript* script);
