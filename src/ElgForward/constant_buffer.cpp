@@ -11,6 +11,7 @@
 #include "resource_array.h"
 #include "handle_cache.h"
 
+namespace Rendering {
 namespace ConstantBuffer {
 
 struct Storage {
@@ -141,3 +142,4 @@ bool SendToGpu(Handle handle, ID3D11DeviceContext* device_context) {
 }
 
 }  // namespace ConstantBuffer
+}  // namespace Rendering

@@ -14,6 +14,8 @@
 #include "point_light.h"
 #include "spot_light.h"
 
+using namespace Rendering;
+
 bool ReadDirectionalLight(const nlohmann::json& json_light, StructuredBuffer::Handle directional_lights) {
   DirectionalLight directional_light;
 

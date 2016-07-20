@@ -6,6 +6,7 @@
 
 #include "handle.h"
 
+namespace Rendering {
 namespace StructuredBuffer {
 
 struct StructuredBufferTag {};
@@ -14,14 +15,14 @@ using Handle = Core::Handle<8, 24, StructuredBufferTag>;
 
 /* Basic interface */
 Handle Create(
-    size_t name_hash,
-    size_t type_hash,
-    size_t type_size,
-    size_t type_alignment,
-    size_t max_size,
-    void* initial_data,
-    size_t initial_count,
-    ID3D11Device* device);
+  size_t name_hash,
+  size_t type_hash,
+  size_t type_size,
+  size_t type_alignment,
+  size_t max_size,
+  void* initial_data,
+  size_t initial_count,
+  ID3D11Device* device);
 
 void* GetCpuBuffer(Handle handle);
 
@@ -47,25 +48,25 @@ bool SendToGpu(Handle handle, ID3D11DeviceContext* device_context);
 
 /* Extended interface */
 inline Handle Create(
-    const std::string& name,
-    size_t type_hash,
-    size_t type_size,
-    size_t type_alignment,
-    size_t max_size,
-    void* initial_data,
-    size_t initial_count,
-    ID3D11Device* device) {
+  const std::string& name,
+  size_t type_hash,
+  size_t type_size,
+  size_t type_alignment,
+  size_t max_size,
+  void* initial_data,
+  size_t initial_count,
+  ID3D11Device* device) {
   std::hash<std::string> hasher;
   return Create(hasher(name), type_hash, type_size, type_alignment, max_size, initial_data, initial_count, device);
 }
 
 template<typename T>
 inline Handle Create(
-    size_t name_hash,
-    size_t max_size,
-    T* initial_data,
-    size_t initial_count,
-    ID3D11Device* device) {
+  size_t name_hash,
+  size_t max_size,
+  T* initial_data,
+  size_t initial_count,
+  ID3D11Device* device) {
   const auto& t_info = typeid(T);
 
   size_t type_hash = t_info.hash_code();
@@ -77,11 +78,11 @@ inline Handle Create(
 
 template<typename T>
 inline Handle Create(
-    const std::string& name,
-    size_t max_size,
-    T* initial_data,
-    size_t initial_count,
-    ID3D11Device* device) {
+  const std::string& name,
+  size_t max_size,
+  T* initial_data,
+  size_t initial_count,
+  ID3D11Device* device) {
   std::hash<std::string> hasher;
   return Create(hasher(name), max_size, initial_data, initial_count, device);
 }
@@ -97,3 +98,4 @@ inline T* GetElementAt(Handle handle, size_t index) {
 }
 
 }  // namespace StructuredBuffer
+}  // namespace Rendering

@@ -28,6 +28,8 @@
 #include "trackball_camera.h"
 #include "scene_loader.h"
 
+using namespace Rendering;
+
 bool InitializeDeviceAndSwapChain(DirectXState* state) {
   // Device settings
   UINT create_device_flags = 0;

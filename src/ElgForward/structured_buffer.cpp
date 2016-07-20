@@ -11,6 +11,7 @@
 #include "resource_array.h"
 #include "handle_cache.h"
 
+namespace Rendering {
 namespace StructuredBuffer {
 
 class Storage {
@@ -234,3 +235,4 @@ bool SendToGpu(Handle handle, ID3D11DeviceContext* device_context) {
 }
 
 }  // namespace StructuredBuffer
+}  // namespace Rendering

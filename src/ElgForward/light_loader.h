@@ -9,11 +9,11 @@
 #include "structured_buffer.h"
 
 bool ReadLightsFromFile(const filesystem::path& lights_path,
-                        StructuredBuffer::Handle directional_lights,
-                        StructuredBuffer::Handle spot_lights,
-                        StructuredBuffer::Handle point_lights);
+                        Rendering::StructuredBuffer::Handle directional_lights,
+                        Rendering::StructuredBuffer::Handle spot_lights,
+                        Rendering::StructuredBuffer::Handle point_lights);
 
 bool ReadLightsFromJson(const nlohmann::json& json_lights,
-                        StructuredBuffer::Handle directional_lights,
-                        StructuredBuffer::Handle spot_lights,
-                        StructuredBuffer::Handle point_lights);
+                        Rendering::StructuredBuffer::Handle directional_lights,
+                        Rendering::StructuredBuffer::Handle spot_lights,
+                        Rendering::StructuredBuffer::Handle point_lights);

@@ -6,6 +6,7 @@
 
 #include "handle.h"
 
+namespace Rendering {
 namespace ConstantBuffer {
 
 struct ConstantBufferTag {};
@@ -70,3 +71,4 @@ inline T* GetCpuBuffer(Handle handle) {
 }
 
 }  // namespace ConstantBuffer
+}  // namespace Rendering
