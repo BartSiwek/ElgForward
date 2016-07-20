@@ -102,10 +102,10 @@ private:
   Microsoft::WRL::ComPtr<ID3D11Buffer> m_gpu_buffer_ = {};
 };
 
-ResourceArray<ConstantBufferHandle, Storage, 255> g_storage_;
-HandleCache<size_t, ConstantBufferHandle> g_cache_;
+ResourceArray<Handle, Storage, 255> g_storage_;
+HandleCache<size_t, Handle> g_cache_;
 
-ConstantBufferHandle Create(size_t name_hash, size_t type_hash, size_t type_size, size_t type_alignment, void* initial_data, ID3D11Device* device) {
+Handle Create(size_t name_hash, size_t type_hash, size_t type_size, size_t type_alignment, void* initial_data, ID3D11Device* device) {
   auto cache_key = name_hash;
   hash_combine(cache_key, type_hash);
 
@@ -125,18 +125,18 @@ ConstantBufferHandle Create(size_t name_hash, size_t type_hash, size_t type_size
   return new_handle;
 }
 
-void* GetCpuBuffer(ConstantBufferHandle handle) {
+void* GetCpuBuffer(Handle handle) {
   return g_storage_.Get(handle).GetCpuBuffer();
 }
 
-ID3D11Buffer* GetGpuBuffer(ConstantBufferHandle handle) {
+ID3D11Buffer* GetGpuBuffer(Handle handle) {
   return g_storage_.Get(handle).GetGpuBuffer();
 }
 
-ID3D11Buffer** GetAddressOfGpuBuffer(ConstantBufferHandle handle) {
+ID3D11Buffer** GetAddressOfGpuBuffer(Handle handle) {
   return g_storage_.Get(handle).GetAddressOfGpuBuffer();
 }
-bool SendToGpu(ConstantBufferHandle handle, ID3D11DeviceContext* device_context) {
+bool SendToGpu(Handle handle, ID3D11DeviceContext* device_context) {
   return g_storage_.Get(handle).SendToGpu(device_context);
 }
 

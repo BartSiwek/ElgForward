@@ -9,7 +9,7 @@
 
 struct VertexLayoutTag {};
 
-using VertexLayoutHandle = Handle<8, 24, VertexLayoutTag>;
+using VertexLayoutHandle = Core::Handle<8, 24, VertexLayoutTag>;
 
 VertexLayoutHandle CreateVertexLayout(const std::vector<D3D11_INPUT_ELEMENT_DESC>& input_layout, ID3DBlob* shader_blob, ID3D11Device* device);
 

@@ -57,11 +57,11 @@ struct PixelShader {
 
 struct VertexShaderTag {};
 
-using VertexShaderHandle = Handle<8, 24, VertexShaderTag>;
+using VertexShaderHandle = Core::Handle<8, 24, VertexShaderTag>;
 
 struct PixelShaderTag {};
 
-using PixelShaderHandle = Handle<8, 24, PixelShaderTag>;
+using PixelShaderHandle = Core::Handle<8, 24, PixelShaderTag>;
 
 VertexShaderHandle CreateVertexShader(const filesystem::path& path, const std::unordered_map<std::string, VertexDataChannel>& custom_channel_map, ID3D11Device* device);
 

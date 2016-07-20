@@ -157,10 +157,10 @@ private:
   Microsoft::WRL::ComPtr<ID3D11ShaderResourceView> m_srv_ = {};
 };
 
-ResourceArray<StructuredBufferHandle, Storage, 255> g_storage_;
-HandleCache<size_t, StructuredBufferHandle> g_cache_;
+ResourceArray<Handle, Storage, 255> g_storage_;
+HandleCache<size_t, Handle> g_cache_;
 
-StructuredBufferHandle Create(
+Handle Create(
     size_t name_hash,
     size_t type_hash,
     size_t type_size,
@@ -189,47 +189,47 @@ StructuredBufferHandle Create(
   return new_handle;
 }
 
-void* GetCpuBuffer(StructuredBufferHandle handle) {
+void* GetCpuBuffer(Handle handle) {
   return g_storage_.Get(handle).GetCpuBuffer();
 }
 
-void* GetElementAt(StructuredBufferHandle handle, size_t index) {
+void* GetElementAt(Handle handle, size_t index) {
   return g_storage_.Get(handle).GetElementAt(index);
 }
 
-ID3D11Buffer* GetGpuBuffer(StructuredBufferHandle handle) {
+ID3D11Buffer* GetGpuBuffer(Handle handle) {
   return g_storage_.Get(handle).GetGpuBuffer();
 }
 
-ID3D11Buffer** GetAddressOfGpuBuffer(StructuredBufferHandle handle) {
+ID3D11Buffer** GetAddressOfGpuBuffer(Handle handle) {
   return g_storage_.Get(handle).GetAddressOfGpuBuffer();
 }
 
-ID3D11ShaderResourceView* GetShaderResourceView(StructuredBufferHandle handle) {
+ID3D11ShaderResourceView* GetShaderResourceView(Handle handle) {
   return g_storage_.Get(handle).GetShaderResourceView();
 }
 
-ID3D11ShaderResourceView** GetAddressOfShaderResourceView(StructuredBufferHandle handle) {
+ID3D11ShaderResourceView** GetAddressOfShaderResourceView(Handle handle) {
   return g_storage_.Get(handle).GetAddressOfShaderResourceView();
 }
 
-void SetCurrentSize(StructuredBufferHandle handle, size_t new_size) {
+void SetCurrentSize(Handle handle, size_t new_size) {
   g_storage_.Get(handle).SetCurrentSize(new_size);
 }
 
-size_t GetCurrentSize(StructuredBufferHandle handle) {
+size_t GetCurrentSize(Handle handle) {
   return g_storage_.Get(handle).GetCurrentSize();
 }
 
-bool Add(StructuredBufferHandle handle, void* value) {
+bool Add(Handle handle, void* value) {
   return g_storage_.Get(handle).Add(value);
 }
 
-size_t GetMaxSize(StructuredBufferHandle handle) {
+size_t GetMaxSize(Handle handle) {
   return g_storage_.Get(handle).GetMaxSize();
 }
 
-bool SendToGpu(StructuredBufferHandle handle, ID3D11DeviceContext* device_context) {
+bool SendToGpu(Handle handle, ID3D11DeviceContext* device_context) {
   return g_storage_.Get(handle).SendToGpu(device_context);
 }
 

@@ -32,7 +32,7 @@ struct Mesh {
 
 struct MeshTag {};
 
-using MeshHandle = Handle<8, 24, MeshTag>;
+using MeshHandle = Core::Handle<8, 24, MeshTag>;
 
 struct MeshLoadOptions {
   DXGI_FORMAT IndexBufferFormat = DXGI_FORMAT_R32_UINT;

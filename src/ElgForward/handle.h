@@ -2,6 +2,8 @@
 
 #include <cstdint>
 
+namespace Core {
+
 template<uint8_t I, uint8_t G, typename Tag>
 class Handle {
 public:
@@ -56,3 +58,5 @@ public:
 
   StorageType Index;
 };
+
+}  // namespace Core

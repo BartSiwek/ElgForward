@@ -10,10 +10,10 @@ namespace ConstantBuffer {
 
 struct ConstantBufferTag {};
 
-using ConstantBufferHandle = Handle<8, 24, ConstantBufferTag>;
+using Handle = Core::Handle<8, 24, ConstantBufferTag>;
 
 /* Basic interface */
-ConstantBufferHandle Create(
+Handle Create(
     size_t name_hash,
     size_t type_hash,
     size_t type_size,
@@ -21,16 +21,16 @@ ConstantBufferHandle Create(
     void* initial_data,
     ID3D11Device* device);
 
-void* GetCpuBuffer(ConstantBufferHandle handle);
+void* GetCpuBuffer(Handle handle);
 
-ID3D11Buffer* GetGpuBuffer(ConstantBufferHandle handle);
+ID3D11Buffer* GetGpuBuffer(Handle handle);
 
-ID3D11Buffer** GetAddressOfGpuBuffer(ConstantBufferHandle handle);
+ID3D11Buffer** GetAddressOfGpuBuffer(Handle handle);
 
-bool SendToGpu(ConstantBufferHandle handle, ID3D11DeviceContext* device_context);
+bool SendToGpu(Handle handle, ID3D11DeviceContext* device_context);
 
 /* Extended interface */
-inline ConstantBufferHandle Create(
+inline Handle Create(
     const std::string& name,
     size_t type_hash,
     size_t type_size,
@@ -42,7 +42,7 @@ inline ConstantBufferHandle Create(
 }
 
 template<typename T>
-inline ConstantBufferHandle Create(
+inline Handle Create(
     size_t name_hash,
     T* initial_data,
     ID3D11Device* device) {
@@ -56,7 +56,7 @@ inline ConstantBufferHandle Create(
 }
 
 template<typename T>
-inline ConstantBufferHandle Create(
+inline Handle Create(
     const std::string& name,
     T* initial_data,
     ID3D11Device* device) {
@@ -65,7 +65,7 @@ inline ConstantBufferHandle Create(
 }
 
 template<typename T>
-inline T* GetCpuBuffer(ConstantBufferHandle handle) {
+inline T* GetCpuBuffer(Handle handle) {
   return static_cast<T*>(GetCpuBuffer(handle));
 }
 

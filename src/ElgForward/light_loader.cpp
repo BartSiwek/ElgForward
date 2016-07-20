@@ -14,7 +14,7 @@
 #include "point_light.h"
 #include "spot_light.h"
 
-bool ReadDirectionalLight(const nlohmann::json& json_light, StructuredBuffer::StructuredBufferHandle directional_lights) {
+bool ReadDirectionalLight(const nlohmann::json& json_light, StructuredBuffer::Handle directional_lights) {
   DirectionalLight directional_light;
 
   float direction[3];
@@ -46,7 +46,7 @@ bool ReadDirectionalLight(const nlohmann::json& json_light, StructuredBuffer::St
   return StructuredBuffer::Add(directional_lights, &directional_light);
 }
 
-bool ReadSpotLight(const nlohmann::json& json_light, StructuredBuffer::StructuredBufferHandle spot_lights) {
+bool ReadSpotLight(const nlohmann::json& json_light, StructuredBuffer::Handle spot_lights) {
   SpotLight spot_light;
 
   float position[3];
@@ -94,7 +94,7 @@ bool ReadSpotLight(const nlohmann::json& json_light, StructuredBuffer::Structure
   return StructuredBuffer::Add(spot_lights, &spot_light);
 }
 
-bool ReadPointLight(const nlohmann::json& json_light, StructuredBuffer::StructuredBufferHandle point_lights) {
+bool ReadPointLight(const nlohmann::json& json_light, StructuredBuffer::Handle point_lights) {
   PointLight point_light;
 
   float position[3];
@@ -132,9 +132,9 @@ bool ReadPointLight(const nlohmann::json& json_light, StructuredBuffer::Structur
 }
 
 bool ReadLightsFromJson(const nlohmann::json& json_lights,
-                        StructuredBuffer::StructuredBufferHandle directional_lights,
-                        StructuredBuffer::StructuredBufferHandle spot_lights,
-                        StructuredBuffer::StructuredBufferHandle point_lights) {
+                        StructuredBuffer::Handle directional_lights,
+                        StructuredBuffer::Handle spot_lights,
+                        StructuredBuffer::Handle point_lights) {
   const auto& json_lights_array = json_lights["lights"];
   if (!json_lights_array.is_array()) {
     DXFW_TRACE(__FILE__, __LINE__, false, "Invalid lights JSON %S", json_lights.dump().c_str());
@@ -182,9 +182,9 @@ bool ReadLightsFromJson(const nlohmann::json& json_lights,
 }
 
 bool ReadLightsFromFile(const filesystem::path& lights_path,
-                        StructuredBuffer::StructuredBufferHandle directional_lights,
-                        StructuredBuffer::StructuredBufferHandle spot_lights,
-                        StructuredBuffer::StructuredBufferHandle point_lights) {
+                        StructuredBuffer::Handle directional_lights,
+                        StructuredBuffer::Handle spot_lights,
+                        StructuredBuffer::Handle point_lights) {
   nlohmann::json json_lights;
 
   bool load_ok = ReadJsonFile(lights_path, &json_lights);

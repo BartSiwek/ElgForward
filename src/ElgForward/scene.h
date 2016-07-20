@@ -39,9 +39,9 @@ struct Scene {
   TrackballCamera Camera;
   CameraScript CameraScript;
 
-  ConstantBuffer::ConstantBufferHandle TransformsConstantBuffer;
-  ConstantBuffer::ConstantBufferHandle LightDataConstantBuffer;
-  StructuredBuffer::StructuredBufferHandle DirectionalLightsStructuredBuffer;
-  StructuredBuffer::StructuredBufferHandle SpotLightsStructuredBuffer;
-  StructuredBuffer::StructuredBufferHandle PointLightsStructuredBuffer;
+  ConstantBuffer::Handle TransformsConstantBuffer;
+  ConstantBuffer::Handle LightDataConstantBuffer;
+  StructuredBuffer::Handle DirectionalLightsStructuredBuffer;
+  StructuredBuffer::Handle SpotLightsStructuredBuffer;
+  StructuredBuffer::Handle PointLightsStructuredBuffer;
 };

@@ -9,7 +9,7 @@
 
 struct IndexBufferTag {};
 
-using IndexBufferHandle = Handle<8, 24, IndexBufferTag>;
+using IndexBufferHandle = Core::Handle<8, 24, IndexBufferTag>;
 
 IndexBufferHandle CreateIndexBuffer(size_t hash, const void* data, size_t data_size, ID3D11Device* device);
 

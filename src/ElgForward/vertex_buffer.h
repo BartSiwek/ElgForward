@@ -9,7 +9,7 @@
 
 struct VertexBufferTag {};
 
-using VertexBufferHandle = Handle<8, 24, VertexBufferTag>;
+using VertexBufferHandle = Core::Handle<8, 24, VertexBufferTag>;
 
 VertexBufferHandle CreateVertexBuffer(size_t hash, const void* data, size_t data_size, ID3D11Device* device);
 

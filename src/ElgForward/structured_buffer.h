@@ -10,10 +10,10 @@ namespace StructuredBuffer {
 
 struct StructuredBufferTag {};
 
-using StructuredBufferHandle = Handle<8, 24, StructuredBufferTag>;
+using Handle = Core::Handle<8, 24, StructuredBufferTag>;
 
 /* Basic interface */
-StructuredBufferHandle Create(
+Handle Create(
     size_t name_hash,
     size_t type_hash,
     size_t type_size,
@@ -23,30 +23,30 @@ StructuredBufferHandle Create(
     size_t initial_count,
     ID3D11Device* device);
 
-void* GetCpuBuffer(StructuredBufferHandle handle);
+void* GetCpuBuffer(Handle handle);
 
-void* GetElementAt(StructuredBufferHandle handle, size_t index);
+void* GetElementAt(Handle handle, size_t index);
 
-ID3D11Buffer* GetGpuBuffer(StructuredBufferHandle handle);
+ID3D11Buffer* GetGpuBuffer(Handle handle);
 
-ID3D11Buffer** GetAddressOfGpuBuffer(StructuredBufferHandle handle);
+ID3D11Buffer** GetAddressOfGpuBuffer(Handle handle);
 
-ID3D11ShaderResourceView* GetShaderResourceView(StructuredBufferHandle handle);
+ID3D11ShaderResourceView* GetShaderResourceView(Handle handle);
 
-ID3D11ShaderResourceView** GetAddressOfShaderResourceView(StructuredBufferHandle handle);
+ID3D11ShaderResourceView** GetAddressOfShaderResourceView(Handle handle);
 
-void SetCurrentSize(StructuredBufferHandle handle, size_t new_size);
+void SetCurrentSize(Handle handle, size_t new_size);
 
-size_t GetCurrentSize(StructuredBufferHandle handle);
+size_t GetCurrentSize(Handle handle);
 
-bool Add(StructuredBufferHandle handle, void* value);
+bool Add(Handle handle, void* value);
 
-size_t GetMaxSize(StructuredBufferHandle handle);
+size_t GetMaxSize(Handle handle);
 
-bool SendToGpu(StructuredBufferHandle handle, ID3D11DeviceContext* device_context);
+bool SendToGpu(Handle handle, ID3D11DeviceContext* device_context);
 
 /* Extended interface */
-inline StructuredBufferHandle Create(
+inline Handle Create(
     const std::string& name,
     size_t type_hash,
     size_t type_size,
@@ -60,7 +60,7 @@ inline StructuredBufferHandle Create(
 }
 
 template<typename T>
-inline StructuredBufferHandle Create(
+inline Handle Create(
     size_t name_hash,
     size_t max_size,
     T* initial_data,
@@ -76,7 +76,7 @@ inline StructuredBufferHandle Create(
 }
 
 template<typename T>
-inline StructuredBufferHandle Create(
+inline Handle Create(
     const std::string& name,
     size_t max_size,
     T* initial_data,
@@ -87,12 +87,12 @@ inline StructuredBufferHandle Create(
 }
 
 template<typename T>
-inline T* GetCpuBuffer(StructuredBufferHandle handle) {
+inline T* GetCpuBuffer(Handle handle) {
   return static_cast<T*>(GetCpuBuffer(handle));
 }
 
 template<typename T>
-inline T* GetElementAt(StructuredBufferHandle handle, size_t index) {
+inline T* GetElementAt(Handle handle, size_t index) {
   return static_cast<T*>(GetElementAt(handle, index));
 }
 
