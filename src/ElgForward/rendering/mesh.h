@@ -9,14 +9,18 @@
 #include "rendering/vertex_buffer.h"
 #include "rendering/index_buffer.h"
 
-struct Mesh {
-  Mesh() = default;
+namespace Rendering {
+namespace Mesh {
 
-  Mesh(const Mesh&) = delete;
-  Mesh& operator=(const Mesh&) = delete;
+struct MeshData {
+  MeshData() = default;
+  ~MeshData() = default;
 
-  Mesh(Mesh&&) = default;
-  Mesh& operator=(Mesh&&) = default;
+  MeshData(const MeshData&) = delete;
+  MeshData& operator=(const MeshData&) = delete;
+
+  MeshData(MeshData&&) = default;
+  MeshData& operator=(MeshData&&) = default;
 
   std::vector<Rendering::VertexBuffer::Handle> VertexBuffers = {};
   std::vector<DXGI_FORMAT> VertexBufferFormats = {};
@@ -32,17 +36,13 @@ struct Mesh {
 
 struct MeshTag {};
 
-using MeshHandle = Core::Handle<8, 24, MeshTag>;
+using Handle = Core::Handle<8, 24, MeshTag>;
 
-struct MeshLoadOptions {
-  DXGI_FORMAT IndexBufferFormat = DXGI_FORMAT_R32_UINT;
-};
+Handle Create(size_t mesh_hash, std::unique_ptr<MeshData>&& data);
 
-struct MeshIdentifier {
-  size_t Hash;
-  MeshHandle handle;
-};
+Handle Exists(size_t mesh_hash);
 
-bool CreateMeshes(const std::string& prefix, const filesystem::path& path, const MeshLoadOptions& options, ID3D11Device* device, std::vector<MeshIdentifier>* identifiers);
+MeshData* Retreive(Handle handle);
 
-Mesh* RetreiveMesh(MeshHandle handle);
+}  // namespace Mesh
+}  // namespace Rendering

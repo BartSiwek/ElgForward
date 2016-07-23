@@ -2,6 +2,8 @@
 
 #include <cstdint>
 
+namespace Rendering {
+
 using VertexDataChannelsType = uint32_t;
 
 const size_t MAX_TEXCOORDS = 8;
@@ -39,3 +41,5 @@ inline constexpr VertexDataChannel GetTexCoordsChannel(size_t index) {
 inline constexpr VertexDataChannel GetColorsChannel(size_t index) {
   return static_cast<VertexDataChannel>(static_cast<VertexDataChannelsType>(VertexDataChannel::COLORS0) << index);
 }
+
+}  // namespace Rendering

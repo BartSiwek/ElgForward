@@ -191,6 +191,6 @@ private:
   DirectX::XMMATRIX m_model_matrix_inverse_transpose_ = DirectX::XMMatrixIdentity();
 };
 
-bool CreateDrawable(MeshHandle mesh, const Material& material, ID3D11Device* device, Drawable* drawable);
+bool CreateDrawable(Mesh::Handle mesh, const Material& material, ID3D11Device* device, Drawable* drawable);
 
 }  // namespace Rendering

@@ -53,6 +53,8 @@ set(TARGET_SOURCES_LOADERS
   ${TARGET_SOURCE_DIR}/loaders/light_loader.h
   ${TARGET_SOURCE_DIR}/loaders/material_loader.cpp
   ${TARGET_SOURCE_DIR}/loaders/material_loader.h
+  ${TARGET_SOURCE_DIR}/loaders/mesh_loader.cpp
+  ${TARGET_SOURCE_DIR}/loaders/mesh_loader.h
   ${TARGET_SOURCE_DIR}/loaders/scene_loader.cpp
   ${TARGET_SOURCE_DIR}/loaders/scene_loader.h
 )
@@ -67,6 +69,8 @@ set(TARGET_SOURCES_RENDERING
   ${TARGET_SOURCE_DIR}/rendering/index_buffer.cpp
   ${TARGET_SOURCE_DIR}/rendering/index_buffer.h
   ${TARGET_SOURCE_DIR}/rendering/material.h
+  ${TARGET_SOURCE_DIR}/rendering/mesh.cpp
+  ${TARGET_SOURCE_DIR}/rendering/mesh.h
   ${TARGET_SOURCE_DIR}/rendering/pixel_shader.cpp
   ${TARGET_SOURCE_DIR}/rendering/pixel_shader.h
   ${TARGET_SOURCE_DIR}/rendering/screen.h
@@ -74,6 +78,7 @@ set(TARGET_SOURCES_RENDERING
   ${TARGET_SOURCE_DIR}/rendering/structured_buffer.h
   ${TARGET_SOURCE_DIR}/rendering/vertex_buffer.cpp
   ${TARGET_SOURCE_DIR}/rendering/vertex_buffer.h
+  ${TARGET_SOURCE_DIR}/rendering/vertex_data.h
   ${TARGET_SOURCE_DIR}/rendering/vertex_layout.cpp
   ${TARGET_SOURCE_DIR}/rendering/vertex_layout.h
   ${TARGET_SOURCE_DIR}/rendering/vertex_shader.cpp
@@ -103,11 +108,7 @@ source_group(Sources\\Rendering\\Cameras FILES ${TARGET_SOURCES_RENDERING_CAMERA
 set(TARGET_SOURCES
   ${TARGET_SOURCE_DIR}/directx_state.h
   ${TARGET_SOURCE_DIR}/main.cpp
-  ${TARGET_SOURCE_DIR}/mesh.cpp
-  ${TARGET_SOURCE_DIR}/mesh.h
   ${TARGET_SOURCE_DIR}/scene.h
-  ${TARGET_SOURCE_DIR}/vertex_data.cpp
-  ${TARGET_SOURCE_DIR}/vertex_data.h
 )
 source_group(Sources FILES ${TARGET_SOURCES})
 

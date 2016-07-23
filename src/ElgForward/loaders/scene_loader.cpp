@@ -11,29 +11,12 @@
 #include "loaders/light_loader.h"
 #include "loaders/camera_loader.h"
 #include "loaders/material_loader.h"
+#include "loaders/mesh_loader.h"
 #include "rendering/screen.h"
 #include "rendering/material.h"
-#include "mesh.h"
+#include "rendering/mesh.h"
 
 namespace Loaders {
-
-bool ReadOptions(const nlohmann::json& json_options, MeshLoadOptions* options) {
-  bool are_valid_options = json_options["index_buffer_format"].is_string();
-  if (!are_valid_options) {
-    return false;
-  }
-
-  const std::string& index_buffer_format = json_options["index_buffer_format"];
-  if (index_buffer_format == "32_UINT") {
-    options->IndexBufferFormat = DXGI_FORMAT_R32_UINT;
-    return true;
-  } else if (index_buffer_format == "16_UINT") {
-    options->IndexBufferFormat = DXGI_FORMAT_R16_UINT;
-    return true;
-  } else {
-    return false;
-  }
-}
 
 void ReadMeshes(const nlohmann::json& json_scene, const filesystem::path& base_path, DirectXState* state, std::vector<MeshIdentifier>* mesh_identifiers) {
   const auto& json_meshes = json_scene["meshes"];
@@ -48,23 +31,10 @@ void ReadMeshes(const nlohmann::json& json_scene, const filesystem::path& base_p
       continue;
     }
 
-    const auto& json_options = json_mesh["options"];
-
-    MeshLoadOptions options;
-    bool options_ok = ReadOptions(json_options, &options);
-    if (!options_ok) {
-      DXFW_TRACE(__FILE__, __LINE__, false, "Invalid mesh options %S", json_options.dump().c_str());
+    bool mesh_ok = ReadMesh(json_mesh, base_path, state->device.Get(), mesh_identifiers);
+    if (!mesh_ok) {
+      DXFW_TRACE(__FILE__, __LINE__, false, "Error reading mesh from %S", json_mesh.dump().c_str());
       continue;
-    }
-
-    const std::string& prefix = json_mesh["prefix"];
-    const std::string& path = json_mesh["path"];
-      
-    auto meshes_path = base_path / path;
-
-    bool meshes_ok = CreateMeshes(prefix, meshes_path, options, state->device.Get(), mesh_identifiers);
-    if (!meshes_ok) {
-      DXFW_TRACE(__FILE__, __LINE__, false, "Error loading meshes from %S", meshes_path.string().c_str());
     }
   }
 }

@@ -1,4 +1,4 @@
-#include "mesh.h"
+#include "mesh_loader.h"
 
 #include <fstream>
 #include <memory>
@@ -14,17 +14,27 @@
 #include <assimp/postprocess.h>
 #pragma warning(pop)
 
+#pragma warning(push)
+#pragma warning(disable: 4706)
+#include <json.hpp>
+#pragma warning(pop)
+
 #include <dxfw/dxfw.h>
 
 #include "core/filesystem.h"
 #include "core/hash.h"
-#include "rendering/vertex_buffer.h"
-#include "rendering/index_buffer.h"
 #include "core/resource_array.h"
 #include "core/handle_cache.h"
+#include "rendering/vertex_buffer.h"
+#include "rendering/index_buffer.h"
 
-Core::ResourceArray<MeshHandle, std::unique_ptr<Mesh>, 255> g_storage_;
-Core::HandleCache<size_t, MeshHandle> g_cache_;
+using namespace Rendering;
+
+namespace Loaders {
+
+struct MeshLoadOptions {
+  DXGI_FORMAT IndexBufferFormat = DXGI_FORMAT_R32_UINT;
+};
 
 class AiLogStreamGuard {
 public:
@@ -58,7 +68,7 @@ public:
 };
 
 template<typename T>
-bool AddVertexBufferToMesh(size_t hash, const std::vector<T>& data, DXGI_FORMAT format, VertexDataChannel channel, ID3D11Device* device, Mesh* mesh) {
+bool AddVertexBufferToMesh(size_t hash, const std::vector<T>& data, DXGI_FORMAT format, VertexDataChannel channel, ID3D11Device* device, Mesh::MeshData* mesh) {
   auto vb_handle = Rendering::VertexBuffer::Create(hash, data, device);
   if (!vb_handle.IsValid()) {
     return false;
@@ -72,7 +82,7 @@ bool AddVertexBufferToMesh(size_t hash, const std::vector<T>& data, DXGI_FORMAT 
   return true;
 }
 
-bool PrepareFloat1VertexBuffer(size_t base_hash, const aiVector3D* input, uint32_t vertex_count, VertexDataChannel channel, ID3D11Device* device, Mesh* mesh) {
+bool PrepareFloat1VertexBuffer(size_t base_hash, const aiVector3D* input, uint32_t vertex_count, VertexDataChannel channel, ID3D11Device* device, Mesh::MeshData* mesh) {
   using EntryType = float;
 
   std::vector<EntryType> data(vertex_count);
@@ -88,7 +98,7 @@ bool PrepareFloat1VertexBuffer(size_t base_hash, const aiVector3D* input, uint32
   return true;
 }
 
-bool PrepareFloat2VertexBuffer(size_t base_hash, const aiVector3D* input, uint32_t vertex_count, VertexDataChannel channel, ID3D11Device* device, Mesh* mesh) {
+bool PrepareFloat2VertexBuffer(size_t base_hash, const aiVector3D* input, uint32_t vertex_count, VertexDataChannel channel, ID3D11Device* device, Mesh::MeshData* mesh) {
   using EntryType = DirectX::XMFLOAT2;
 
   std::vector<EntryType> data(vertex_count);
@@ -105,7 +115,7 @@ bool PrepareFloat2VertexBuffer(size_t base_hash, const aiVector3D* input, uint32
   return true;
 }
 
-bool PrepareFloat3VertexBuffer(size_t base_hash, const aiVector3D* input, uint32_t vertex_count, VertexDataChannel channel, ID3D11Device* device, Mesh* mesh) {
+bool PrepareFloat3VertexBuffer(size_t base_hash, const aiVector3D* input, uint32_t vertex_count, VertexDataChannel channel, ID3D11Device* device, Mesh::MeshData* mesh) {
   using EntryType = DirectX::XMFLOAT3;
 
   std::vector<EntryType> data(vertex_count);
@@ -123,7 +133,7 @@ bool PrepareFloat3VertexBuffer(size_t base_hash, const aiVector3D* input, uint32
   return true;
 }
 
-bool PrepareFloat4VertexBuffer(size_t base_hash, const aiColor4D* input, uint32_t vertex_count, VertexDataChannel channel, ID3D11Device* device, Mesh* mesh) {
+bool PrepareFloat4VertexBuffer(size_t base_hash, const aiColor4D* input, uint32_t vertex_count, VertexDataChannel channel, ID3D11Device* device, Mesh::MeshData* mesh) {
   using EntryType = DirectX::XMFLOAT4;
 
   std::vector<EntryType> data(vertex_count);
@@ -142,6 +152,24 @@ bool PrepareFloat4VertexBuffer(size_t base_hash, const aiColor4D* input, uint32_
   return true;
 }
 
+bool ReadOptions(const nlohmann::json& json_options, MeshLoadOptions* options) {
+  bool are_valid_options = json_options["index_buffer_format"].is_string();
+  if (!are_valid_options) {
+    return false;
+  }
+
+  const std::string& index_buffer_format = json_options["index_buffer_format"];
+  if (index_buffer_format == "32_UINT") {
+    options->IndexBufferFormat = DXGI_FORMAT_R32_UINT;
+    return true;
+  } else if (index_buffer_format == "16_UINT") {
+    options->IndexBufferFormat = DXGI_FORMAT_R16_UINT;
+    return true;
+  } else {
+    return false;
+  }
+}
+
 bool ValidateOptions(const MeshLoadOptions& options) {
   if (options.IndexBufferFormat != DXGI_FORMAT_R32_UINT && options.IndexBufferFormat != DXGI_FORMAT_R16_UINT) {
     return false;
@@ -150,7 +178,7 @@ bool ValidateOptions(const MeshLoadOptions& options) {
   return true;
 }
 
-bool LoadIndexBuffer32UInt(size_t hash, const aiMesh& imported_mesh, ID3D11Device* device, Mesh* mesh) {
+bool LoadIndexBuffer32UInt(size_t hash, const aiMesh& imported_mesh, ID3D11Device* device, Mesh::MeshData* mesh) {
   std::vector<uint32_t> indices;
   for (size_t face_index = 0; face_index < imported_mesh.mNumFaces; ++face_index) {
     for (size_t index_index = 0; index_index < imported_mesh.mFaces[face_index].mNumIndices; ++index_index) {
@@ -170,7 +198,7 @@ bool LoadIndexBuffer32UInt(size_t hash, const aiMesh& imported_mesh, ID3D11Devic
   return true;
 }
 
-bool LoadIndexBuffer16UInt(size_t hash, const aiMesh& imported_mesh, ID3D11Device* device, Mesh* mesh) {
+bool LoadIndexBuffer16UInt(size_t hash, const aiMesh& imported_mesh, ID3D11Device* device, Mesh::MeshData* mesh) {
   std::vector<uint16_t> indices;
   for (size_t face_index = 0; face_index < imported_mesh.mNumFaces; ++face_index) {
     for (size_t index_index = 0; index_index < imported_mesh.mFaces[face_index].mNumIndices; ++index_index) {
@@ -190,7 +218,7 @@ bool LoadIndexBuffer16UInt(size_t hash, const aiMesh& imported_mesh, ID3D11Devic
   return true;
 }
 
-bool CreateMeshes(const std::string& prefix, const filesystem::path& path, const MeshLoadOptions& options, ID3D11Device* device, std::vector<MeshIdentifier>* identifiers) {
+bool ReadMeshes(const std::string& prefix, const filesystem::path& path, const MeshLoadOptions& options, ID3D11Device* device, std::vector<MeshIdentifier>* identifiers) {
   if (identifiers == nullptr) {
     DXFW_TRACE(__FILE__, __LINE__, true, "Got a null identifier vector pointer", nullptr);
     return false;
@@ -217,7 +245,7 @@ bool CreateMeshes(const std::string& prefix, const filesystem::path& path, const
     std::string mesh_name = prefix + ' ' + imported_mesh->mName.C_Str();
     size_t mesh_hash = std::hash<std::string>()(mesh_name);
 
-    auto cached_handle = g_cache_.Get(mesh_hash);
+    auto cached_handle = Mesh::Exists(mesh_hash);
     if (cached_handle.IsValid()) {
       identifiers->emplace_back(MeshIdentifier{ mesh_hash, cached_handle });
       continue;
@@ -228,7 +256,7 @@ bool CreateMeshes(const std::string& prefix, const filesystem::path& path, const
       return false;
     }
 
-    auto mesh = std::make_unique<Mesh>();
+    auto mesh = std::make_unique<Mesh::MeshData>();
 
     uint32_t vertex_count = imported_mesh->mNumVertices;
 
@@ -297,14 +325,35 @@ bool CreateMeshes(const std::string& prefix, const filesystem::path& path, const
       return false;
     }
 
-    auto new_mesh_handle = g_storage_.Add(std::move(mesh));
-    g_cache_.Set(mesh_hash, new_mesh_handle);
+    auto new_mesh_handle = Mesh::Create(mesh_hash, std::move(mesh));
     identifiers->emplace_back(MeshIdentifier{ mesh_hash, new_mesh_handle });
   }
 
   return true;
 }
 
-Mesh* RetreiveMesh(MeshHandle handle) {
-  return g_storage_.Get(handle).get();
+bool ReadMesh(const nlohmann::json& json_mesh, const filesystem::path& base_path, ID3D11Device* device, std::vector<MeshIdentifier>* mesh_identifiers) {
+  const auto& json_options = json_mesh["options"];
+
+  MeshLoadOptions options;
+  bool options_ok = ReadOptions(json_options, &options);
+  if (!options_ok) {
+    DXFW_TRACE(__FILE__, __LINE__, false, "Invalid mesh options %S", json_options.dump().c_str());
+    return false;
+  }
+
+  const std::string& prefix = json_mesh["prefix"];
+  const std::string& path = json_mesh["path"];
+
+  auto meshes_path = base_path / path;
+
+  bool meshes_ok = ReadMeshes(prefix, meshes_path, options, device, mesh_identifiers);
+  if (!meshes_ok) {
+    DXFW_TRACE(__FILE__, __LINE__, false, "Error loading meshes from %S", meshes_path.string().c_str());
+    return false;
+  }
+
+  return true;
 }
+
+}  // namespace Loaders
