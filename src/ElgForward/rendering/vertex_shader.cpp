@@ -1,4 +1,4 @@
-#include "shader.h"
+#include "rendering/vertex_shader.h"
 
 #include <d3d11.h>
 #include <D3Dcompiler.h>
@@ -14,11 +14,11 @@
 #include "core/resource_array.h"
 #include "core/handle_cache.h"
 
-Core::ResourceArray<VertexShaderHandle, VertexShader, 255> g_vertex_shader_storage_;
-Core::HandleCache<size_t, VertexShaderHandle> g_vertex_shader_cache_;
+namespace Rendering {
+namespace VertexShader {
 
-Core::ResourceArray<PixelShaderHandle, PixelShader, 255> g_pixel_shader_storage_;
-Core::HandleCache<size_t, PixelShaderHandle> g_pixel_shader_cache_;
+Core::ResourceArray<Handle, ShaderData, 255> g_vertex_shader_storage_;
+Core::HandleCache<size_t, Handle> g_vertex_shader_cache_;
 
 const std::unordered_map<std::string, VertexDataChannel>& GetStandardChannelMap() {
   static std::unordered_map<std::string, VertexDataChannel> standard_channel_map = {
@@ -78,9 +78,9 @@ bool MapSemanticsToChannel(const char* semantic_name, uint32_t index, const std:
   return false;
 }
 
-bool ReflectShader(VertexShader* shader, const std::unordered_map<std::string, VertexDataChannel>& custom_channel_map) {
+bool ReflectShader(ShaderData* data, const std::unordered_map<std::string, VertexDataChannel>& custom_channel_map) {
   Microsoft::WRL::ComPtr<ID3D11ShaderReflection> reflector;
-  HRESULT reflector_creation_result = D3DReflect(shader->Buffer->GetBufferPointer(), shader->Buffer->GetBufferSize(), IID_ID3D11ShaderReflection, (void**)reflector.GetAddressOf());
+  HRESULT reflector_creation_result = D3DReflect(data->Buffer->GetBufferPointer(), data->Buffer->GetBufferSize(), IID_ID3D11ShaderReflection, (void**)reflector.GetAddressOf());
   if (FAILED(reflector_creation_result)) {
     DXFW_DIRECTX_TRACE(__FILE__, __LINE__, true, reflector_creation_result);
     return false;
@@ -104,13 +104,13 @@ bool ReflectShader(VertexShader* shader, const std::unordered_map<std::string, V
       return false;
     }
 
-    shader->InputDescription.emplace_back(param_desc.SemanticName, param_desc.SemanticIndex, channel, component_count, param_desc.ComponentType);
+    data->InputDescription.emplace_back(param_desc.SemanticName, param_desc.SemanticIndex, channel, component_count, param_desc.ComponentType);
   }
 
   return true;
 }
 
-VertexShaderHandle CreateVertexShader(const filesystem::path& path, const std::unordered_map<std::string, VertexDataChannel>& custom_channel_map, ID3D11Device* device) {
+Handle Create(const filesystem::path& path, const std::unordered_map<std::string, VertexDataChannel>& custom_channel_map, ID3D11Device* device) {
   std::hash<filesystem::path> hasher;
   size_t path_hash = hasher(path);
 
@@ -119,69 +119,37 @@ VertexShaderHandle CreateVertexShader(const filesystem::path& path, const std::u
     return cached_handle;
   }
 
-  auto vertex_shader = VertexShader();
+  auto data = ShaderData();
   
-  HRESULT load_result = D3DReadFileToBlob(path.c_str(), vertex_shader.Buffer.GetAddressOf());
+  HRESULT load_result = D3DReadFileToBlob(path.c_str(), data.Buffer.GetAddressOf());
   if (FAILED(load_result)) {
     DXFW_DIRECTX_TRACE(__FILE__, __LINE__, true, load_result);
     return {};
   }
 
-  HRESULT shader_creation_result = device->CreateVertexShader(vertex_shader.Buffer->GetBufferPointer(), 
-                                                              vertex_shader.Buffer->GetBufferSize(), 
+  HRESULT shader_creation_result = device->CreateVertexShader(data.Buffer->GetBufferPointer(),
+                                                              data.Buffer->GetBufferSize(),
                                                               nullptr,
-                                                              vertex_shader.Shader.GetAddressOf());
+                                                              data.Shader.GetAddressOf());
   
   if (FAILED(shader_creation_result)) {
     DXFW_DIRECTX_TRACE(__FILE__, __LINE__, true, shader_creation_result);
     return {};
   }
 
-  bool relfection_ok = ReflectShader(&vertex_shader, custom_channel_map);
+  bool relfection_ok = ReflectShader(&data, custom_channel_map);
   if (!relfection_ok) {
     return {};
   }
 
-  auto new_handle = g_vertex_shader_storage_.Add(std::move(vertex_shader));
+  auto new_handle = g_vertex_shader_storage_.Add(std::move(data));
   g_vertex_shader_cache_.Set(path_hash, new_handle);
   return new_handle;
 }
 
-VertexShader* RetreiveVertexShader(VertexShaderHandle handle) {
+ShaderData* Retreive(Handle handle) {
   return &g_vertex_shader_storage_.Get(handle);
 }
 
-PixelShaderHandle CreatePixelShader(const filesystem::path& path, ID3D11Device* device) {
-  std::hash<filesystem::path> hasher;
-  size_t path_hash = hasher(path);
-
-  auto cached_handle = g_pixel_shader_cache_.Get(path_hash);
-  if (cached_handle.IsValid()) {
-    return cached_handle;
-  }
-  
-  auto pixel_shader = PixelShader();
-  HRESULT load_result = D3DReadFileToBlob(path.c_str(), pixel_shader.Buffer.GetAddressOf());
-  if (FAILED(load_result)) {
-    DXFW_DIRECTX_TRACE(__FILE__, __LINE__, true, load_result);
-    return {};
-  }
-
-  HRESULT shader_creation_result = device->CreatePixelShader(pixel_shader.Buffer->GetBufferPointer(),
-                                                             pixel_shader.Buffer->GetBufferSize(),
-                                                             nullptr,
-                                                             pixel_shader.Shader.GetAddressOf());
-
-  if (FAILED(shader_creation_result)) {
-    DXFW_DIRECTX_TRACE(__FILE__, __LINE__, true, shader_creation_result);
-    return {};
-  }
-
-  auto new_handle = g_pixel_shader_storage_.Add(std::move(pixel_shader));
-  g_pixel_shader_cache_.Set(path_hash, new_handle);
-  return new_handle;
-}
-
-PixelShader* RetreivePixelShader(PixelShaderHandle handle) {
-  return &g_pixel_shader_storage_.Get(handle);
-}
+}  // namespace VertexShader
+}  // namespace Rendering

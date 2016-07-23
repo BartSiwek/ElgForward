@@ -20,7 +20,7 @@
   "scene": [
     {
       "name": "cube_drawable",
-      "mesh_name": "cube g cube",
+      "mesh_name": "cube cube",
       "material_name": "basic",
       "transform" : {
         "translation": [0.0, 0.0, 0.0],

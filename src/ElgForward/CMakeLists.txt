@@ -65,12 +65,16 @@ set(TARGET_SOURCES_RENDERING
   ${TARGET_SOURCE_DIR}/rendering/drawable.h
   ${TARGET_SOURCE_DIR}/rendering/index_buffer.cpp
   ${TARGET_SOURCE_DIR}/rendering/index_buffer.h
+  ${TARGET_SOURCE_DIR}/rendering/pixel_shader.cpp
+  ${TARGET_SOURCE_DIR}/rendering/pixel_shader.h
   ${TARGET_SOURCE_DIR}/rendering/structured_buffer.cpp
   ${TARGET_SOURCE_DIR}/rendering/structured_buffer.h
   ${TARGET_SOURCE_DIR}/rendering/vertex_buffer.cpp
   ${TARGET_SOURCE_DIR}/rendering/vertex_buffer.h
   ${TARGET_SOURCE_DIR}/rendering/vertex_layout.cpp
   ${TARGET_SOURCE_DIR}/rendering/vertex_layout.h
+  ${TARGET_SOURCE_DIR}/rendering/vertex_shader.cpp
+  ${TARGET_SOURCE_DIR}/rendering/vertex_shader.h
 )
 source_group(Sources\\Rendering FILES ${TARGET_SOURCES_RENDERING})
 
@@ -92,8 +96,6 @@ set(TARGET_SOURCES
   ${TARGET_SOURCE_DIR}/perspective_lens.h
   ${TARGET_SOURCE_DIR}/scene.h
   ${TARGET_SOURCE_DIR}/screen.h
-  ${TARGET_SOURCE_DIR}/shader.cpp
-  ${TARGET_SOURCE_DIR}/shader.h
   ${TARGET_SOURCE_DIR}/trackball_camera.cpp
   ${TARGET_SOURCE_DIR}/trackball_camera.h
   ${TARGET_SOURCE_DIR}/vertex_data.cpp

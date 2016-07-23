@@ -8,7 +8,6 @@
 #include <dxfw/dxfw.h>
 
 #include "core/hash.h"
-#include "shader.h"
 #include "core/resource_array.h"
 #include "core/handle_cache.h"
 

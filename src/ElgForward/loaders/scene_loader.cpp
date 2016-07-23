@@ -145,15 +145,25 @@ void BuildDrawables(const nlohmann::json& json_scene, const std::vector<MeshIden
       return mesh_name_hash == identifier.Hash;
     });
 
+    if (mesh_indetifier_it == std::end(mesh_indetifiers)) {
+      DXFW_TRACE(__FILE__, __LINE__, false, "Error creating drawable from mesh %S and material %S - mesh not found", mesh_name.c_str(), material_name.c_str());
+      continue;
+    }
+
     auto material_it = std::find_if(std::begin(materials), std::end(materials), [material_name_hash](const auto& material) {
       return material_name_hash == material.Hash;
     });
+
+    if (material_it == std::end(materials)) {
+      DXFW_TRACE(__FILE__, __LINE__, false, "Error creating drawable from mesh %S and material %S - material not found", mesh_name.c_str(), material_name.c_str());
+      continue;
+    }
 
     drawables->emplace_back();
     auto& drawable = drawables->back();
     bool drawable_ok = CreateDrawable(mesh_indetifier_it->handle, *material_it, state->device.Get(), &drawable);
     if (!drawable_ok) {
-      DXFW_TRACE(__FILE__, __LINE__, false, "Error creating drawable from mesh %S and material %S", mesh_name, material_name);
+      DXFW_TRACE(__FILE__, __LINE__, false, "Error creating drawable from mesh %S and material %S - CreateDrawable failed", mesh_name.c_str(), material_name.c_str());
       continue;
     }
 

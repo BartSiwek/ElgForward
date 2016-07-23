@@ -73,8 +73,8 @@ bool IsVertexBufferFormatCompatible(uint32_t component_count, D3D_REGISTER_COMPO
 
 bool CreateDrawable(MeshHandle mesh_handle, const Material& material, ID3D11Device* device, Drawable* drawable) {
   auto mesh_ptr = RetreiveMesh(mesh_handle);
-  auto vertex_shader_ptr = RetreiveVertexShader(material.VertexShader);
-  auto pixel_shader_ptr = RetreivePixelShader(material.PixelShader);
+  auto vertex_shader_ptr = Rendering::VertexShader::Retreive(material.VertexShader);
+  auto pixel_shader_ptr = Rendering::PixelShader::Retreive(material.PixelShader);
 
   std::vector<D3D11_INPUT_ELEMENT_DESC> input_layout_desc;
 
