@@ -4,16 +4,13 @@
 
 #include <d3d11.h>
 
-#include "memory_helpers.h"
+#include "core/memory_helpers.h"
 #include "perspective_lens.h"
 #include "trackball_camera.h"
 #include "camera_script.h"
-#include "drawable.h"
-#include "constant_buffer.h"
-#include "structured_buffer.h"
-#include "directional_light.h"
-#include "spot_light.h"
-#include "point_light.h"
+#include "rendering/drawable.h"
+#include "rendering/constant_buffer.h"
+#include "rendering/structured_buffer.h"
 
 struct Transforms {
   DirectX::XMMATRIX ModelMatrix;
@@ -34,7 +31,7 @@ struct LightData {
 };
 
 struct Scene {
-  std::vector<Drawable> Drawables;
+  std::vector<Rendering::Drawable> Drawables;
   PerspectiveLens Lens;
   TrackballCamera Camera;
   CameraScript CameraScript;

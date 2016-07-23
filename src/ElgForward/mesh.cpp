@@ -16,15 +16,15 @@
 
 #include <dxfw/dxfw.h>
 
-#include "filesystem.h"
-#include "hash.h"
-#include "vertex_buffer.h"
-#include "index_buffer.h"
-#include "resource_array.h"
-#include "handle_cache.h"
+#include "core/filesystem.h"
+#include "core/hash.h"
+#include "rendering/vertex_buffer.h"
+#include "rendering/index_buffer.h"
+#include "core/resource_array.h"
+#include "core/handle_cache.h"
 
-ResourceArray<MeshHandle, std::unique_ptr<Mesh>, 255> g_storage_;
-HandleCache<size_t, MeshHandle> g_cache_;
+Core::ResourceArray<MeshHandle, std::unique_ptr<Mesh>, 255> g_storage_;
+Core::HandleCache<size_t, MeshHandle> g_cache_;
 
 class AiLogStreamGuard {
 public:
@@ -59,7 +59,7 @@ public:
 
 template<typename T>
 bool AddVertexBufferToMesh(size_t hash, const std::vector<T>& data, DXGI_FORMAT format, VertexDataChannel channel, ID3D11Device* device, Mesh* mesh) {
-  auto vb_handle = CreateVertexBuffer(hash, data, device);
+  auto vb_handle = Rendering::VertexBuffer::Create(hash, data, device);
   if (!vb_handle.IsValid()) {
     return false;
   }
@@ -158,7 +158,7 @@ bool LoadIndexBuffer32UInt(size_t hash, const aiMesh& imported_mesh, ID3D11Devic
     }
   }
 
-  auto index_buffer_handle = CreateIndexBuffer(hash, indices, device);
+  auto index_buffer_handle = Rendering::IndexBuffer::Create(hash, indices, device);
   if (!index_buffer_handle.IsValid()) {
     return false;
   }
@@ -178,7 +178,7 @@ bool LoadIndexBuffer16UInt(size_t hash, const aiMesh& imported_mesh, ID3D11Devic
     }
   }
 
-  auto index_buffer_handle = CreateIndexBuffer(hash, indices, device);
+  auto index_buffer_handle = Rendering::IndexBuffer::Create(hash, indices, device);
   if (!index_buffer_handle.IsValid()) {
     return false;
   }

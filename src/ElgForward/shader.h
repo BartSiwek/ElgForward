@@ -6,9 +6,9 @@
 #include <d3d11.h>
 #include <wrl.h>
 
-#include "filesystem.h"
+#include "core/filesystem.h"
 #include "vertex_data.h"
-#include "handle.h"
+#include "core/handle.h"
 
 struct VertexShaderInputDescription {
   VertexShaderInputDescription(const char* name, uint32_t index, VertexDataChannel channel, uint32_t component_count, D3D_REGISTER_COMPONENT_TYPE component_type)

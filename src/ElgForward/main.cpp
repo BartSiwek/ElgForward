@@ -13,20 +13,23 @@
 #include <wrl.h>
 #endif
 
-#include "filesystem.h"
-#include "dxfw_wrapper.h"
-#include "dxfw_helpers.h"
+#include "core/filesystem.h"
+#include "dxfw/dxfw_wrapper.h"
+#include "dxfw/dxfw_helpers.h"
 #include "directx_state.h"
 #include "scene.h"
-#include "constant_buffer.h"
+#include "rendering/constant_buffer.h"
+#include "rendering/lights/directional_light.h"
+#include "rendering/lights/point_light.h"
+#include "rendering/lights/spot_light.h"
 #include "mesh.h"
-#include "vertex_layout.h"
+#include "rendering/vertex_layout.h"
 #include "material.h"
-#include "drawable.h"
+#include "rendering/drawable.h"
 #include "screen.h"
 #include "perspective_lens.h"
 #include "trackball_camera.h"
-#include "scene_loader.h"
+#include "loaders/scene_loader.h"
 
 using namespace Rendering;
 
@@ -189,17 +192,17 @@ bool InitializeScene(DirectXState* state, Scene* scene) {
     return false;
   }
 
-  scene->DirectionalLightsStructuredBuffer = StructuredBuffer::Create<DirectionalLight>("DirectionalLights", 1000, nullptr, 0, state->device.Get());
+  scene->DirectionalLightsStructuredBuffer = StructuredBuffer::Create<Rendering::Lights::DirectionalLight>("DirectionalLights", 1000, nullptr, 0, state->device.Get());
   if (!scene->DirectionalLightsStructuredBuffer.IsValid()) {
     return false;
   }
 
-  scene->SpotLightsStructuredBuffer = StructuredBuffer::Create<SpotLight>("SpotLights", 1000, nullptr, 0, state->device.Get());
+  scene->SpotLightsStructuredBuffer = StructuredBuffer::Create<Rendering::Lights::SpotLight>("SpotLights", 1000, nullptr, 0, state->device.Get());
   if (!scene->SpotLightsStructuredBuffer.IsValid()) {
     return false;
   }
 
-  scene->PointLightsStructuredBuffer = StructuredBuffer::Create<PointLight>("PointLights", 1000, nullptr, 0, state->device.Get());
+  scene->PointLightsStructuredBuffer = StructuredBuffer::Create<Rendering::Lights::PointLight>("PointLights", 1000, nullptr, 0, state->device.Get());
   if (!scene->PointLightsStructuredBuffer.IsValid()) {
     return false;
   }
@@ -256,7 +259,7 @@ void Render(Scene* scene, DirectXState* state) {
 
 void UpdateFrameBuffers(Scene* scene, DirectXState* state) {
   // Point lights
-  auto point_light_cpu_buffer = StructuredBuffer::GetCpuBuffer<PointLight>(scene->PointLightsStructuredBuffer);
+  auto point_light_cpu_buffer = StructuredBuffer::GetCpuBuffer<Rendering::Lights::PointLight>(scene->PointLightsStructuredBuffer);
   for (auto point_light = point_light_cpu_buffer,
        point_light_end = point_light_cpu_buffer + StructuredBuffer::GetCurrentSize(scene->PointLightsStructuredBuffer);
        point_light != point_light_end;
@@ -272,7 +275,7 @@ void UpdateFrameBuffers(Scene* scene, DirectXState* state) {
   }
 
   // Spot lights
-  auto spot_light_cpu_buffer = StructuredBuffer::GetCpuBuffer<SpotLight>(scene->SpotLightsStructuredBuffer);
+  auto spot_light_cpu_buffer = StructuredBuffer::GetCpuBuffer<Rendering::Lights::SpotLight>(scene->SpotLightsStructuredBuffer);
   for (auto spot_light = spot_light_cpu_buffer,
        spot_light_end = spot_light_cpu_buffer + StructuredBuffer::GetCurrentSize(scene->SpotLightsStructuredBuffer);
        spot_light != spot_light_end;
@@ -288,7 +291,7 @@ void UpdateFrameBuffers(Scene* scene, DirectXState* state) {
   }
 
   // Directional lights
-  auto directional_light_cpu_buffer = StructuredBuffer::GetCpuBuffer<DirectionalLight>(scene->DirectionalLightsStructuredBuffer);
+  auto directional_light_cpu_buffer = StructuredBuffer::GetCpuBuffer<Rendering::Lights::DirectionalLight>(scene->DirectionalLightsStructuredBuffer);
   for (auto directional_light = directional_light_cpu_buffer,
        directional_light_end = directional_light_cpu_buffer + StructuredBuffer::GetCurrentSize(scene->DirectionalLightsStructuredBuffer);
        directional_light != directional_light_end;
@@ -333,7 +336,7 @@ void Update(Scene* scene, DirectXState* state) {
 }
 
 int main(int /* argc */, char** /* argv */) {
-  DxfwGuard dxfw_guard;
+  Dxfw::DxfwGuard dxfw_guard;
   if (!dxfw_guard.IsInitialized()) {
     return -1;
   }
@@ -348,7 +351,7 @@ int main(int /* argc */, char** /* argv */) {
 
   Scene scene;
   InitializeScene(&state, &scene);
-  LoadScene(base_path / "assets/scenes/cube.json", base_path, &state, &scene);
+  Loaders::LoadScene(base_path / "assets/scenes/cube.json", base_path, &state, &scene);
 
   while (!Dxfw::ShouldWindowClose(state.window.get())) {
     Update(&scene, &state);

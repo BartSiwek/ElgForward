@@ -9,16 +9,16 @@
 #include <sstream>
 #include <memory>
 
-#include "filesystem.h"
-#include "hash.h"
-#include "resource_array.h"
-#include "handle_cache.h"
+#include "core/filesystem.h"
+#include "core/hash.h"
+#include "core/resource_array.h"
+#include "core/handle_cache.h"
 
-ResourceArray<VertexShaderHandle, VertexShader, 255> g_vertex_shader_storage_;
-HandleCache<size_t, VertexShaderHandle> g_vertex_shader_cache_;
+Core::ResourceArray<VertexShaderHandle, VertexShader, 255> g_vertex_shader_storage_;
+Core::HandleCache<size_t, VertexShaderHandle> g_vertex_shader_cache_;
 
-ResourceArray<PixelShaderHandle, PixelShader, 255> g_pixel_shader_storage_;
-HandleCache<size_t, PixelShaderHandle> g_pixel_shader_cache_;
+Core::ResourceArray<PixelShaderHandle, PixelShader, 255> g_pixel_shader_storage_;
+Core::HandleCache<size_t, PixelShaderHandle> g_pixel_shader_cache_;
 
 const std::unordered_map<std::string, VertexDataChannel>& GetStandardChannelMap() {
   static std::unordered_map<std::string, VertexDataChannel> standard_channel_map = {

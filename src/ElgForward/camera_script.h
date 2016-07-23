@@ -1,8 +1,8 @@
 #pragma once
 
 
-#include "filesystem.h"
-#include "chaiscript_helpers.h"
+#include "core/filesystem.h"
+#include "core/chaiscript_helpers.h"
 #include "perspective_lens.h"
 #include "trackball_camera.h"
 
@@ -11,7 +11,7 @@ class CameraScript {
    bool init(const filesystem::path& path, TrackballCamera* camera, PerspectiveLens* lens) {
      try {
        // Prepare
-       PrepareChaiscript(&m_script_);
+       Core::PrepareChaiscript(&m_script_);
 
        // Setup camera
        m_script_.add(chaiscript::user_type<TrackballCamera>(), "TrackballCamera");

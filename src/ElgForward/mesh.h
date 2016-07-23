@@ -4,10 +4,10 @@
 
 #include <d3d11.h>
 
-#include "filesystem.h"
+#include "core/filesystem.h"
 #include "vertex_data.h"
-#include "vertex_buffer.h"
-#include "index_buffer.h"
+#include "rendering/vertex_buffer.h"
+#include "rendering/index_buffer.h"
 
 struct Mesh {
   Mesh() = default;
@@ -18,14 +18,14 @@ struct Mesh {
   Mesh(Mesh&&) = default;
   Mesh& operator=(Mesh&&) = default;
 
-  std::vector<VertexBufferHandle> VertexBuffers = {};
+  std::vector<Rendering::VertexBuffer::Handle> VertexBuffers = {};
   std::vector<DXGI_FORMAT> VertexBufferFormats = {};
   std::vector<uint32_t> VertexBufferStrides = {};
   std::vector<VertexDataChannel> VertexDataChannels = {};
 
   D3D_PRIMITIVE_TOPOLOGY PrimitiveTopology = D3D_PRIMITIVE_TOPOLOGY_UNDEFINED;
 
-  IndexBufferHandle IndexBuffer = {};
+  Rendering::IndexBuffer::Handle IndexBuffer = {};
   DXGI_FORMAT IndexBufferFormat = DXGI_FORMAT_UNKNOWN;
   uint32_t IndexCount = 0;
 };
