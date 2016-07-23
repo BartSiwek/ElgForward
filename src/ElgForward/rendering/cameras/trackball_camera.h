@@ -8,6 +8,9 @@
 
 #include <dxfw/dxfw.h>
 
+namespace Rendering {
+namespace Cameras {
+
 enum class TrackballCameraOperation : uint32_t {
   None = 0,
   Panning = 1,
@@ -117,3 +120,6 @@ private:
   // Extra state
   TrackballCameraOperation m_desired_state_;
 };
+
+}  // namespace Cameras
+}  // namespace Rendering

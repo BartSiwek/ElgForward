@@ -3,30 +3,32 @@
 
 #include "core/filesystem.h"
 #include "core/chaiscript_helpers.h"
-#include "perspective_lens.h"
-#include "trackball_camera.h"
+#include "rendering/lens/perspective_lens.h"
+#include "rendering/cameras/trackball_camera.h"
+
+namespace Rendering {
 
 class CameraScript {
  public:
-   bool init(const filesystem::path& path, TrackballCamera* camera, PerspectiveLens* lens) {
+   bool init(const filesystem::path& path, Cameras::TrackballCamera* camera, Lens::PerspectiveLens* lens) {
      try {
        // Prepare
        Core::PrepareChaiscript(&m_script_);
 
        // Setup camera
-       m_script_.add(chaiscript::user_type<TrackballCamera>(), "TrackballCamera");
-       m_script_.add(chaiscript::fun(&TrackballCamera::GetLocation), "GetLocation");
-       m_script_.add(chaiscript::fun(&TrackballCamera::SetLocation), "SetLocation");
-       m_script_.add(chaiscript::fun(&TrackballCamera::GetRadius), "GetRadius");
-       m_script_.add(chaiscript::fun(&TrackballCamera::SetRadius), "SetRadius");
-       m_script_.add(chaiscript::fun(&TrackballCamera::LookAt), "LookAt");
+       m_script_.add(chaiscript::user_type<Cameras::TrackballCamera>(), "TrackballCamera");
+       m_script_.add(chaiscript::fun(&Cameras::TrackballCamera::GetLocation), "GetLocation");
+       m_script_.add(chaiscript::fun(&Cameras::TrackballCamera::SetLocation), "SetLocation");
+       m_script_.add(chaiscript::fun(&Cameras::TrackballCamera::GetRadius), "GetRadius");
+       m_script_.add(chaiscript::fun(&Cameras::TrackballCamera::SetRadius), "SetRadius");
+       m_script_.add(chaiscript::fun(&Cameras::TrackballCamera::LookAt), "LookAt");
 
        m_script_.add_global(chaiscript::var(std::ref(*camera)), "camera");
 
        // Setup lens
-       m_script_.add(chaiscript::user_type<PerspectiveLens>(), "PerspectiveLens");
-       m_script_.add(chaiscript::fun(&PerspectiveLens::GetZoomFactor), "GetZoomFactor");
-       m_script_.add(chaiscript::fun(&PerspectiveLens::SetZoomFactor), "SetZoomFactor");
+       m_script_.add(chaiscript::user_type<Lens::PerspectiveLens>(), "PerspectiveLens");
+       m_script_.add(chaiscript::fun(&Lens::PerspectiveLens::GetZoomFactor), "GetZoomFactor");
+       m_script_.add(chaiscript::fun(&Lens::PerspectiveLens::SetZoomFactor), "SetZoomFactor");
 
        m_script_.add_global(chaiscript::var(std::ref(*lens)), "lens");
 
@@ -60,3 +62,5 @@ class CameraScript {
 
   std::function<void(float)> m_update_fun_ = {};
 };
+
+}  // namespace Rendering

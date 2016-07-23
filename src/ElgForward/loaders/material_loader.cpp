@@ -6,8 +6,8 @@
 #pragma warning(pop)
 
 #include "core/filesystem.h"
+#include "rendering/material.h"
 #include "directx_state.h"
-#include "material.h"
 
 namespace Loaders {
 
@@ -21,7 +21,7 @@ bool MaterialTypeFromString(const std::string& /* type */, MaterialType* value) 
   return true;
 }
 
-bool ReadBasicMaterial(const nlohmann::json& json_material, const filesystem::path& base_path, DirectXState* state, Material* material) {
+bool ReadBasicMaterial(const nlohmann::json& json_material, const filesystem::path& base_path, DirectXState* state, Rendering::Material* material) {
   const std::string& name = json_material["name"];
 
   auto vs_path = base_path / "basic_vs.cso";
@@ -30,7 +30,7 @@ bool ReadBasicMaterial(const nlohmann::json& json_material, const filesystem::pa
   return CreateMaterial(name, vs_path, ps_path, state->device.Get(), material);
 }
 
-bool ReadMaterial(const nlohmann::json& json_material, const filesystem::path& base_path, DirectXState* state, Material* material) {
+bool ReadMaterial(const nlohmann::json& json_material, const filesystem::path& base_path, DirectXState* state, Rendering::Material* material) {
   bool is_valid_material_entry = json_material["name"].is_string()
                               && json_material["type"].is_string();
 

@@ -4,6 +4,9 @@
 
 #include <DirectXMath.h>
 
+namespace Rendering {
+namespace Cameras {
+
 /* MATH HELPERS */
 DirectX::XMVECTOR GetPointOnUnitSphere(const DirectX::XMVECTOR& v) {
   auto l = DirectX::XMVector2LengthSq(v);
@@ -216,3 +219,6 @@ void TrackballCameraUpdate(TrackballCameraOperation desired_state, float frustum
 
   UpdateViewMatrix(center_v, rotation_quaterion_v, radius_f, view_matrix, view_matrix_inverse_transpose);
 }
+
+}  // namespace Cameras
+}  // namespace Rendering

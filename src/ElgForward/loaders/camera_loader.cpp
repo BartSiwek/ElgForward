@@ -6,11 +6,15 @@
 #pragma warning(pop)
 
 #include "core/filesystem.h"
+#include "rendering/camera_script.h"
+#include "rendering/screen.h"
+#include "rendering/cameras/trackball_camera.h"
+#include "rendering/lens/perspective_lens.h"
 #include "directx_state.h"
-#include "trackball_camera.h"
-#include "perspective_lens.h"
-#include "camera_script.h"
-#include "screen.h"
+
+using namespace Rendering::Cameras;
+using namespace Rendering::Lens;
+using namespace Rendering;
 
 namespace Loaders {
 

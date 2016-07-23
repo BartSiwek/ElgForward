@@ -59,14 +59,17 @@ set(TARGET_SOURCES_LOADERS
 source_group(Sources\\Loaders FILES ${TARGET_SOURCES_LOADERS})
 
 set(TARGET_SOURCES_RENDERING
+  ${TARGET_SOURCE_DIR}/rendering/camera_script.h
   ${TARGET_SOURCE_DIR}/rendering/constant_buffer.cpp
   ${TARGET_SOURCE_DIR}/rendering/constant_buffer.h
   ${TARGET_SOURCE_DIR}/rendering/drawable.cpp
   ${TARGET_SOURCE_DIR}/rendering/drawable.h
   ${TARGET_SOURCE_DIR}/rendering/index_buffer.cpp
   ${TARGET_SOURCE_DIR}/rendering/index_buffer.h
+  ${TARGET_SOURCE_DIR}/rendering/material.h
   ${TARGET_SOURCE_DIR}/rendering/pixel_shader.cpp
   ${TARGET_SOURCE_DIR}/rendering/pixel_shader.h
+  ${TARGET_SOURCE_DIR}/rendering/screen.h
   ${TARGET_SOURCE_DIR}/rendering/structured_buffer.cpp
   ${TARGET_SOURCE_DIR}/rendering/structured_buffer.h
   ${TARGET_SOURCE_DIR}/rendering/vertex_buffer.cpp
@@ -85,19 +88,24 @@ set(TARGET_SOURCES_RENDERING_LIGHTS
 )
 source_group(Sources\\Rendering\\Lights FILES ${TARGET_SOURCES_RENDERING_LIGHTS})
 
+set(TARGET_SOURCES_RENDERING_LENS
+  ${TARGET_SOURCE_DIR}/rendering/lens/perspective_lens.cpp
+  ${TARGET_SOURCE_DIR}/rendering/lens/perspective_lens.h
+)
+source_group(Sources\\Rendering\\Lens FILES ${TARGET_SOURCES_RENDERING_LENS})
+
+set(TARGET_SOURCES_RENDERING_CAMERAS
+  ${TARGET_SOURCE_DIR}/rendering/cameras/trackball_camera.cpp
+  ${TARGET_SOURCE_DIR}/rendering/cameras/trackball_camera.h
+)
+source_group(Sources\\Rendering\\Cameras FILES ${TARGET_SOURCES_RENDERING_CAMERAS})
+
 set(TARGET_SOURCES
-  ${TARGET_SOURCE_DIR}/camera_script.h
   ${TARGET_SOURCE_DIR}/directx_state.h
   ${TARGET_SOURCE_DIR}/main.cpp
-  ${TARGET_SOURCE_DIR}/material.h
   ${TARGET_SOURCE_DIR}/mesh.cpp
   ${TARGET_SOURCE_DIR}/mesh.h
-  ${TARGET_SOURCE_DIR}/perspective_lens.cpp
-  ${TARGET_SOURCE_DIR}/perspective_lens.h
   ${TARGET_SOURCE_DIR}/scene.h
-  ${TARGET_SOURCE_DIR}/screen.h
-  ${TARGET_SOURCE_DIR}/trackball_camera.cpp
-  ${TARGET_SOURCE_DIR}/trackball_camera.h
   ${TARGET_SOURCE_DIR}/vertex_data.cpp
   ${TARGET_SOURCE_DIR}/vertex_data.h
 )
@@ -121,6 +129,8 @@ set(TARGET_SOURCES_ALL
   ${TARGET_SOURCES_LOADERS}
   ${TARGET_SOURCES_RENDERING}
   ${TARGET_SOURCES_RENDERING_LIGHTS}
+  ${TARGET_SOURCES_RENDERING_LENS}
+  ${TARGET_SOURCES_RENDERING_CAMERAS}
   ${TARGET_SOURCES}
   ${TARGET_SHADERS}
 )

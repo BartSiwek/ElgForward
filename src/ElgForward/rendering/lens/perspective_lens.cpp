@@ -1,5 +1,8 @@
 #include "perspective_lens.h"
 
+namespace Rendering {
+namespace Lens {
+
 void PerspectiveLensUpdate(float zoom_factor, float aspect_ratio, float w, float h, float n, float f, float* frustum_width, float* frustum_height, DirectX::XMMATRIX* proj_matrix) {
   auto inv_zoom_factor = 1.0f / zoom_factor;
   if (aspect_ratio >= 1.0f) {
@@ -13,3 +16,6 @@ void PerspectiveLensUpdate(float zoom_factor, float aspect_ratio, float w, float
     *proj_matrix = DirectX::XMMatrixPerspectiveLH(*frustum_width, *frustum_height, n, f);
   }
 }
+
+}  // namespace Lens
+}  // namespace Rendering

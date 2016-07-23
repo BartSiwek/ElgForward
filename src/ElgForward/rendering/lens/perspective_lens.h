@@ -6,6 +6,9 @@
 
 #include <DirectXMath.h>
 
+namespace Rendering {
+namespace Lens {
+
 void PerspectiveLensUpdate(float zoom_factor, float aspect_ratio, float w, float h, float n, float f, float* frustum_width, float* frustum_height, DirectX::XMMATRIX* proj_matrix);
 
 class PerspectiveLens {
@@ -71,3 +74,6 @@ private:
   float m_frustum_width_;
   float m_frustum_height_;
 };
+
+}  // namespace Lens
+}  // namespace Rendering

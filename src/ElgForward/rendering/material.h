@@ -3,10 +3,12 @@
 #include "rendering/vertex_shader.h"
 #include "rendering/pixel_shader.h"
 
+namespace Rendering {
+
 struct Material {
   size_t Hash;
-  Rendering::VertexShader::Handle VertexShader;
-  Rendering::PixelShader::Handle PixelShader;
+  VertexShader::Handle VertexShader;
+  PixelShader::Handle PixelShader;
 };
 
 inline bool CreateMaterial(const std::string& id, const filesystem::path& vs_path, const filesystem::path& ps_path, ID3D11Device* device, Material* material) {
@@ -24,3 +26,5 @@ inline bool CreateMaterial(const std::string& id, const filesystem::path& vs_pat
 
   return true;
 }
+
+}  // namespace Rendering

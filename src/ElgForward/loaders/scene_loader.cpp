@@ -11,9 +11,9 @@
 #include "loaders/light_loader.h"
 #include "loaders/camera_loader.h"
 #include "loaders/material_loader.h"
+#include "rendering/screen.h"
+#include "rendering/material.h"
 #include "mesh.h"
-#include "material.h"
-#include "screen.h"
 
 namespace Loaders {
 
@@ -121,7 +121,8 @@ void ReadDrawableTransform(const nlohmann::json& json_transform, Rendering::Draw
 }
 
 void BuildDrawables(const nlohmann::json& json_scene, const std::vector<MeshIdentifier>& mesh_indetifiers,
-                    const std::vector<Material>& materials, DirectXState* state, std::vector<Rendering::Drawable>* drawables) {
+                    const std::vector<Rendering::Material>& materials, DirectXState* state,
+                    std::vector<Rendering::Drawable>* drawables) {
   const auto& json_drawables = json_scene["scene"];
 
   for (const auto& json_drawable : json_drawables) {
@@ -174,11 +175,12 @@ void BuildDrawables(const nlohmann::json& json_scene, const std::vector<MeshIden
   }
 }
 
-void ReadMaterials(const nlohmann::json& json_scene, const filesystem::path& base_path, DirectXState* state, std::vector<Material>* materials) {
+void ReadMaterials(const nlohmann::json& json_scene, const filesystem::path& base_path, DirectXState* state,
+                   std::vector<Rendering::Material>* materials) {
   const auto& json_materials = json_scene["materials"];
 
   for (const auto& json_material : json_materials) {
-    Material new_material;
+    Rendering::Material new_material;
     bool material_ok = ReadMaterial(json_material, base_path, state, &new_material);
     if (!material_ok) {
       DXFW_TRACE(__FILE__, __LINE__, false, "Error loading material [%S]", json_material.dump().c_str());
@@ -231,7 +233,7 @@ bool LoadScene(const filesystem::path& path, const filesystem::path& base_path, 
   std::vector<MeshIdentifier> mesh_identifiers;
   ReadMeshes(json_scene, base_path, state, &mesh_identifiers);
   
-  std::vector<Material> materials;
+  std::vector<Rendering::Material> materials;
   ReadMaterials(json_scene, base_path, state, &materials);
   
   ReadLights(json_scene, base_path, scene);
