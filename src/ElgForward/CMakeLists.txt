@@ -76,6 +76,7 @@ set(TARGET_SOURCES_RENDERING
   ${TARGET_SOURCE_DIR}/rendering/screen.h
   ${TARGET_SOURCE_DIR}/rendering/structured_buffer.cpp
   ${TARGET_SOURCE_DIR}/rendering/structured_buffer.h
+  ${TARGET_SOURCE_DIR}/rendering/typed_constant_buffer.h
   ${TARGET_SOURCE_DIR}/rendering/typed_structured_buffer.h
   ${TARGET_SOURCE_DIR}/rendering/vertex_buffer.cpp
   ${TARGET_SOURCE_DIR}/rendering/vertex_buffer.h

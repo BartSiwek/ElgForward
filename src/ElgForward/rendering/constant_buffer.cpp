@@ -126,6 +126,11 @@ Handle Create(size_t name_hash, size_t type_hash, size_t type_size, size_t type_
   return new_handle;
 }
 
+Handle Create(const std::string& name, size_t type_hash, size_t type_size, size_t type_alignment, void* initial_data, ID3D11Device* device) {
+  std::hash<std::string> hasher;
+  return Create(hasher(name), type_hash, type_size, type_alignment, initial_data, device);
+}
+
 void* GetCpuBuffer(Handle handle) {
   return g_storage_.Get(handle).GetCpuBuffer();
 }

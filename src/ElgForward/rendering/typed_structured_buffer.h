@@ -5,7 +5,6 @@
 #include <d3d11.h>
 
 #include "rendering/structured_buffer.h"
-#include "rendering/lights/point_light.h"
 
 namespace Rendering {
 namespace StructuredBuffer {

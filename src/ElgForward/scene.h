@@ -12,8 +12,7 @@
 #include "rendering/lights/spot_light.h"
 #include "rendering/camera_script.h"
 #include "rendering/drawable.h"
-#include "rendering/constant_buffer.h"
-#include "rendering/structured_buffer.h"
+#include "rendering/typed_constant_buffer.h"
 #include "rendering/typed_structured_buffer.h"
 
 struct Transforms {
@@ -40,8 +39,8 @@ struct Scene {
   Rendering::Cameras::TrackballCamera Camera;
   Rendering::CameraScript CameraScript;
 
-  Rendering::ConstantBuffer::Handle TransformsConstantBuffer;
-  Rendering::ConstantBuffer::Handle LightDataConstantBuffer;
+  Rendering::ConstantBuffer::TypedHandle<Transforms> TransformsConstantBuffer;
+  Rendering::ConstantBuffer::TypedHandle<LightData> LightDataConstantBuffer;
   Rendering::StructuredBuffer::TypedHandle<Rendering::Lights::DirectionalLight> DirectionalLightsStructuredBuffer;
   Rendering::StructuredBuffer::TypedHandle<Rendering::Lights::SpotLight> SpotLightsStructuredBuffer;
   Rendering::StructuredBuffer::TypedHandle<Rendering::Lights::PointLight> PointLightsStructuredBuffer;
