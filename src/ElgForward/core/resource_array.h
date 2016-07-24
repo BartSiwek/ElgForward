@@ -55,7 +55,7 @@ public:
   }
 
   bool IsActive(HandleType handle) const {
-    auto index = handle.Index;
+    auto index = handle.GetIndex();
     if (index < m_array_.size()) {
       return m_array_[index].Generation == handle.Generation;
     }
@@ -63,16 +63,16 @@ public:
   }
 
   Type& Get(HandleType handle) {
-    return m_array_[handle.Index].Value;
+    return m_array_[handle.GetIndex()].Value;
   }
 
   const Type& Get(HandleType handle) const {
-    return m_array_[handle.Index].Value;
+    return m_array_[handle.GetIndex()].Value;
   }
 
   void Remove(HandleType handle) {
-    auto index = handle.Index;
-    if (handle.Generation == m_array_[index].Generation) {
+    auto index = handle.GetIndex();
+    if (handle.GetGeneration() == m_array_[index].Generation) {
       m_array_[index].Value.~Type();
       m_array_[index].Generation += 1;
       m_array_[index].NextFreelistIndex = m_freelist_head_;

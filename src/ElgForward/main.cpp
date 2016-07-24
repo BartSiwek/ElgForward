@@ -22,7 +22,7 @@
 #include "rendering/lights/directional_light.h"
 #include "rendering/lights/point_light.h"
 #include "rendering/lights/spot_light.h"
-#include "mesh.h"
+#include "rendering/mesh.h"
 #include "rendering/vertex_layout.h"
 #include "rendering/material.h"
 #include "rendering/drawable.h"

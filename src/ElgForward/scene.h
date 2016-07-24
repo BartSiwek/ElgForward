@@ -7,10 +7,14 @@
 #include "core/memory_helpers.h"
 #include "rendering/lens/perspective_lens.h"
 #include "rendering/cameras/trackball_camera.h"
+#include "rendering/lights/directional_light.h"
+#include "rendering/lights/point_light.h"
+#include "rendering/lights/spot_light.h"
 #include "rendering/camera_script.h"
 #include "rendering/drawable.h"
 #include "rendering/constant_buffer.h"
 #include "rendering/structured_buffer.h"
+#include "rendering/typed_structured_buffer.h"
 
 struct Transforms {
   DirectX::XMMATRIX ModelMatrix;
@@ -38,7 +42,7 @@ struct Scene {
 
   Rendering::ConstantBuffer::Handle TransformsConstantBuffer;
   Rendering::ConstantBuffer::Handle LightDataConstantBuffer;
-  Rendering::StructuredBuffer::Handle DirectionalLightsStructuredBuffer;
-  Rendering::StructuredBuffer::Handle SpotLightsStructuredBuffer;
-  Rendering::StructuredBuffer::Handle PointLightsStructuredBuffer;
+  Rendering::StructuredBuffer::TypedHandle<Rendering::Lights::DirectionalLight> DirectionalLightsStructuredBuffer;
+  Rendering::StructuredBuffer::TypedHandle<Rendering::Lights::SpotLight> SpotLightsStructuredBuffer;
+  Rendering::StructuredBuffer::TypedHandle<Rendering::Lights::PointLight> PointLightsStructuredBuffer;
 };
