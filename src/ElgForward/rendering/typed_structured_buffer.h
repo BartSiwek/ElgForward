@@ -60,6 +60,24 @@ class TypedHandle {
     return m_handle_.CompactForm();
   }
 
+  T* begin() {
+    return static_cast<T*>(GetElementAt(static_cast<Handle>(m_handle_), 0));
+  }
+
+  T* end() {
+    size_t current_size = GetCurrentSize(static_cast<Handle>(m_handle_));
+    return static_cast<T*>(GetElementAt(static_cast<Handle>(m_handle_), 0)) + current_size;
+  }
+
+  const T* cbegin() const {
+    return static_cast<T*>(GetElementAt(static_cast<Handle>(m_handle_), 0));
+  }
+
+  const T* cend() const {
+    size_t current_size = GetCurrentSize(static_cast<Handle>(m_handle_));
+    return static_cast<T*>(GetElementAt(static_cast<Handle>(m_handle_), 0)) + current_size;
+  }
+
  private:
   Handle m_handle_;
 };

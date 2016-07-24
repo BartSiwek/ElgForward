@@ -259,12 +259,8 @@ void Render(Scene* scene, DirectXState* state) {
 
 void UpdateFrameBuffers(Scene* scene, DirectXState* state) {
   // Point lights
-  auto point_light_cpu_buffer = StructuredBuffer::GetCpuBuffer<Rendering::Lights::PointLight>(scene->PointLightsStructuredBuffer);
-  for (auto point_light = point_light_cpu_buffer,
-       point_light_end = point_light_cpu_buffer + StructuredBuffer::GetCurrentSize(scene->PointLightsStructuredBuffer);
-       point_light != point_light_end;
-       ++point_light) {
-    point_light->Update(scene->Camera.GetViewMatrix());
+  for(auto& point_light : scene->PointLightsStructuredBuffer) {
+    point_light.Update(scene->Camera.GetViewMatrix());
   }
   
   bool point_update_ok = SendToGpu(scene->PointLightsStructuredBuffer, state->device_context.Get());
@@ -275,12 +271,8 @@ void UpdateFrameBuffers(Scene* scene, DirectXState* state) {
   }
 
   // Spot lights
-  auto spot_light_cpu_buffer = StructuredBuffer::GetCpuBuffer<Rendering::Lights::SpotLight>(scene->SpotLightsStructuredBuffer);
-  for (auto spot_light = spot_light_cpu_buffer,
-       spot_light_end = spot_light_cpu_buffer + StructuredBuffer::GetCurrentSize(scene->SpotLightsStructuredBuffer);
-       spot_light != spot_light_end;
-       ++spot_light) {
-    spot_light->Update(scene->Camera.GetViewMatrix());
+  for (auto& spot_light : scene->SpotLightsStructuredBuffer) {
+    spot_light.Update(scene->Camera.GetViewMatrix());
   }
 
   bool spot_update_ok = SendToGpu(scene->SpotLightsStructuredBuffer, state->device_context.Get());
@@ -291,12 +283,8 @@ void UpdateFrameBuffers(Scene* scene, DirectXState* state) {
   }
 
   // Directional lights
-  auto directional_light_cpu_buffer = StructuredBuffer::GetCpuBuffer<Rendering::Lights::DirectionalLight>(scene->DirectionalLightsStructuredBuffer);
-  for (auto directional_light = directional_light_cpu_buffer,
-       directional_light_end = directional_light_cpu_buffer + StructuredBuffer::GetCurrentSize(scene->DirectionalLightsStructuredBuffer);
-       directional_light != directional_light_end;
-       ++directional_light) {
-    directional_light->Update(scene->Camera.GetViewMatrix());
+  for (auto& directional_light : scene->DirectionalLightsStructuredBuffer) {
+    directional_light.Update(scene->Camera.GetViewMatrix());
   }
 
   bool dir_update_ok = SendToGpu(scene->DirectionalLightsStructuredBuffer, state->device_context.Get());
