@@ -2,7 +2,7 @@
 
 #include "basic.h"
 
-cbuffer PerFrameConstants  : register(b0) {
+cbuffer PerFrameConstants : register(b0) {
   float4x4 ModelMatrix;
   float4x4 ModelMatrixInverseTranspose;
   float4x4 ViewMatrix;
@@ -13,11 +13,34 @@ cbuffer PerFrameConstants  : register(b0) {
   float4x4 ModelViewProjectionMatrix;
 };
 
-cbuffer LightData  : register(b1) {
+cbuffer LightData : register(b1) {
   int DirectionalLightCount;
   int SpotLightCount;
   int PointLightCount;
   float pad;
+};
+
+cbuffer Material : register(b2) {
+  float4 GlobalAmbient;
+  float4 AmbientColor;
+  float4 EmissiveColor;
+  float4 DiffuseColor;
+  float4 SpecularColor;
+  float4 Reflectance;
+  float Opacity;
+  float SpecularPower;
+  float IndexOfRefraction;
+  bool HasAmbientTexture;
+  bool HasEmissiveTexture;
+  bool HasDiffuseTexture;
+  bool HasSpecularTexture;
+  bool HasSpecularPowerTexture;
+  bool HasNormalTexture;
+  bool HasBumpTexture;
+  bool HasOpacityTexture;
+  float BumpIntensity;
+  float SpecularScale;
+  float AlphaThreshold;
 };
 
 struct PointLight {
@@ -32,8 +55,6 @@ struct PointLight {
 };
 
 StructuredBuffer <PointLight> PointLights : register(t0);
-
-static float4 MaterialDiffuseColor = float4(0.2, 0.4, 0.8, 1);
 
 struct VertexShaderInput {
   float3 PositionMs : POSITION;
@@ -59,7 +80,7 @@ VertexShaderOutput main(VertexShaderInput input) {
 
     float nDotL = dot(l, n);
 
-    finalColor += PointLights[i].DiffuseColor * MaterialDiffuseColor * max(nDotL, 0);
+    finalColor += PointLights[i].DiffuseColor * DiffuseColor * max(nDotL, 0);
   }
 
   output.Position = mul(positionMs, ModelViewProjectionMatrix);

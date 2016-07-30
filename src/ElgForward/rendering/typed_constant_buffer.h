@@ -88,17 +88,12 @@ inline T* GetCpuBuffer(TypedHandle<T> handle) {
 }
 
 template<typename T>
-ID3D11Buffer* GetGpuBuffer(TypedHandle<T> handle) {
+inline Microsoft::WRL::ComPtr<ID3D11Buffer> GetGpuBuffer(TypedHandle<T> handle) {
   return GetGpuBuffer(static_cast<Handle>(handle));
 }
 
 template<typename T>
-ID3D11Buffer** GetAddressOfGpuBuffer(TypedHandle<T> handle) {
-  return GetAddressOfGpuBuffer(static_cast<Handle>(handle));
-}
-
-template<typename T>
-bool SendToGpu(TypedHandle<T> handle, ID3D11DeviceContext* device_context) {
+inline bool SendToGpu(TypedHandle<T> handle, ID3D11DeviceContext* device_context) {
   return SendToGpu(static_cast<Handle>(handle), device_context);
 }
 

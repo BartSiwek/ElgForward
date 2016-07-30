@@ -3,6 +3,7 @@
 #include <string>
 
 #include <d3d11.h>
+#include <wrl.h>
 
 #include "core/handle.h"
 
@@ -23,13 +24,9 @@ void* GetCpuBuffer(Handle handle);
 
 void* GetElementAt(Handle handle, size_t index);
 
-ID3D11Buffer* GetGpuBuffer(Handle handle);
+Microsoft::WRL::ComPtr<ID3D11Buffer> GetGpuBuffer(Handle handle);
 
-ID3D11Buffer** GetAddressOfGpuBuffer(Handle handle);
-
-ID3D11ShaderResourceView* GetShaderResourceView(Handle handle);
-
-ID3D11ShaderResourceView** GetAddressOfShaderResourceView(Handle handle);
+Microsoft::WRL::ComPtr<ID3D11ShaderResourceView> GetShaderResourceView(Handle handle);
 
 void SetCurrentSize(Handle handle, size_t new_size);
 

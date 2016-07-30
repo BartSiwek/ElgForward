@@ -3,6 +3,7 @@
 #include <string>
 
 #include <d3d11.h>
+#include <wrl.h>
 
 #include "core/handle.h"
 
@@ -19,9 +20,7 @@ Handle Create(const std::string& name, size_t type_hash, size_t type_size, size_
 
 void* GetCpuBuffer(Handle handle);
 
-ID3D11Buffer* GetGpuBuffer(Handle handle);
-
-ID3D11Buffer** GetAddressOfGpuBuffer(Handle handle);
+Microsoft::WRL::ComPtr<ID3D11Buffer> GetGpuBuffer(Handle handle);
 
 bool SendToGpu(Handle handle, ID3D11DeviceContext* device_context);
 

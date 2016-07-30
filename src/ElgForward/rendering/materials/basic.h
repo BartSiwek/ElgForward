@@ -7,7 +7,7 @@
 namespace Rendering {
 namespace Materials {
 
-struct BasicMaterial {
+struct Basic {
   DirectX::XMVECTOR GlobalAmbient;
   DirectX::XMVECTOR AmbientColor;
   DirectX::XMVECTOR EmissiveColor;
@@ -24,12 +24,12 @@ struct BasicMaterial {
   bool HasSpecularPowerTexture;
   bool HasNormalTexture;
   bool HasBumpTexture;
-  bool    HasOpacityTexture;
-  float   BumpIntensity;
-  float   SpecularScale;
-  float   AlphaThreshold;
+  bool HasOpacityTexture;
+  float BumpIntensity;
+  float SpecularScale;
+  float AlphaThreshold;
   PAD(8);
 };
 
-}  // Materials Lights
+}  // namespace Materials
 }  // namespace Rendering

@@ -62,12 +62,8 @@ public:
     return m_cpu_buffer_.get();
   }
 
-  ID3D11Buffer* GetGpuBuffer() {
-    return m_gpu_buffer_.Get();
-  }
-
-  ID3D11Buffer** GetAddressOfGpuBuffer() {
-    return m_gpu_buffer_.GetAddressOf();
+  Microsoft::WRL::ComPtr<ID3D11Buffer> GetGpuBuffer() {
+    return m_gpu_buffer_;
   }
 
   bool SendToGpu(ID3D11DeviceContext* device_context) {
@@ -118,7 +114,7 @@ Handle Create(size_t name_hash, size_t type_hash, size_t type_size, size_t type_
   Storage storage(type_size, type_alignment);
   bool init_ok = storage.Initialize(initial_data, device);
   if (!init_ok) {
-    return{};
+    return {};
   }
 
   auto new_handle = g_storage_.Add(std::move(storage));
@@ -135,13 +131,10 @@ void* GetCpuBuffer(Handle handle) {
   return g_storage_.Get(handle).GetCpuBuffer();
 }
 
-ID3D11Buffer* GetGpuBuffer(Handle handle) {
+Microsoft::WRL::ComPtr<ID3D11Buffer> GetGpuBuffer(Handle handle) {
   return g_storage_.Get(handle).GetGpuBuffer();
 }
 
-ID3D11Buffer** GetAddressOfGpuBuffer(Handle handle) {
-  return g_storage_.Get(handle).GetAddressOfGpuBuffer();
-}
 bool SendToGpu(Handle handle, ID3D11DeviceContext* device_context) {
   return g_storage_.Get(handle).SendToGpu(device_context);
 }

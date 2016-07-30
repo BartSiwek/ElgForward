@@ -22,6 +22,7 @@
 #include "rendering/lights/directional_light.h"
 #include "rendering/lights/point_light.h"
 #include "rendering/lights/spot_light.h"
+#include "rendering/materials/basic.h"
 #include "rendering/mesh.h"
 #include "rendering/vertex_layout.h"
 #include "rendering/material.h"
@@ -212,7 +213,7 @@ bool InitializeScene(DirectXState* state, Scene* scene) {
 
 void UpdateDrawableBuffers(const Drawable& drawable, Scene* scene, DirectXState* state) {
   // Transforms
-  auto buffer = ConstantBuffer::GetCpuBuffer<Transforms>(scene->TransformsConstantBuffer);
+  auto buffer = ConstantBuffer::GetCpuBuffer(scene->TransformsConstantBuffer);
   buffer->ModelMatrix = drawable.GetModelMatrix();
   buffer->ModelMatrixInverseTranspose = drawable.GetModelMatrixInverseTranspose();
   buffer->ViewMatrix = scene->Camera.GetViewMatrix();
@@ -224,12 +225,13 @@ void UpdateDrawableBuffers(const Drawable& drawable, Scene* scene, DirectXState*
 
   bool update_ok = SendToGpu(scene->TransformsConstantBuffer, state->device_context.Get());
   if (update_ok) {
-    state->device_context->VSSetConstantBuffers(0, 1, ConstantBuffer::GetAddressOfGpuBuffer(scene->TransformsConstantBuffer));
+    state->device_context->VSSetConstantBuffers(0, 1, ConstantBuffer::GetGpuBuffer(scene->TransformsConstantBuffer).GetAddressOf());
   } else {
     DXFW_TRACE(__FILE__, __LINE__, false, "Error updating per frame constant buffer");
   }
 
   // Material
+  state->device_context->VSSetConstantBuffers(2, 1, drawable.GetAddressOfMaterialConstantBuffer());
 }
 
 void Render(Scene* scene, DirectXState* state) {
@@ -265,7 +267,7 @@ void UpdateFrameBuffers(Scene* scene, DirectXState* state) {
   
   bool point_update_ok = SendToGpu(scene->PointLightsStructuredBuffer, state->device_context.Get());
   if (point_update_ok) {
-    state->device_context->VSSetShaderResources(0, 1, GetAddressOfShaderResourceView(scene->PointLightsStructuredBuffer));
+    state->device_context->VSSetShaderResources(0, 1, GetShaderResourceView(scene->PointLightsStructuredBuffer).GetAddressOf());
   } else {
     DXFW_TRACE(__FILE__, __LINE__, false, "Error updating point light buffer");
   }
@@ -277,7 +279,7 @@ void UpdateFrameBuffers(Scene* scene, DirectXState* state) {
 
   bool spot_update_ok = SendToGpu(scene->SpotLightsStructuredBuffer, state->device_context.Get());
   if (spot_update_ok) {
-    state->device_context->VSSetShaderResources(1, 1, GetAddressOfShaderResourceView(scene->SpotLightsStructuredBuffer));
+    state->device_context->VSSetShaderResources(1, 1, GetShaderResourceView(scene->SpotLightsStructuredBuffer).GetAddressOf());
   } else {
     DXFW_TRACE(__FILE__, __LINE__, false, "Error updating spot light buffer");
   }
@@ -289,7 +291,7 @@ void UpdateFrameBuffers(Scene* scene, DirectXState* state) {
 
   bool dir_update_ok = SendToGpu(scene->DirectionalLightsStructuredBuffer, state->device_context.Get());
   if (dir_update_ok) {
-    state->device_context->VSSetShaderResources(2, 1, GetAddressOfShaderResourceView(scene->DirectionalLightsStructuredBuffer));
+    state->device_context->VSSetShaderResources(2, 1, GetShaderResourceView(scene->DirectionalLightsStructuredBuffer).GetAddressOf());
   } else {
     DXFW_TRACE(__FILE__, __LINE__, false, "Error updating directional light buffer");
   }
@@ -302,7 +304,7 @@ void UpdateFrameBuffers(Scene* scene, DirectXState* state) {
 
   bool light_data_buffer_update_ok = SendToGpu(scene->LightDataConstantBuffer, state->device_context.Get());
   if (light_data_buffer_update_ok) {
-    state->device_context->VSSetConstantBuffers(1, 1, GetAddressOfGpuBuffer(scene->LightDataConstantBuffer));
+    state->device_context->VSSetConstantBuffers(1, 1, GetGpuBuffer(scene->LightDataConstantBuffer).GetAddressOf());
   } else {
     DXFW_TRACE(__FILE__, __LINE__, false, "Error updating the light data buffer");
   }

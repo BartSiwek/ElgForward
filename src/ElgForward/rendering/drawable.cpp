@@ -75,6 +75,7 @@ bool CreateDrawable(Mesh::Handle mesh_handle, const Material& material, ID3D11De
   auto mesh_ptr = Mesh::Retreive(mesh_handle);
   auto vertex_shader_ptr = Rendering::VertexShader::Retreive(material.VertexShader);
   auto pixel_shader_ptr = Rendering::PixelShader::Retreive(material.PixelShader);
+  auto constant_buffer_ptr = Rendering::ConstantBuffer::GetGpuBuffer(material.MaterialConstantBuffer);
 
   std::vector<D3D11_INPUT_ELEMENT_DESC> input_layout_desc;
 
@@ -124,6 +125,11 @@ bool CreateDrawable(Mesh::Handle mesh_handle, const Material& material, ID3D11De
 
   bool ps_ok = drawable->SetPixelShader(pixel_shader_ptr->Shader);
   if (!ps_ok) {
+    return false;
+  }
+
+  bool material_consntant_buffer_ok = drawable->SetMaterialConstantBuffer(constant_buffer_ptr);
+  if (!material_consntant_buffer_ok) {
     return false;
   }
 

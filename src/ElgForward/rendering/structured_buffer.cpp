@@ -77,20 +77,12 @@ public:
     return static_cast<char*>(m_cpu_buffer_.get()) + offset;
   }
 
-  ID3D11Buffer* GetGpuBuffer() {
-    return m_gpu_buffer_.Get();
+  Microsoft::WRL::ComPtr<ID3D11Buffer> GetGpuBuffer() {
+    return m_gpu_buffer_;
   }
 
-  ID3D11Buffer** GetAddressOfGpuBuffer() {
-    return m_gpu_buffer_.GetAddressOf();
-  }
-
-  ID3D11ShaderResourceView* GetShaderResourceView() {
-    return m_srv_.Get();
-  }
-
-  ID3D11ShaderResourceView** GetAddressOfShaderResourceView() {
-    return m_srv_.GetAddressOf();
+  Microsoft::WRL::ComPtr<ID3D11ShaderResourceView> GetShaderResourceView() {
+    return m_srv_;
   }
 
   bool SetCurrentSize(size_t new_size) {
@@ -211,20 +203,12 @@ void* GetElementAt(Handle handle, size_t index) {
   return g_storage_.Get(handle).GetElementAt(index);
 }
 
-ID3D11Buffer* GetGpuBuffer(Handle handle) {
+Microsoft::WRL::ComPtr<ID3D11Buffer> GetGpuBuffer(Handle handle) {
   return g_storage_.Get(handle).GetGpuBuffer();
 }
 
-ID3D11Buffer** GetAddressOfGpuBuffer(Handle handle) {
-  return g_storage_.Get(handle).GetAddressOfGpuBuffer();
-}
-
-ID3D11ShaderResourceView* GetShaderResourceView(Handle handle) {
+Microsoft::WRL::ComPtr<ID3D11ShaderResourceView> GetShaderResourceView(Handle handle) {
   return g_storage_.Get(handle).GetShaderResourceView();
-}
-
-ID3D11ShaderResourceView** GetAddressOfShaderResourceView(Handle handle) {
-  return g_storage_.Get(handle).GetAddressOfShaderResourceView();
 }
 
 void SetCurrentSize(Handle handle, size_t new_size) {

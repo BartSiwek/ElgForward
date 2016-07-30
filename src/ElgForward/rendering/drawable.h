@@ -9,6 +9,7 @@
 #include "material.h"
 
 #include "rendering/vertex_layout.h"
+#include "rendering/constant_buffer.h"
 
 namespace Rendering {
 
@@ -42,7 +43,7 @@ public:
     return false;
   }
 
-  const ID3D11Buffer* const* GetVertexBuffers() const {
+  ID3D11Buffer* const* GetVertexBuffers() const {
     return &m_vertex_buffers_[0];
   }
 
@@ -77,11 +78,7 @@ public:
     return false;
   }
 
-  const ID3D11InputLayout* GetVertexLayout() const {
-    return m_input_layout_.Get();
-  }
-
-  ID3D11InputLayout* GetVertexLayout() {
+  ID3D11InputLayout* GetVertexLayout() const {
     return m_input_layout_.Get();
   }
 
@@ -96,11 +93,7 @@ public:
     return false;
   }
 
-  const ID3D11Buffer* GetIndexBuffer() const {
-    return m_index_buffer_.Get();
-  }
-
-  ID3D11Buffer* GetIndexBuffer() {
+  ID3D11Buffer* GetIndexBuffer() const {
     return m_index_buffer_.Get();
   }
 
@@ -124,11 +117,7 @@ public:
     return false;
   }
 
-  const ID3D11VertexShader* GetVertexShader() const {
-    return m_vs_.Get();
-  }
-
-  ID3D11VertexShader* GetVertexShader() {
+  ID3D11VertexShader* GetVertexShader() const {
     return m_vs_.Get();
   }
 
@@ -140,12 +129,28 @@ public:
     return false;
   }
 
-  const ID3D11PixelShader* GetPixelShader() const {
+  ID3D11PixelShader* GetPixelShader() const {
     return m_ps_.Get();
   }
 
-  ID3D11PixelShader* GetPixelShader() {
-    return m_ps_.Get();
+  bool SetMaterialConstantBuffer(Microsoft::WRL::ComPtr<ID3D11Buffer> buffer) {
+    if (m_material_constant_buffer_ == nullptr) {
+      m_material_constant_buffer_ = buffer;
+      return true;
+    }
+    return false;
+  }
+
+  ID3D11Buffer* GetMaterialConstantBuffer() const {
+    return m_material_constant_buffer_.Get();
+  }
+
+  ID3D11Buffer* const* GetAddressOfMaterialConstantBuffer() const {
+    return m_material_constant_buffer_.GetAddressOf();
+  }
+
+  ID3D11Buffer** GetAddressOfMaterialConstantBuffer() {
+    return m_material_constant_buffer_.GetAddressOf();
   }
 
   void SetModelMatrix(const DirectX::XMMATRIX& matrix) {
@@ -186,6 +191,7 @@ private:
 
   Microsoft::WRL::ComPtr<ID3D11VertexShader> m_vs_ = nullptr;
   Microsoft::WRL::ComPtr<ID3D11PixelShader> m_ps_ = nullptr;
+  Microsoft::WRL::ComPtr<ID3D11Buffer> m_material_constant_buffer_ = nullptr;
 
   DirectX::XMMATRIX m_model_matrix_ = DirectX::XMMatrixIdentity();
   DirectX::XMMATRIX m_model_matrix_inverse_transpose_ = DirectX::XMMatrixIdentity();
