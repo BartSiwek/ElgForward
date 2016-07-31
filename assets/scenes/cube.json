@@ -10,7 +10,7 @@
   ],
   "materials": [
     {
-      "name": "basic",
+      "name": "basic1",
       "type": "basic",
       "diffuse": [0.2, 0.4, 0.8, 1.0],
       "specular": [1.0, 1.0, 1.0, 1.0],
@@ -20,11 +20,41 @@
   "lights": "assets/lights/cube_lights.json",
   "scene": [
     {
-      "name": "cube_drawable",
+      "name": "cube_drawable_1",
       "mesh_name": "cube cube",
-      "material_name": "basic",
+      "material_name": "basic1",
       "transform" : {
-        "translation": [0.0, 0.0, 0.0],
+        "translation": [-1.0, 0.0, -1.0],
+        "rotation": [1.0, 1.0, 1.0, 90.0],
+        "scale": [0.5, 0.5, 0.5]
+      }
+    }, 
+	{
+      "name": "cube_drawable_2",
+      "mesh_name": "cube cube",
+      "material_name": "basic1",
+      "transform" : {
+        "translation": [1.0, 0.0, -1.0],
+        "rotation": [1.0, 1.0, 1.0, 90.0],
+        "scale": [0.5, 0.5, 0.5]
+      }
+    },
+	{
+      "name": "cube_drawable_3",
+      "mesh_name": "cube cube",
+      "material_name": "basic1",
+      "transform" : {
+        "translation": [-1.0, 0.0, 1.0],
+        "rotation": [1.0, 1.0, 1.0, 90.0],
+        "scale": [0.5, 0.5, 0.5]
+      }
+    },
+	{
+      "name": "cube_drawable_4",
+      "mesh_name": "cube cube",
+      "material_name": "basic1",
+      "transform" : {
+        "translation": [1.0, 0.0, 1.0],
         "rotation": [1.0, 1.0, 1.0, 90.0],
         "scale": [0.5, 0.5, 0.5]
       }
@@ -37,7 +67,7 @@
       "fov": 90.0
     },
     "trackball_camera": {
-      "radius": 2.0,
+      "radius": 4.0,
       "position": [0.0, 0.0, 0.0]
     },
     "script": "assets/scripts/camera.chai"

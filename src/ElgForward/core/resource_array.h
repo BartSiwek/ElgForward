@@ -6,7 +6,7 @@ namespace Core {
 
 template<typename H, typename T, size_t S>
 class ResourceArray {
-public:
+ public:
   using HandleType = H;
   using Type = T;
 
@@ -20,11 +20,12 @@ public:
       m_array_[i].NextFreelistIndex = i + 1;
     }
 
-    m_array_[Size-1].NextFreelistIndex = HandleType::MaxIndex;
+    m_array_[Size - 1].NextFreelistIndex = HandleType::MaxIndex;
   }
 
   ~ResourceArray() {
     size_t current_entry = m_freelist_head_;
+
     while (current_entry != HandleType::MaxIndex) {
       m_array_[current_entry].Generation = HandleType::MaxGenerarion;
       current_entry = m_array_[current_entry].NextFreelistIndex;
@@ -39,16 +40,18 @@ public:
   }
 
   template<class... Types>
-  HandleType Add(Types&&... args) {
+  HandleType Add(Types&& ... args) {
     auto index = m_freelist_head_;
+
     if (index == HandleType::MaxIndex) {
       return {};
     }
+
     m_freelist_head_ = m_array_[index].NextFreelistIndex;
 
     auto ptr = std::addressof(m_array_[index].Value);
     ::new(ptr) Type(std::forward<Types>(args)...);
-    
+
     auto generation = m_array_[index].Generation;
 
     return { index, generation };
@@ -56,9 +59,11 @@ public:
 
   bool IsActive(HandleType handle) const {
     auto index = handle.GetIndex();
+
     if (index < m_array_.size()) {
       return m_array_[index].Generation == handle.Generation;
     }
+
     return false;
   }
 
@@ -72,6 +77,7 @@ public:
 
   void Remove(HandleType handle) {
     auto index = handle.GetIndex();
+
     if (handle.GetGeneration() == m_array_[index].Generation) {
       m_array_[index].Value.~Type();
       m_array_[index].Generation += 1;
@@ -80,7 +86,7 @@ public:
     }
   }
 
-private:
+ private:
   struct ArrayEntry {
     ArrayEntry() : Generation(0), NextFreelistIndex(0) {
       // Should be initialized by the ResourceArray
