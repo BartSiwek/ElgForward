@@ -99,6 +99,12 @@ bool InitializeDeviceAndSwapChain(DirectXState* state) {
     return false;
   }
 
+  auto debug_result = state->device.As(&state->debug);
+if (FAILED(debug_result)) {
+    DXFW_DIRECTX_TRACE(__FILE__, __LINE__, true, hr);
+    return false;
+  }
+
   return true;
 }
 

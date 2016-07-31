@@ -15,12 +15,19 @@
       "diffuse": [0.2, 0.4, 0.8, 1.0],
       "specular": [1.0, 1.0, 1.0, 1.0],
       "specular_power": 100.0
+    },
+	{
+      "name": "basic2",
+      "type": "basic",
+      "diffuse": [0.8, 0.4, 0.2, 1.0],
+      "specular": [1.0, 1.0, 1.0, 1.0],
+      "specular_power": 100.0
     }
   ],
   "lights": "assets/lights/cube_lights.json",
   "scene": [
     {
-      "name": "cube_drawable_1",
+      "name": "drawable_1",
       "mesh_name": "cube cube",
       "material_name": "basic1",
       "transform" : {
@@ -30,7 +37,7 @@
       }
     }, 
 	{
-      "name": "cube_drawable_2",
+      "name": "drawable_2",
       "mesh_name": "cube cube",
       "material_name": "basic1",
       "transform" : {
@@ -40,9 +47,9 @@
       }
     },
 	{
-      "name": "cube_drawable_3",
+      "name": "drawable_3",
       "mesh_name": "cube cube",
-      "material_name": "basic1",
+      "material_name": "basic2",
       "transform" : {
         "translation": [-1.0, 0.0, 1.0],
         "rotation": [1.0, 1.0, 1.0, 90.0],
@@ -50,9 +57,9 @@
       }
     },
 	{
-      "name": "cube_drawable_4",
+      "name": "drawable_4",
       "mesh_name": "cube cube",
-      "material_name": "basic1",
+      "material_name": "basic2",
       "transform" : {
         "translation": [1.0, 0.0, 1.0],
         "rotation": [1.0, 1.0, 1.0, 90.0],
@@ -63,7 +70,7 @@
   "camera": {
     "prespective_lens": {
       "near_plane": 1.0,
-      "far_plane": 3.0,
+      "far_plane": 9.0,
       "fov": 90.0
     },
     "trackball_camera": {

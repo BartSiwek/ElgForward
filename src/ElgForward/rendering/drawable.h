@@ -24,7 +24,7 @@ public:
 
   ~Drawable() {
     for (size_t i = 0; i < D3D11_IA_VERTEX_INPUT_RESOURCE_SLOT_COUNT; ++i) {
-      SAFE_RELEASE(m_vertex_buffers_[i]);
+      // SAFE_RELEASE(m_vertex_buffers_[i]);
     }
   }
 
@@ -33,7 +33,7 @@ public:
       auto buffer = Rendering::VertexBuffer::Retreive(buffer_handle);
       auto buffer_ptr = buffer.Get();
 
-      buffer_ptr->AddRef();
+      // buffer_ptr->AddRef();
 
       m_vertex_buffers_[index] = buffer_ptr;
       m_vertex_buffer_strides_[index] = stride;

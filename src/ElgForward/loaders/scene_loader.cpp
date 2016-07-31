@@ -142,6 +142,8 @@ void BuildDrawables(const nlohmann::json& json_scene, const std::vector<MeshIden
     if (json_transform.is_object()) {
       ReadDrawableTransform(json_transform, &drawable);
     }
+
+    state->debug->ReportLiveDeviceObjects(D3D11_RLDO_SUMMARY | D3D11_RLDO_DETAIL);
   }
 }
 
