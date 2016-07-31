@@ -6,6 +6,7 @@
 #pragma warning(pop)
 
 #include "core/filesystem.h"
+#include "core/json_helpers.h"
 #include "rendering/typed_constant_buffer.h"
 #include "rendering/material.h"
 #include "rendering/materials/basic.h"
@@ -17,10 +18,13 @@ enum class MaterialType {
   BASIC = 0,
 };
 
-bool MaterialTypeFromString(const std::string& /* type */, MaterialType* value) {
+bool MaterialTypeFromString(const std::string& type, MaterialType* value) {
   // TODO: Add something here when there are more materials
-  *value = MaterialType::BASIC;
-  return true;
+  if (type == "basic") {
+    *value = MaterialType::BASIC;
+    return true;
+  }
+  return false;
 }
 
 bool CreateMaterial(const std::string& id, const filesystem::path& vs_path, const filesystem::path& ps_path, ID3D11Device* device,
@@ -49,26 +53,21 @@ bool ReadBasicMaterial(const nlohmann::json& json_material, const filesystem::pa
   auto ps_path = base_path / "basic_ps.cso";
 
   Rendering::Materials::Basic basic_material;
-  basic_material.GlobalAmbient = { 0.0f, 0.0f, 0.0f, 0.0f };
-  basic_material.AmbientColor = { 0.0f, 0.0f, 0.0f, 0.0f };
-  basic_material.EmissiveColor = { 0.0f, 0.0f, 0.0f, 0.0f };
-  basic_material.DiffuseColor = { 0.2f, 0.4f, 0.8f, 1.0f };
-  basic_material.SpecularColor = { 0.0f, 0.0f, 0.0f, 0.0f };
-  basic_material.Reflectance = { 0.0f, 0.0f, 0.0f, 0.0f };
-  basic_material.Opacity = 0.0f;
-  basic_material.SpecularPower = 0.0f;
-  basic_material.IndexOfRefraction = 0.0f;
-  basic_material.HasAmbientTexture = false;
-  basic_material.HasEmissiveTexture = false;
-  basic_material.HasDiffuseTexture = false;
-  basic_material.HasSpecularTexture = false;
-  basic_material.HasSpecularPowerTexture = false;
-  basic_material.HasNormalTexture = false;
-  basic_material.HasBumpTexture = false;
-  basic_material.HasOpacityTexture = false;
-  basic_material.BumpIntensity = 0.0f;
-  basic_material.SpecularScale = 0.0f;
-  basic_material.AlphaThreshold = 0.0f;
+  
+  float diffuse[4];
+  if (Core::ReadFloat4(json_material.value("diffuse", nlohmann::json::array({ 0.5, 0.5, 0.5, 1.0 })), diffuse)) {
+    basic_material.DiffuseColor = DirectX::XMVectorSet(diffuse[0], diffuse[1], diffuse[2], diffuse[3]);
+  }
+
+  float specular[4];
+  if (Core::ReadFloat4(json_material.value("specular", nlohmann::json::array({ 0.0, 0.0, 0.0, 0.0 })), specular)) {
+    basic_material.SpecularColor = DirectX::XMVectorSet(specular[0], specular[1], specular[2], specular[3]);
+  }
+
+  float specular_power;
+  if (Core::ReadFloat(json_material.value("specular_power", nlohmann::json::number_float_t(10.0f)), &specular_power)) {
+    basic_material.SpecularPower = specular_power;
+  }
 
   auto material_constant_buffer = Rendering::ConstantBuffer::Create(name, &basic_material, state->device.Get());
 
