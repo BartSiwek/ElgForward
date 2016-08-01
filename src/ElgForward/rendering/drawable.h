@@ -4,7 +4,7 @@
 
 #include <DirectXMath.h>
 
-#include "core/com_helpers.h"
+#include "core/com_array.h"
 #include "mesh.h"
 #include "material.h"
 
@@ -15,31 +15,29 @@ namespace Rendering {
 
 class Drawable {
 public:
-  Drawable() {
-    for (size_t i = 0; i < D3D11_IA_VERTEX_INPUT_RESOURCE_SLOT_COUNT; ++i) {
-      m_vertex_buffers_[i] = nullptr;
-      m_vertex_buffer_offsets_[i] = 0;
-    }
-  }
+  Drawable() = default;
+  ~Drawable() = default;
 
-  ~Drawable() {
-    for (size_t i = 0; i < D3D11_IA_VERTEX_INPUT_RESOURCE_SLOT_COUNT; ++i) {
-      // SAFE_RELEASE(m_vertex_buffers_[i]);
-    }
-  }
+  Drawable(const Drawable&) = delete;
+  Drawable& operator=(const Drawable&) = delete;
+
+  Drawable(Drawable&& other) = default;
+  Drawable& operator=(Drawable&& other) = default;
 
   bool SetVertexBuffer(uint32_t index, Rendering::VertexBuffer::Handle buffer_handle, uint32_t stride) {
     if (buffer_handle.IsValid()) {
       auto buffer = Rendering::VertexBuffer::Retreive(buffer_handle);
       auto buffer_ptr = buffer.Get();
 
-      // buffer_ptr->AddRef();
+      buffer_ptr->AddRef();
 
       m_vertex_buffers_[index] = buffer_ptr;
       m_vertex_buffer_strides_[index] = stride;
       m_vertex_buffer_offsets_[index] = 0;
+
       return true;
     }
+
     return false;
   }
 
@@ -179,10 +177,10 @@ public:
 
 
 private:
-  std::array<ID3D11Buffer*, D3D11_IA_VERTEX_INPUT_RESOURCE_SLOT_COUNT> m_vertex_buffers_;
-  std::array<uint32_t, D3D11_IA_VERTEX_INPUT_RESOURCE_SLOT_COUNT> m_vertex_buffer_strides_;
-  std::array<uint32_t, D3D11_IA_VERTEX_INPUT_RESOURCE_SLOT_COUNT> m_vertex_buffer_offsets_;
-  Microsoft::WRL::ComPtr<ID3D11InputLayout> m_input_layout_;
+  Core::ComArray<ID3D11Buffer*, D3D11_IA_VERTEX_INPUT_RESOURCE_SLOT_COUNT> m_vertex_buffers_ = {};
+  std::array<uint32_t, D3D11_IA_VERTEX_INPUT_RESOURCE_SLOT_COUNT> m_vertex_buffer_strides_ = {};
+  std::array<uint32_t, D3D11_IA_VERTEX_INPUT_RESOURCE_SLOT_COUNT> m_vertex_buffer_offsets_ = {};
+  Microsoft::WRL::ComPtr<ID3D11InputLayout> m_input_layout_ = nullptr;
 
   Microsoft::WRL::ComPtr<ID3D11Buffer> m_index_buffer_ = nullptr;
   DXGI_FORMAT m_index_buffer_format_ = DXGI_FORMAT_UNKNOWN;

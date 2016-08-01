@@ -233,7 +233,7 @@ void UpdateDrawableBuffers(const Drawable& drawable, Scene* scene, DirectXState*
   if (update_ok) {
     state->device_context->VSSetConstantBuffers(0, 1, ConstantBuffer::GetGpuBuffer(scene->TransformsConstantBuffer).GetAddressOf());
   } else {
-    DXFW_TRACE(__FILE__, __LINE__, false, "Error updating per frame constant buffer");
+    DXFW_TRACE(__FILE__, __LINE__, false, "Error updating per frame constant buffer", "");
   }
 
   // Material
@@ -275,7 +275,7 @@ void UpdateFrameBuffers(Scene* scene, DirectXState* state) {
   if (point_update_ok) {
     state->device_context->VSSetShaderResources(0, 1, GetShaderResourceView(scene->PointLightsStructuredBuffer).GetAddressOf());
   } else {
-    DXFW_TRACE(__FILE__, __LINE__, false, "Error updating point light buffer");
+    DXFW_TRACE(__FILE__, __LINE__, false, "Error updating point light buffer", "");
   }
 
   // Spot lights
@@ -287,7 +287,7 @@ void UpdateFrameBuffers(Scene* scene, DirectXState* state) {
   if (spot_update_ok) {
     state->device_context->VSSetShaderResources(1, 1, GetShaderResourceView(scene->SpotLightsStructuredBuffer).GetAddressOf());
   } else {
-    DXFW_TRACE(__FILE__, __LINE__, false, "Error updating spot light buffer");
+    DXFW_TRACE(__FILE__, __LINE__, false, "Error updating spot light buffer", "");
   }
 
   // Directional lights
@@ -299,7 +299,7 @@ void UpdateFrameBuffers(Scene* scene, DirectXState* state) {
   if (dir_update_ok) {
     state->device_context->VSSetShaderResources(2, 1, GetShaderResourceView(scene->DirectionalLightsStructuredBuffer).GetAddressOf());
   } else {
-    DXFW_TRACE(__FILE__, __LINE__, false, "Error updating directional light buffer");
+    DXFW_TRACE(__FILE__, __LINE__, false, "Error updating directional light buffer", "");
   }
 
   // Light data buffer
@@ -312,7 +312,7 @@ void UpdateFrameBuffers(Scene* scene, DirectXState* state) {
   if (light_data_buffer_update_ok) {
     state->device_context->VSSetConstantBuffers(1, 1, GetGpuBuffer(scene->LightDataConstantBuffer).GetAddressOf());
   } else {
-    DXFW_TRACE(__FILE__, __LINE__, false, "Error updating the light data buffer");
+    DXFW_TRACE(__FILE__, __LINE__, false, "Error updating the light data buffer", "");
   }
 }
 

@@ -160,21 +160,21 @@ bool ReadLightsFromJson(const nlohmann::json& json_lights,
     const std::string& light_type = json_light_type;
     if (light_type == "directional") {
       if (!ReadDirectionalLight(json_light, directional_lights)) {
-        DXFW_TRACE(__FILE__, __LINE__, false, "Reached max directional lights");
+        DXFW_TRACE(__FILE__, __LINE__, false, "Reached max directional lights", "");
       }
       continue;
     }
 
     if (light_type == "spot") {
       if (!ReadSpotLight(json_light, spot_lights)) {
-        DXFW_TRACE(__FILE__, __LINE__, false, "Reached max spot lights");
+        DXFW_TRACE(__FILE__, __LINE__, false, "Reached max spot lights", "");
       }
       continue;
     }
 
     if (light_type == "point") {
       if (!ReadPointLight(json_light, point_lights)) {
-        DXFW_TRACE(__FILE__, __LINE__, false, "Reached max point lights");
+        DXFW_TRACE(__FILE__, __LINE__, false, "Reached max point lights", "");
       }
       continue;
     }
