@@ -12,5 +12,7 @@ struct DirectXState {
   Microsoft::WRL::ComPtr<IDXGISwapChain> swap_chain;
   Microsoft::WRL::ComPtr<ID3D11DeviceContext> device_context;
   Microsoft::WRL::ComPtr<ID3D11RenderTargetView> render_target_view;
+  Microsoft::WRL::ComPtr<ID3D11DepthStencilView> depth_stencil_view;
+  Microsoft::WRL::ComPtr<ID3D11DepthStencilState> depth_stencil_state;
   D3D11_VIEWPORT viewport;
 };
