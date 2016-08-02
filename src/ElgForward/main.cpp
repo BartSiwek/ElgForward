@@ -320,6 +320,8 @@ void UpdateDrawableBuffers(const Drawable& drawable, Scene* scene, DirectXState*
 void Render(Scene* scene, DirectXState* state) {
   float bgColor[4] = { 0.0f, 0.0f, 0.0f, 0.0f };
   state->device_context->ClearRenderTargetView(state->render_target_view.Get(), bgColor);
+  
+  state->device_context->ClearDepthStencilView(state->depth_stencil_view.Get(), D3D11_CLEAR_DEPTH, 1.0f, 0);
 
   for (auto& drawable : scene->Drawables) {
     UpdateDrawableBuffers(drawable, scene, state);
