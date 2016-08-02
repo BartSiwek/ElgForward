@@ -6,6 +6,13 @@
       "options": {
         "index_buffer_format": "32_UINT"
       }
+    },
+    {
+      "prefix": "teapot",
+      "path": "assets/meshes/teapot.obj",
+      "options": {
+        "index_buffer_format": "32_UINT"
+      }
     }
   ],
   "materials": [
@@ -16,7 +23,7 @@
       "specular": [1.0, 1.0, 1.0, 1.0],
       "specular_power": 100.0
     },
-	{
+    {
       "name": "basic2",
       "type": "basic",
       "diffuse": [0.8, 0.4, 0.2, 1.0],
@@ -36,18 +43,28 @@
         "scale": [0.5, 0.5, 0.5]
       }
     }, 
-	{
+    {
       "name": "drawable_2",
-      "mesh_name": "cube cube",
+      "mesh_name": "teapot Base",
       "material_name": "basic1",
       "transform" : {
-        "translation": [1.0, 0.0, -1.0],
-        "rotation": [1.0, 1.0, 1.0, 90.0],
-        "scale": [0.5, 0.5, 0.5]
+        "translation": [1.0, -0.25, -1.0],
+        "rotation": [0.0, 1.0, 0.0, 0.0],
+        "scale": [0.005, 0.005, 0.005]
       }
     },
 	{
       "name": "drawable_3",
+      "mesh_name": "teapot Top",
+      "material_name": "basic1",
+      "transform" : {
+        "translation": [1.0, -0.25, -1.0],
+        "rotation": [0.0, 1.0, 0.0, 0.0],
+        "scale": [0.005, 0.005, 0.005]
+      }
+    },
+    {
+      "name": "drawable_4",
       "mesh_name": "cube cube",
       "material_name": "basic2",
       "transform" : {
@@ -56,14 +73,24 @@
         "scale": [0.5, 0.5, 0.5]
       }
     },
-	{
-      "name": "drawable_4",
-      "mesh_name": "cube cube",
+    {
+      "name": "drawable_5",
+      "mesh_name": "teapot Base",
       "material_name": "basic2",
       "transform" : {
-        "translation": [1.0, 0.0, 1.0],
-        "rotation": [1.0, 1.0, 1.0, 90.0],
-        "scale": [0.5, 0.5, 0.5]
+        "translation": [1.0, -0.25, 1.0],
+        "rotation": [0.0, 1.0, 0.0, 0.0],
+        "scale": [0.005, 0.005, 0.005]
+      }
+    },
+    {
+      "name": "drawable_6",
+      "mesh_name": "teapot Top",
+      "material_name": "basic2",
+      "transform" : {
+        "translation": [1.0, -0.25, 1.0],
+        "rotation": [0.0, 1.0, 0.0, 0.0],
+        "scale": [0.005, 0.005, 0.005]
       }
     }
   ],
