@@ -15,22 +15,22 @@
 #include "rendering/typed_constant_buffer.h"
 #include "rendering/typed_structured_buffer.h"
 
-struct Transforms {
-  DirectX::XMMATRIX ModelMatrix;
-  DirectX::XMMATRIX ModelMatrixInverseTranspose;
-  DirectX::XMMATRIX ViewMatrix;
-  DirectX::XMMATRIX ViewMatrixInverseTranspose;
-  DirectX::XMMATRIX ProjectionMatrix;
-  DirectX::XMMATRIX ModelViewMatrix;
-  DirectX::XMMATRIX ModelViewMatrixInverseTranspose;
-  DirectX::XMMATRIX ModelViewProjectionMatrix;
-};
-
-struct LightData {
+struct PerFrame {
   int DirectionalLightCount = 0;
   int SpotLightCount = 0;
   int PointLightCount = 0;
   PAD(4);
+};
+
+struct PerObject {
+  DirectX::XMMATRIX ModelMatrix;
+  DirectX::XMMATRIX ModelMatrixInverseTranspose;
+};
+
+struct PerCamera {
+  DirectX::XMMATRIX ViewMatrix;
+  DirectX::XMMATRIX ViewMatrixInverseTranspose;
+  DirectX::XMMATRIX ProjectionMatrix;
 };
 
 struct Scene {
@@ -39,8 +39,9 @@ struct Scene {
   Rendering::Cameras::TrackballCamera Camera;
   Rendering::CameraScript CameraScript;
 
-  Rendering::ConstantBuffer::TypedHandle<Transforms> TransformsConstantBuffer;
-  Rendering::ConstantBuffer::TypedHandle<LightData> LightDataConstantBuffer;
+  Rendering::ConstantBuffer::TypedHandle<PerFrame> PerFrameConstantBuffer;
+  Rendering::ConstantBuffer::TypedHandle<PerObject> PerObjectConstantBuffer;
+  Rendering::ConstantBuffer::TypedHandle<PerCamera> PerCameraConstantBuffer;
   Rendering::StructuredBuffer::TypedHandle<Rendering::Lights::DirectionalLight> DirectionalLightsStructuredBuffer;
   Rendering::StructuredBuffer::TypedHandle<Rendering::Lights::SpotLight> SpotLightsStructuredBuffer;
   Rendering::StructuredBuffer::TypedHandle<Rendering::Lights::PointLight> PointLightsStructuredBuffer;

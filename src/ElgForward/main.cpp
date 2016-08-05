@@ -28,6 +28,7 @@
 #include "rendering/material.h"
 #include "rendering/drawable.h"
 #include "rendering/screen.h"
+#include "shaders/registers.h"
 #include "loaders/scene_loader.h"
 #include "directx_state.h"
 #include "scene.h"
@@ -266,13 +267,18 @@ bool InitializeDirect3d11(DirectXState* state) {
 }
 
 bool InitializeScene(DirectXState* state, Scene* scene) {
-  scene->TransformsConstantBuffer = ConstantBuffer::Create<Transforms>("Transforms", nullptr, state->device.Get());
-  if (!scene->TransformsConstantBuffer.IsValid()) {
+  scene->PerFrameConstantBuffer = ConstantBuffer::Create<PerFrame>("PerFrameConstants", nullptr, state->device.Get());
+  if (!scene->PerFrameConstantBuffer.IsValid()) {
     return false;
   }
 
-  scene->LightDataConstantBuffer = ConstantBuffer::Create<LightData>("LightData", nullptr, state->device.Get());
-  if (!scene->TransformsConstantBuffer.IsValid()) {
+  scene->PerObjectConstantBuffer = ConstantBuffer::Create<PerObject>("PerObjectConstants", nullptr, state->device.Get());
+  if (!scene->PerObjectConstantBuffer.IsValid()) {
+    return false;
+  }
+
+  scene->PerCameraConstantBuffer = ConstantBuffer::Create<PerCamera>("PerCameraConstants", nullptr, state->device.Get());
+  if (!scene->PerCameraConstantBuffer.IsValid()) {
     return false;
   }
 
@@ -295,26 +301,20 @@ bool InitializeScene(DirectXState* state, Scene* scene) {
 }
 
 void UpdateDrawableBuffers(const Drawable& drawable, Scene* scene, DirectXState* state) {
-  // Transforms
-  auto buffer = ConstantBuffer::GetCpuBuffer(scene->TransformsConstantBuffer);
+  // Per object
+  auto buffer = ConstantBuffer::GetCpuBuffer(scene->PerObjectConstantBuffer);
   buffer->ModelMatrix = drawable.GetModelMatrix();
   buffer->ModelMatrixInverseTranspose = drawable.GetModelMatrixInverseTranspose();
-  buffer->ViewMatrix = scene->Camera.GetViewMatrix();
-  buffer->ViewMatrixInverseTranspose = scene->Camera.GetViewMatrixInverseTranspose();
-  buffer->ProjectionMatrix = scene->Lens.GetProjectionMatrix();
-  buffer->ModelViewMatrix = buffer->ModelMatrix * buffer->ViewMatrix;
-  buffer->ModelViewMatrixInverseTranspose = buffer->ModelMatrixInverseTranspose * buffer->ViewMatrixInverseTranspose;
-  buffer->ModelViewProjectionMatrix = buffer->ModelViewMatrix * buffer->ProjectionMatrix;
 
-  bool update_ok = SendToGpu(scene->TransformsConstantBuffer, state->device_context.Get());
+  bool update_ok = SendToGpu(scene->PerObjectConstantBuffer, state->device_context.Get());
   if (update_ok) {
-    state->device_context->VSSetConstantBuffers(0, 1, ConstantBuffer::GetGpuBuffer(scene->TransformsConstantBuffer).GetAddressOf());
+    state->device_context->VSSetConstantBuffers(PER_OBJECT_CONSTANT_BUFFER_REGISTER, 1, ConstantBuffer::GetGpuBuffer(scene->PerObjectConstantBuffer).GetAddressOf());
   } else {
-    DXFW_TRACE(__FILE__, __LINE__, false, "Error updating per frame constant buffer", "");
+    DXFW_TRACE(__FILE__, __LINE__, false, "Error updating per object constant buffer", "");
   }
 
   // Material
-  state->device_context->VSSetConstantBuffers(2, 1, drawable.GetAddressOfMaterialConstantBuffer());
+  state->device_context->VSSetConstantBuffers(PER_MATERIAL_CONSTANT_BUFFER_REGISTER, 1, drawable.GetAddressOfMaterialConstantBuffer());
 }
 
 void Render(Scene* scene, DirectXState* state) {
@@ -382,16 +382,30 @@ void UpdateFrameBuffers(Scene* scene, DirectXState* state) {
   }
 
   // Light data buffer
-  auto light_data_buffer = ConstantBuffer::GetCpuBuffer<LightData>(scene->LightDataConstantBuffer);
-  light_data_buffer->PointLightCount = GetCurrentSize(scene->PointLightsStructuredBuffer);
-  light_data_buffer->SpotLightCount = GetCurrentSize(scene->SpotLightsStructuredBuffer);
-  light_data_buffer->DirectionalLightCount = GetCurrentSize(scene->DirectionalLightsStructuredBuffer);
+  auto buffer = ConstantBuffer::GetCpuBuffer(scene->PerFrameConstantBuffer);
+  buffer->PointLightCount = GetCurrentSize(scene->PointLightsStructuredBuffer);
+  buffer->SpotLightCount = GetCurrentSize(scene->SpotLightsStructuredBuffer);
+  buffer->DirectionalLightCount = GetCurrentSize(scene->DirectionalLightsStructuredBuffer);
 
-  bool light_data_buffer_update_ok = SendToGpu(scene->LightDataConstantBuffer, state->device_context.Get());
-  if (light_data_buffer_update_ok) {
-    state->device_context->VSSetConstantBuffers(1, 1, GetGpuBuffer(scene->LightDataConstantBuffer).GetAddressOf());
+  bool update_ok = SendToGpu(scene->PerFrameConstantBuffer, state->device_context.Get());
+  if (update_ok) {
+    state->device_context->VSSetConstantBuffers(PER_FRAME_CONSTANT_BUFFER_REGISTER, 1, ConstantBuffer::GetGpuBuffer(scene->PerFrameConstantBuffer).GetAddressOf());
   } else {
-    DXFW_TRACE(__FILE__, __LINE__, false, "Error updating the light data buffer", "");
+    DXFW_TRACE(__FILE__, __LINE__, false, "Error updating per frame constant buffer", "");
+  }
+}
+
+void UpdateCameraBuffers(Scene* scene, DirectXState* state) {
+  auto buffer = ConstantBuffer::GetCpuBuffer(scene->PerCameraConstantBuffer);
+  buffer->ViewMatrix = scene->Camera.GetViewMatrix();
+  buffer->ViewMatrixInverseTranspose = scene->Camera.GetViewMatrixInverseTranspose();
+  buffer->ProjectionMatrix = scene->Lens.GetProjectionMatrix();
+
+  bool update_ok = SendToGpu(scene->PerCameraConstantBuffer, state->device_context.Get());
+  if (update_ok) {
+    state->device_context->VSSetConstantBuffers(PER_CAMERA_CONSTANT_BUFFER_REGISTER, 1, ConstantBuffer::GetGpuBuffer(scene->PerCameraConstantBuffer).GetAddressOf());
+  } else {
+    DXFW_TRACE(__FILE__, __LINE__, false, "Error updating per frame constant buffer", "");
   }
 }
 
@@ -408,6 +422,7 @@ void Update(Scene* scene, DirectXState* state) {
   scene->Camera.UpdateMatrices(frustum_width, frustum_height);
 
   UpdateFrameBuffers(scene, state);
+  UpdateCameraBuffers(scene, state);
 }
 
 int main(int /* argc */, char** /* argv */) {

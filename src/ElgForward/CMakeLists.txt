@@ -124,6 +124,7 @@ set(TARGET_SHADERS
   ${TARGET_SOURCE_DIR}/shaders/basic.h
   ${TARGET_SOURCE_DIR}/shaders/basic_vs.hlsl
   ${TARGET_SOURCE_DIR}/shaders/basic_ps.hlsl
+  ${TARGET_SOURCE_DIR}/shaders/registers.h
 )
 
 set_source_files_properties(${TARGET_SOURCE_DIR}/shaders/basic.h PROPERTIES VS_SHADER_MODEL 5.0)

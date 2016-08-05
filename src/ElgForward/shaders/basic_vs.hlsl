@@ -1,26 +1,27 @@
 #pragma pack_matrix(row_major)
 
+#include "registers.h"
 #include "basic.h"
 
-cbuffer PerFrameConstants : register(b0) {
-  float4x4 ModelMatrix;
-  float4x4 ModelMatrixInverseTranspose;
-  float4x4 ViewMatrix;
-  float4x4 ViewMatrixInverseTranspose;
-  float4x4 ProjectionMatrix;
-  float4x4 ModelViewMatrix;
-  float4x4 ModelViewMatrixInverseTranspose;
-  float4x4 ModelViewProjectionMatrix;
-};
-
-cbuffer LightData : register(b1) {
+cbuffer PerFrameConstants : PER_FRAME_CONSTANT_BUFFER_REGISTER {
   int DirectionalLightCount;
   int SpotLightCount;
   int PointLightCount;
   float pad;
 };
 
-cbuffer Material : register(b2) {
+cbuffer PerCamersConstants : PER_CAMERA_CONSTANT_BUFFER_REGISTER {
+  float4x4 ViewMatrix;
+  float4x4 ViewMatrixInverseTranspose;
+  float4x4 ProjectionMatrix;
+}
+
+cbuffer PerObjectConstants : PER_OBJECT_CONSTANT_BUFFER_REGISTER {
+  float4x4 ModelMatrix;
+  float4x4 ModelMatrixInverseTranspose;
+}
+
+cbuffer PerMaterialConstants : PER_MATERIAL_CONSTANT_BUFFER_REGISTER {
   float4 DiffuseColor;
   float4 SpecularColor;
   float SpecularPower;
@@ -48,10 +49,14 @@ struct VertexShaderInput {
 VertexShaderOutput main(VertexShaderInput input) {
   VertexShaderOutput output;
 
-  float4 positionMs = float4(input.PositionMs, 1.0);
-  float4 positionVs = mul(positionMs, ModelViewMatrix);
+  float4x4 modelViewMatrix = mul(ModelMatrix, ViewMatrix);
+  float4x4 modelViewProjectionMatrix = mul(modelViewMatrix, ProjectionMatrix);
+  float4x4 modelViewMatrixInverseTranspose = mul(ModelMatrixInverseTranspose, ViewMatrixInverseTranspose);
 
-  float3 nu = mul(input.NormalMs, (float3x3)ModelViewMatrixInverseTranspose);
+  float4 positionMs = float4(input.PositionMs, 1.0);
+  float4 positionVs = mul(positionMs, modelViewMatrix);
+
+  float3 nu = mul(input.NormalMs, (float3x3)modelViewMatrixInverseTranspose);
   float3 n = normalize(nu);
 
   float4 finalColor = float4(0.0, 0.0, 0.0, 1.0);
@@ -66,7 +71,7 @@ VertexShaderOutput main(VertexShaderInput input) {
     finalColor += PointLights[i].DiffuseColor * DiffuseColor * max(nDotL, 0);
   }
 
-  output.Position = mul(positionMs, ModelViewProjectionMatrix);
+  output.Position = mul(positionMs, modelViewProjectionMatrix);
   output.Color = finalColor;
 
   return output;
