@@ -9,6 +9,8 @@ namespace Core {
 template<typename T, size_t Size>
 class ComArray {
  public:
+  using value_type = T*;
+
   ComArray() : m_array_() {
   }
 
@@ -42,11 +44,11 @@ class ComArray {
     InternalRelease();
   }
 
-  const T& operator[](size_t index) const {
+  const value_type& operator[](size_t index) const {
     return m_array_[index];
   }
 
-  T& operator[](size_t index) {
+  value_type& operator[](size_t index) {
     return m_array_[index];
   }
 
@@ -71,7 +73,7 @@ class ComArray {
      }
   }
 
-  std::array<T, Size> m_array_;
+  std::array<value_type, Size> m_array_;
 };
 
 }  // namespace Core
