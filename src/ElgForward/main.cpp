@@ -25,7 +25,6 @@
 #include "rendering/materials/basic.h"
 #include "rendering/mesh.h"
 #include "rendering/vertex_layout.h"
-#include "rendering/material.h"
 #include "rendering/drawable.h"
 #include "rendering/screen.h"
 #include "shaders/registers.h"
@@ -272,11 +271,6 @@ bool InitializeScene(DirectXState* state, Scene* scene) {
     return false;
   }
 
-  scene->PerObjectConstantBuffer = ConstantBuffer::Create<PerObject>("PerObjectConstants", nullptr, state->device.Get());
-  if (!scene->PerObjectConstantBuffer.IsValid()) {
-    return false;
-  }
-
   scene->PerCameraConstantBuffer = ConstantBuffer::Create<PerCamera>("PerCameraConstants", nullptr, state->device.Get());
   if (!scene->PerCameraConstantBuffer.IsValid()) {
     return false;
@@ -300,18 +294,9 @@ bool InitializeScene(DirectXState* state, Scene* scene) {
   return true;
 }
 
-void UpdateDrawableBuffers(const Drawable& drawable, Scene* scene, DirectXState* state) {
-  // Per object
-  auto buffer = ConstantBuffer::GetCpuBuffer(scene->PerObjectConstantBuffer);
-  buffer->ModelMatrix = drawable.GetModelMatrix();
-  buffer->ModelMatrixInverseTranspose = drawable.GetModelMatrixInverseTranspose();
-
-  bool update_ok = SendToGpu(scene->PerObjectConstantBuffer, state->device_context.Get());
-  if (update_ok) {
-    state->device_context->VSSetConstantBuffers(PER_OBJECT_CONSTANT_BUFFER_REGISTER, 1, ConstantBuffer::GetGpuBuffer(scene->PerObjectConstantBuffer).GetAddressOf());
-  } else {
-    DXFW_TRACE(__FILE__, __LINE__, false, "Error updating per object constant buffer", "");
-  }
+void UpdateDrawableBuffers(const Drawable& drawable, DirectXState* state) {
+  // Transform
+  state->device_context->VSSetConstantBuffers(PER_OBJECT_CONSTANT_BUFFER_REGISTER, 1, drawable.GetAddressOfTransformConstantBuffer());
 
   // Material
   state->device_context->VSSetConstantBuffers(PER_MATERIAL_CONSTANT_BUFFER_REGISTER, 1, drawable.GetAddressOfMaterialConstantBuffer());
@@ -324,7 +309,7 @@ void Render(Scene* scene, DirectXState* state) {
   state->device_context->ClearDepthStencilView(state->depth_stencil_view.Get(), D3D11_CLEAR_DEPTH, 1.0f, 0);
 
   for (auto& drawable : scene->Drawables) {
-    UpdateDrawableBuffers(drawable, scene, state);
+    UpdateDrawableBuffers(drawable, state);
 
     state->device_context->VSSetShader(drawable.GetVertexShader(), 0, 0);
     state->device_context->PSSetShader(drawable.GetPixelShader(), 0, 0);

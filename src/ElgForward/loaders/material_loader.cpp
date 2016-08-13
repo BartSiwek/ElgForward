@@ -8,7 +8,6 @@
 #include "core/filesystem.h"
 #include "core/json_helpers.h"
 #include "rendering/typed_constant_buffer.h"
-#include "rendering/material.h"
 #include "rendering/materials/basic.h"
 #include "directx_state.h"
 
@@ -28,25 +27,25 @@ bool MaterialTypeFromString(const std::string& type, MaterialType* value) {
 }
 
 bool CreateMaterial(const std::string& id, const filesystem::path& vs_path, const filesystem::path& ps_path, ID3D11Device* device,
-                    Rendering::ConstantBuffer::Handle material_constant_buffer, Rendering::Material* material) {
+                    Rendering::ConstantBuffer::Handle material_constant_buffer, MaterialIdentifier* material) {
   material->Hash = std::hash<std::string>()(id);
 
-  material->VertexShader = Rendering::VertexShader::Create(vs_path, std::unordered_map<std::string, Rendering::VertexDataChannel>(), device);
-  if (!material->VertexShader.IsValid()) {
+  material->Material.VertexShader = Rendering::VertexShader::Create(vs_path, std::unordered_map<std::string, Rendering::VertexDataChannel>(), device);
+  if (!material->Material.VertexShader.IsValid()) {
     return false;
   }
 
-  material->PixelShader = Rendering::PixelShader::Create(ps_path, device);
-  if (!material->PixelShader.IsValid()) {
+  material->Material.PixelShader = Rendering::PixelShader::Create(ps_path, device);
+  if (!material->Material.PixelShader.IsValid()) {
     return false;
   }
 
-  material->MaterialConstantBuffer = material_constant_buffer;
+  material->Material.MaterialConstantBuffer = material_constant_buffer;
 
   return true;
 }
 
-bool ReadBasicMaterial(const nlohmann::json& json_material, const filesystem::path& base_path, DirectXState* state, Rendering::Material* material) {
+bool ReadBasicMaterial(const nlohmann::json& json_material, const filesystem::path& base_path, ID3D11Device* device, MaterialIdentifier* material) {
   const std::string& name = json_material["name"];
 
   auto vs_path = base_path / "basic_vs.cso";
@@ -69,12 +68,15 @@ bool ReadBasicMaterial(const nlohmann::json& json_material, const filesystem::pa
     basic_material.SpecularPower = specular_power;
   }
 
-  auto material_constant_buffer = Rendering::ConstantBuffer::Create(name, &basic_material, state->device.Get());
+  auto material_constant_buffer = Rendering::ConstantBuffer::Create(name, &basic_material, device);
+  if (!material_constant_buffer.IsValid()) {
+    return false;
+  }
 
-  return CreateMaterial(name, vs_path, ps_path, state->device.Get(), static_cast<Rendering::ConstantBuffer::Handle>(material_constant_buffer), material);
+  return CreateMaterial(name, vs_path, ps_path, device, static_cast<Rendering::ConstantBuffer::Handle>(material_constant_buffer), material);
 }
 
-bool ReadMaterial(const nlohmann::json& json_material, const filesystem::path& base_path, DirectXState* state, Rendering::Material* material) {
+bool ReadMaterial(const nlohmann::json& json_material, const filesystem::path& base_path, ID3D11Device* device, MaterialIdentifier* material) {
   bool is_valid_material_entry = json_material["name"].is_string()
                               && json_material["type"].is_string();
 
@@ -94,7 +96,7 @@ bool ReadMaterial(const nlohmann::json& json_material, const filesystem::path& b
 
   switch (material_type) {
     case MaterialType::BASIC:
-      return ReadBasicMaterial(json_material, base_path, state, material);
+      return ReadBasicMaterial(json_material, base_path, device, material);
     default:
       DXFW_TRACE(__FILE__, __LINE__, false, "Unknown material type %S", type.c_str());
       return true;

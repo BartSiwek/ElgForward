@@ -5,12 +5,13 @@
 #include "rendering/constant_buffer.h"
 
 namespace Rendering {
+namespace Material {
 
 struct Material {
-  size_t Hash;
   VertexShader::Handle VertexShader;
   PixelShader::Handle PixelShader;
   ConstantBuffer::Handle MaterialConstantBuffer;
 };
 
+}  // namespace Material
 }  // namespace Rendering

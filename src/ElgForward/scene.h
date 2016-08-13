@@ -22,11 +22,6 @@ struct PerFrame {
   PAD(4);
 };
 
-struct PerObject {
-  DirectX::XMMATRIX ModelMatrix;
-  DirectX::XMMATRIX ModelMatrixInverseTranspose;
-};
-
 struct PerCamera {
   DirectX::XMMATRIX ViewMatrix;
   DirectX::XMMATRIX ViewMatrixInverseTranspose;
@@ -40,7 +35,6 @@ struct Scene {
   Rendering::CameraScript CameraScript;
 
   Rendering::ConstantBuffer::TypedHandle<PerFrame> PerFrameConstantBuffer;
-  Rendering::ConstantBuffer::TypedHandle<PerObject> PerObjectConstantBuffer;
   Rendering::ConstantBuffer::TypedHandle<PerCamera> PerCameraConstantBuffer;
   Rendering::StructuredBuffer::TypedHandle<Rendering::Lights::DirectionalLight> DirectionalLightsStructuredBuffer;
   Rendering::StructuredBuffer::TypedHandle<Rendering::Lights::SpotLight> SpotLightsStructuredBuffer;

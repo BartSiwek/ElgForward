@@ -12,15 +12,15 @@
 namespace Rendering {
 namespace Mesh {
 
-struct MeshData {
-  MeshData() = default;
-  ~MeshData() = default;
+struct Mesh {
+  Mesh() = default;
+  ~Mesh() = default;
 
-  MeshData(const MeshData&) = delete;
-  MeshData& operator=(const MeshData&) = delete;
+  Mesh(const Mesh&) = delete;
+  Mesh& operator=(const Mesh&) = delete;
 
-  MeshData(MeshData&&) = default;
-  MeshData& operator=(MeshData&&) = default;
+  Mesh(Mesh&&) = default;
+  Mesh& operator=(Mesh&&) = default;
 
   std::vector<Rendering::VertexBuffer::Handle> VertexBuffers = {};
   std::vector<DXGI_FORMAT> VertexBufferFormats = {};
@@ -38,11 +38,11 @@ struct MeshTag {};
 
 using Handle = Core::Handle<8, 24, MeshTag>;
 
-Handle Create(size_t mesh_hash, std::unique_ptr<MeshData>&& data);
+Handle Create(size_t mesh_hash, std::unique_ptr<Mesh>&& data);
 
 Handle Exists(size_t mesh_hash);
 
-MeshData* Retreive(Handle handle);
+Mesh* Retreive(Handle handle);
 
 }  // namespace Mesh
 }  // namespace Rendering

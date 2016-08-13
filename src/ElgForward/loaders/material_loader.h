@@ -11,6 +11,11 @@
 
 namespace Loaders {
 
-bool ReadMaterial(const nlohmann::json& json_material, const filesystem::path& base_path, DirectXState* state, Rendering::Material* material);
+struct MaterialIdentifier {
+  size_t Hash;
+  Rendering::Material::Material Material;
+};
+
+bool ReadMaterial(const nlohmann::json& json_material, const filesystem::path& base_path, ID3D11Device* device, MaterialIdentifier* material);
 
 }  // namespace Loaders

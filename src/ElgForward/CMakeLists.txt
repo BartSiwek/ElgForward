@@ -58,6 +58,8 @@ set(TARGET_SOURCES_LOADERS
   ${TARGET_SOURCE_DIR}/loaders/mesh_loader.h
   ${TARGET_SOURCE_DIR}/loaders/scene_loader.cpp
   ${TARGET_SOURCE_DIR}/loaders/scene_loader.h
+  ${TARGET_SOURCE_DIR}/loaders/transform_loader.cpp
+  ${TARGET_SOURCE_DIR}/loaders/transform_loader.h
 )
 source_group(Sources\\Loaders FILES ${TARGET_SOURCES_LOADERS})
 
@@ -77,6 +79,8 @@ set(TARGET_SOURCES_RENDERING
   ${TARGET_SOURCE_DIR}/rendering/screen.h
   ${TARGET_SOURCE_DIR}/rendering/structured_buffer.cpp
   ${TARGET_SOURCE_DIR}/rendering/structured_buffer.h
+  ${TARGET_SOURCE_DIR}/rendering/transform.h
+  ${TARGET_SOURCE_DIR}/rendering/transform_and_inverse_transpose.h
   ${TARGET_SOURCE_DIR}/rendering/typed_constant_buffer.h
   ${TARGET_SOURCE_DIR}/rendering/typed_structured_buffer.h
   ${TARGET_SOURCE_DIR}/rendering/vertex_buffer.cpp

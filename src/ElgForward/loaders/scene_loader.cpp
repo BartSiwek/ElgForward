@@ -12,9 +12,12 @@
 #include "loaders/camera_loader.h"
 #include "loaders/material_loader.h"
 #include "loaders/mesh_loader.h"
+#include "loaders/transform_loader.h"
 #include "rendering/screen.h"
 #include "rendering/material.h"
 #include "rendering/mesh.h"
+#include "rendering/transform.h"
+#include "rendering/transform_and_inverse_transpose.h"
 
 namespace Loaders {
 
@@ -39,59 +42,23 @@ void ReadMeshes(const nlohmann::json& json_scene, const filesystem::path& base_p
   }
 }
 
-void ReadDrawableTransform(const nlohmann::json& json_transform, Rendering::Drawable* drawable) {
-  // Translation
-  DirectX::XMMATRIX translation = DirectX::XMMatrixIdentity();
-  DirectX::XMMATRIX translation_inverse = DirectX::XMMatrixIdentity();
-
-  const auto& json_translation = json_transform["translation"];
-
-  float translation_values[3];
-  if (Core::ReadFloat3(json_translation, translation_values)) {
-    translation = DirectX::XMMatrixTranslation(translation_values[0], translation_values[1], translation_values[2]);
-    translation_inverse = DirectX::XMMatrixTranslation(-translation_values[0], -translation_values[1], -translation_values[2]);
-  } else {
-    DXFW_TRACE(__FILE__, __LINE__, false, "Invalid drawable translation %S", json_translation.dump().c_str());
-  }
-
-  // Rotation
-  DirectX::XMMATRIX rotation = DirectX::XMMatrixIdentity();
+void ReadDrawableTransform(const std::string& drawable_name, const nlohmann::json& json_drawable, DirectXState* state, Rendering::Transform::Transform* transform) {
+  const auto& json_transform = json_drawable["transform"];
   
-  const auto& json_rotation = json_transform["rotation"];
-
-  float rotation_values[4];
-  if (Core::ReadFloat3(json_rotation, rotation_values)) {
-    rotation = DirectX::XMMatrixRotationRollPitchYaw(rotation_values[0], rotation_values[1], rotation_values[2]);
-  } else if (Core::ReadFloat4(json_rotation, rotation_values)) {
-    auto axis = DirectX::XMVectorSet(rotation_values[0], rotation_values[1], rotation_values[2], 0.0f);
-    rotation = DirectX::XMMatrixRotationAxis(axis, DirectX::XMConvertToRadians(rotation_values[3]));
-  } else {
-    DXFW_TRACE(__FILE__, __LINE__, false, "Invalid drawable rotation %S", json_rotation.dump().c_str());
+  if (!json_transform.is_object()) {
+    DXFW_TRACE(__FILE__, __LINE__, false, "Invalid drawable transform entry [%S]", json_transform.dump().c_str());
+    return;
   }
 
-  // Scaling
-  DirectX::XMMATRIX scaling = DirectX::XMMatrixIdentity();
-  DirectX::XMMATRIX scaling_inverse = DirectX::XMMatrixIdentity();
-  
-  const auto& json_scale = json_transform["scale"];
+  bool transform_ok = ReadTransform(drawable_name, json_transform, state->device.Get(), transform);
 
-  float scale_values[3];
-  if (Core::ReadFloat3(json_scale, scale_values)) {
-    scaling = DirectX::XMMatrixScaling(scale_values[0], scale_values[1], scale_values[2]);
-    scaling_inverse = DirectX::XMMatrixScaling(1.0f / scale_values[0], 1.0f / scale_values[1], 1.0f / scale_values[2]);
-  } else {
-    DXFW_TRACE(__FILE__, __LINE__, false, "Invalid drawable scaling %S", json_scale.dump().c_str());
+  if (!transform_ok) {
+    DXFW_TRACE(__FILE__, __LINE__, false, "Error reading drawable transform entry [%S]", json_transform.dump().c_str());
   }
-
-  auto model_transform = scaling * rotation * translation;
-  drawable->SetModelMatrix(model_transform);
-
-  auto model_transform_inverse_transpose = scaling_inverse * rotation * DirectX::XMMatrixTranspose(translation_inverse);
-  drawable->SetModelMatrixInverseTranspose(model_transform_inverse_transpose);
 }
 
 void BuildDrawables(const nlohmann::json& json_scene, const std::vector<MeshIdentifier>& mesh_indetifiers,
-                    const std::vector<Rendering::Material>& materials, DirectXState* state,
+                    const std::vector<MaterialIdentifier>& materials, DirectXState* state,
                     std::vector<Rendering::Drawable>* drawables) {
   const auto& json_drawables = json_scene["scene"];
 
@@ -105,6 +72,7 @@ void BuildDrawables(const nlohmann::json& json_scene, const std::vector<MeshIden
       continue;
     }
 
+    const std::string& drawable_name = json_drawable["name"];
     const std::string& mesh_name = json_drawable["mesh_name"];
     const std::string& material_name = json_drawable["material_name"];
 
@@ -121,37 +89,37 @@ void BuildDrawables(const nlohmann::json& json_scene, const std::vector<MeshIden
       continue;
     }
 
-    auto material_it = std::find_if(std::begin(materials), std::end(materials), [material_name_hash](const auto& material) {
+    auto mesh = Rendering::Mesh::Retreive(mesh_indetifier_it->handle);
+
+    auto material_identifier_it = std::find_if(std::begin(materials), std::end(materials), [material_name_hash](const auto& material) {
       return material_name_hash == material.Hash;
     });
 
-    if (material_it == std::end(materials)) {
+    if (material_identifier_it == std::end(materials)) {
       DXFW_TRACE(__FILE__, __LINE__, false, "Error creating drawable from mesh %S and material %S - material not found", mesh_name.c_str(), material_name.c_str());
       continue;
     }
 
+    Rendering::Transform::Transform transform;
+    ReadDrawableTransform(drawable_name, json_drawable, state, &transform);
+
     drawables->emplace_back();
     auto& drawable = drawables->back();
-    bool drawable_ok = CreateDrawable(mesh_indetifier_it->handle, *material_it, state->device.Get(), &drawable);
+    bool drawable_ok = CreateDrawable(*mesh, material_identifier_it->Material, transform, state->device.Get(), &drawable);
     if (!drawable_ok) {
       DXFW_TRACE(__FILE__, __LINE__, false, "Error creating drawable from mesh %S and material %S - CreateDrawable failed", mesh_name.c_str(), material_name.c_str());
       continue;
-    }
-
-    const auto& json_transform = json_drawable["transform"];
-    if (json_transform.is_object()) {
-      ReadDrawableTransform(json_transform, &drawable);
     }
   }
 }
 
 void ReadMaterials(const nlohmann::json& json_scene, const filesystem::path& base_path, DirectXState* state,
-                   std::vector<Rendering::Material>* materials) {
+                   std::vector<MaterialIdentifier>* materials) {
   const auto& json_materials = json_scene["materials"];
 
   for (const auto& json_material : json_materials) {
-    Rendering::Material new_material;
-    bool material_ok = ReadMaterial(json_material, base_path, state, &new_material);
+    MaterialIdentifier new_material;
+    bool material_ok = ReadMaterial(json_material, base_path, state->device.Get(), &new_material);
     if (!material_ok) {
       DXFW_TRACE(__FILE__, __LINE__, false, "Error loading material [%S]", json_material.dump().c_str());
     }
@@ -203,7 +171,7 @@ bool LoadScene(const filesystem::path& path, const filesystem::path& base_path, 
   std::vector<MeshIdentifier> mesh_identifiers;
   ReadMeshes(json_scene, base_path, state, &mesh_identifiers);
   
-  std::vector<Rendering::Material> materials;
+  std::vector<MaterialIdentifier> materials;
   ReadMaterials(json_scene, base_path, state, &materials);
   
   ReadLights(json_scene, base_path, scene);

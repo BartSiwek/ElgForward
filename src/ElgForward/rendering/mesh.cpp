@@ -7,10 +7,10 @@
 namespace Rendering {
 namespace Mesh {
 
-Core::ResourceArray<Handle, std::unique_ptr<MeshData>, 255> g_storage_;
+Core::ResourceArray<Handle, std::unique_ptr<Mesh>, 255> g_storage_;
 Core::HandleCache<size_t, Handle> g_cache_;
 
-Handle Create(size_t mesh_hash, std::unique_ptr<MeshData>&& data) {
+Handle Create(size_t mesh_hash, std::unique_ptr<Mesh>&& data) {
   auto cached_handle = g_cache_.Get(mesh_hash);
   if (cached_handle.IsValid()) {
     return cached_handle;
@@ -25,7 +25,7 @@ Handle Exists(size_t mesh_hash) {
   return g_cache_.Get(mesh_hash);
 }
 
-MeshData* Retreive(Handle handle) {
+Mesh* Retreive(Handle handle) {
   return g_storage_.Get(handle).get();
 }
 

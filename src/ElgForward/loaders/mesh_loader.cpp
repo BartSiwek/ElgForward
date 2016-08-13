@@ -68,7 +68,7 @@ public:
 };
 
 template<typename T>
-bool AddVertexBufferToMesh(size_t hash, const std::vector<T>& data, DXGI_FORMAT format, VertexDataChannel channel, ID3D11Device* device, Mesh::MeshData* mesh) {
+bool AddVertexBufferToMesh(size_t hash, const std::vector<T>& data, DXGI_FORMAT format, VertexDataChannel channel, ID3D11Device* device, Mesh::Mesh* mesh) {
   auto vb_handle = Rendering::VertexBuffer::Create(hash, data, device);
   if (!vb_handle.IsValid()) {
     return false;
@@ -82,7 +82,7 @@ bool AddVertexBufferToMesh(size_t hash, const std::vector<T>& data, DXGI_FORMAT 
   return true;
 }
 
-bool PrepareFloat1VertexBuffer(size_t base_hash, const aiVector3D* input, uint32_t vertex_count, VertexDataChannel channel, ID3D11Device* device, Mesh::MeshData* mesh) {
+bool PrepareFloat1VertexBuffer(size_t base_hash, const aiVector3D* input, uint32_t vertex_count, VertexDataChannel channel, ID3D11Device* device, Mesh::Mesh* mesh) {
   using EntryType = float;
 
   std::vector<EntryType> data(vertex_count);
@@ -98,7 +98,7 @@ bool PrepareFloat1VertexBuffer(size_t base_hash, const aiVector3D* input, uint32
   return true;
 }
 
-bool PrepareFloat2VertexBuffer(size_t base_hash, const aiVector3D* input, uint32_t vertex_count, VertexDataChannel channel, ID3D11Device* device, Mesh::MeshData* mesh) {
+bool PrepareFloat2VertexBuffer(size_t base_hash, const aiVector3D* input, uint32_t vertex_count, VertexDataChannel channel, ID3D11Device* device, Mesh::Mesh* mesh) {
   using EntryType = DirectX::XMFLOAT2;
 
   std::vector<EntryType> data(vertex_count);
@@ -115,7 +115,7 @@ bool PrepareFloat2VertexBuffer(size_t base_hash, const aiVector3D* input, uint32
   return true;
 }
 
-bool PrepareFloat3VertexBuffer(size_t base_hash, const aiVector3D* input, uint32_t vertex_count, VertexDataChannel channel, ID3D11Device* device, Mesh::MeshData* mesh) {
+bool PrepareFloat3VertexBuffer(size_t base_hash, const aiVector3D* input, uint32_t vertex_count, VertexDataChannel channel, ID3D11Device* device, Mesh::Mesh* mesh) {
   using EntryType = DirectX::XMFLOAT3;
 
   std::vector<EntryType> data(vertex_count);
@@ -133,7 +133,7 @@ bool PrepareFloat3VertexBuffer(size_t base_hash, const aiVector3D* input, uint32
   return true;
 }
 
-bool PrepareFloat4VertexBuffer(size_t base_hash, const aiColor4D* input, uint32_t vertex_count, VertexDataChannel channel, ID3D11Device* device, Mesh::MeshData* mesh) {
+bool PrepareFloat4VertexBuffer(size_t base_hash, const aiColor4D* input, uint32_t vertex_count, VertexDataChannel channel, ID3D11Device* device, Mesh::Mesh* mesh) {
   using EntryType = DirectX::XMFLOAT4;
 
   std::vector<EntryType> data(vertex_count);
@@ -178,7 +178,7 @@ bool ValidateOptions(const MeshLoadOptions& options) {
   return true;
 }
 
-bool LoadIndexBuffer32UInt(size_t hash, const aiMesh& imported_mesh, ID3D11Device* device, Mesh::MeshData* mesh) {
+bool LoadIndexBuffer32UInt(size_t hash, const aiMesh& imported_mesh, ID3D11Device* device, Mesh::Mesh* mesh) {
   std::vector<uint32_t> indices;
   for (size_t face_index = 0; face_index < imported_mesh.mNumFaces; ++face_index) {
     for (size_t index_index = 0; index_index < imported_mesh.mFaces[face_index].mNumIndices; ++index_index) {
@@ -198,7 +198,7 @@ bool LoadIndexBuffer32UInt(size_t hash, const aiMesh& imported_mesh, ID3D11Devic
   return true;
 }
 
-bool LoadIndexBuffer16UInt(size_t hash, const aiMesh& imported_mesh, ID3D11Device* device, Mesh::MeshData* mesh) {
+bool LoadIndexBuffer16UInt(size_t hash, const aiMesh& imported_mesh, ID3D11Device* device, Mesh::Mesh* mesh) {
   std::vector<uint16_t> indices;
   for (size_t face_index = 0; face_index < imported_mesh.mNumFaces; ++face_index) {
     for (size_t index_index = 0; index_index < imported_mesh.mFaces[face_index].mNumIndices; ++index_index) {
@@ -256,7 +256,7 @@ bool ReadMeshes(const std::string& prefix, const filesystem::path& path, const M
       return false;
     }
 
-    auto mesh = std::make_unique<Mesh::MeshData>();
+    auto mesh = std::make_unique<Mesh::Mesh>();
 
     uint32_t vertex_count = imported_mesh->mNumVertices;
 

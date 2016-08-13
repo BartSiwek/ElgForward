@@ -5,9 +5,9 @@
 #include <DirectXMath.h>
 
 #include "core/com_array.h"
-#include "mesh.h"
-#include "material.h"
-
+#include "rendering/mesh.h"
+#include "rendering/material.h"
+#include "rendering/transform.h"
 #include "rendering/vertex_layout.h"
 #include "rendering/constant_buffer.h"
 
@@ -151,30 +151,25 @@ public:
     return m_material_constant_buffer_.GetAddressOf();
   }
 
-  void SetModelMatrix(const DirectX::XMMATRIX& matrix) {
-    m_model_matrix_ = matrix;
+  bool SetTransformConstantBuffer(Microsoft::WRL::ComPtr<ID3D11Buffer> buffer) {
+    if (m_transform_constant_buffer_ == nullptr) {
+      m_transform_constant_buffer_ = buffer;
+      return true;
+    }
+    return false;
   }
 
-  const DirectX::XMMATRIX& GetModelMatrix() const {
-    return m_model_matrix_;
+  ID3D11Buffer* GetTransformConstantBuffer() const {
+    return m_transform_constant_buffer_.Get();
   }
 
-  DirectX::XMMATRIX& GetModelMatrix() {
-    return m_model_matrix_;
+  ID3D11Buffer* const* GetAddressOfTransformConstantBuffer() const {
+    return m_transform_constant_buffer_.GetAddressOf();
   }
 
-  void SetModelMatrixInverseTranspose(const DirectX::XMMATRIX& matrix) {
-    m_model_matrix_inverse_transpose_ = matrix;
+  ID3D11Buffer** GetAddressOfTransformConstantBuffer() {
+    return m_transform_constant_buffer_.GetAddressOf();
   }
-
-  const DirectX::XMMATRIX& GetModelMatrixInverseTranspose() const {
-    return m_model_matrix_inverse_transpose_;
-  }
-
-  DirectX::XMMATRIX& GetModelMatrixInverseTranspose() {
-    return m_model_matrix_inverse_transpose_;
-  }
-
 
 private:
   Core::ComArray<ID3D11Buffer, D3D11_IA_VERTEX_INPUT_RESOURCE_SLOT_COUNT> m_vertex_buffers_ = {};
@@ -191,10 +186,10 @@ private:
   Microsoft::WRL::ComPtr<ID3D11PixelShader> m_ps_ = nullptr;
   Microsoft::WRL::ComPtr<ID3D11Buffer> m_material_constant_buffer_ = nullptr;
 
-  DirectX::XMMATRIX m_model_matrix_ = DirectX::XMMatrixIdentity();
-  DirectX::XMMATRIX m_model_matrix_inverse_transpose_ = DirectX::XMMatrixIdentity();
+  Microsoft::WRL::ComPtr<ID3D11Buffer> m_transform_constant_buffer_ = nullptr;
 };
 
-bool CreateDrawable(Mesh::Handle mesh, const Material& material, ID3D11Device* device, Drawable* drawable);
+bool CreateDrawable(const Mesh::Mesh& mesh, const Material::Material& material, const Transform::Transform& transform,
+                    ID3D11Device* device, Drawable* drawable);
 
 }  // namespace Rendering
