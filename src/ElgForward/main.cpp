@@ -294,12 +294,13 @@ bool InitializeScene(DirectXState* state, Scene* scene) {
   return true;
 }
 
-void UpdateDrawableBuffers(const Drawable& drawable, DirectXState* state) {
-  // Transform
-  state->device_context->VSSetConstantBuffers(PER_OBJECT_CONSTANT_BUFFER_REGISTER, 1, drawable.GetAddressOfTransformConstantBuffer());
-
-  // Material
-  state->device_context->VSSetConstantBuffers(PER_MATERIAL_CONSTANT_BUFFER_REGISTER, 1, drawable.GetAddressOfMaterialConstantBuffer());
+void SetConstantBuffers(const Drawable& drawable, Scene* scene, DirectXState* state) {
+  ID3D11Buffer* constant_buffers[D3D11_COMMONSHADER_CONSTANT_BUFFER_API_SLOT_COUNT] = { nullptr };
+  constant_buffers[PER_FRAME_CONSTANT_BUFFER_REGISTER] = ConstantBuffer::GetGpuBuffer(scene->PerFrameConstantBuffer).Get();
+  constant_buffers[PER_CAMERA_CONSTANT_BUFFER_REGISTER] = ConstantBuffer::GetGpuBuffer(scene->PerCameraConstantBuffer).Get();
+  constant_buffers[PER_OBJECT_CONSTANT_BUFFER_REGISTER] = drawable.GetTransformConstantBuffer();
+  constant_buffers[PER_MATERIAL_CONSTANT_BUFFER_REGISTER] = drawable.GetMaterialConstantBuffer();
+  state->device_context->VSSetConstantBuffers(0, D3D11_COMMONSHADER_CONSTANT_BUFFER_API_SLOT_COUNT, constant_buffers);
 }
 
 void Render(Scene* scene, DirectXState* state) {
@@ -309,10 +310,10 @@ void Render(Scene* scene, DirectXState* state) {
   state->device_context->ClearDepthStencilView(state->depth_stencil_view.Get(), D3D11_CLEAR_DEPTH, 1.0f, 0);
 
   for (auto& drawable : scene->Drawables) {
-    UpdateDrawableBuffers(drawable, state);
-
     state->device_context->VSSetShader(drawable.GetVertexShader(), 0, 0);
     state->device_context->PSSetShader(drawable.GetPixelShader(), 0, 0);
+
+    SetConstantBuffers(drawable, scene, state);
 
     state->device_context->IASetVertexBuffers(0,
                                               D3D11_IA_VERTEX_INPUT_RESOURCE_SLOT_COUNT,
@@ -373,9 +374,7 @@ void UpdateFrameBuffers(Scene* scene, DirectXState* state) {
   buffer->DirectionalLightCount = GetCurrentSize(scene->DirectionalLightsStructuredBuffer);
 
   bool update_ok = SendToGpu(scene->PerFrameConstantBuffer, state->device_context.Get());
-  if (update_ok) {
-    state->device_context->VSSetConstantBuffers(PER_FRAME_CONSTANT_BUFFER_REGISTER, 1, ConstantBuffer::GetGpuBuffer(scene->PerFrameConstantBuffer).GetAddressOf());
-  } else {
+  if (!update_ok) {
     DXFW_TRACE(__FILE__, __LINE__, false, "Error updating per frame constant buffer", "");
   }
 }
@@ -387,9 +386,7 @@ void UpdateCameraBuffers(Scene* scene, DirectXState* state) {
   buffer->ProjectionMatrix = scene->Lens.GetProjectionMatrix();
 
   bool update_ok = SendToGpu(scene->PerCameraConstantBuffer, state->device_context.Get());
-  if (update_ok) {
-    state->device_context->VSSetConstantBuffers(PER_CAMERA_CONSTANT_BUFFER_REGISTER, 1, ConstantBuffer::GetGpuBuffer(scene->PerCameraConstantBuffer).GetAddressOf());
-  } else {
+  if (!update_ok) {
     DXFW_TRACE(__FILE__, __LINE__, false, "Error updating per frame constant buffer", "");
   }
 }
