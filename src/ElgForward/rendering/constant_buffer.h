@@ -14,6 +14,10 @@ struct ConstantBufferTag {};
 
 using Handle = Core::Handle<8, 24, ConstantBufferTag>;
 
+Handle Create(size_t cpu_name_hash, size_t gpu_name_hash, size_t type_hash, size_t type_size, size_t type_alignment, void* initial_data, ID3D11Device* device);
+
+Handle Create(const std::string& cpu_name, const std::string& gpu_name, size_t type_hash, size_t type_size, size_t type_alignment, void* initial_data, ID3D11Device* device);
+
 Handle Create(size_t name_hash, size_t type_hash, size_t type_size, size_t type_alignment, void* initial_data, ID3D11Device* device);
 
 Handle Create(const std::string& name, size_t type_hash, size_t type_size, size_t type_alignment, void* initial_data, ID3D11Device* device);
