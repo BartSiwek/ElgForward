@@ -143,9 +143,9 @@ Core::HandleCache<size_t, Handle> g_cpu_cache_;
 
 GpuBufferHandle CreateGpuBuffer(size_t name_hash, size_t type_hash, size_t type_size, void* initial_data, ID3D11Device* device) {
   auto cache_key = name_hash;
-  hash_combine(name_hash, type_hash);
+  hash_combine(cache_key, type_hash);
 
-  auto cached_handle = g_gpu_cache_.Get(name_hash);
+  auto cached_handle = g_gpu_cache_.Get(cache_key);
   if (cached_handle.IsValid()) {
     return cached_handle;
   }

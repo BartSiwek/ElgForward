@@ -391,6 +391,10 @@ void UpdateCameraBuffers(Scene* scene, DirectXState* state) {
   }
 }
 
+void UpdateDrawableBuffers(const Drawable& drawable, Scene* scene, DirectXState* state) {
+  // TODO: Update the state
+}
+
 void Update(Scene* scene, DirectXState* state) {
   // Update the camera
   auto t = static_cast<float>(dxfwGetTime());
@@ -405,6 +409,10 @@ void Update(Scene* scene, DirectXState* state) {
 
   UpdateFrameBuffers(scene, state);
   UpdateCameraBuffers(scene, state);
+
+  for (auto& drawable : scene->Drawables) {
+    UpdateDrawableBuffers(drawable, scene, state);
+  }
 }
 
 int main(int /* argc */, char** /* argv */) {

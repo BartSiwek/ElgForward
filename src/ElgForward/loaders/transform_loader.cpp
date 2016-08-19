@@ -70,8 +70,10 @@ bool ReadTransform(const std::string& parent_name, const nlohmann::json& json_tr
   transform_data.MatrixInverseTranspose = scaling_inverse * rotation * DirectX::XMMatrixTranspose(translation_inverse);
 
   // Constant buffer
-  std::string name = parent_name + " transform";
-  auto transform_constant_buffer = Rendering::ConstantBuffer::Create(name, &transform_data, device);
+  std::string cpu_name = parent_name + " transform";
+  // TODO: std::string gpu_name = "transform";
+  std::string gpu_name = cpu_name;
+  auto transform_constant_buffer = Rendering::ConstantBuffer::Create(cpu_name, gpu_name, &transform_data, device);
   if (!transform_constant_buffer.IsValid()) {
     return false;
   }

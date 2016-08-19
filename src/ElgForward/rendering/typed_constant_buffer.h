@@ -64,6 +64,25 @@ private:
 };
 
 template<typename T>
+inline TypedHandle<T> Create(size_t cpu_name_hash, size_t gpu_name_hash, T* initial_data, ID3D11Device* device) {
+  const auto& t_info = typeid(T);
+
+  size_t type_hash = t_info.hash_code();
+  size_t type_size = sizeof(T);
+  size_t type_alignment = alignof(T);
+
+  auto handle = Create(cpu_name_hash, gpu_name_hash, type_hash, type_size, type_alignment, initial_data, device);
+  return TypedHandle<T>(handle);
+}
+
+template<typename T>
+inline TypedHandle<T> Create(const std::string& cpu_name, const std::string& gpu_name, T* initial_data, ID3D11Device* device) {
+  std::hash<std::string> hasher;
+  auto handle = Create(hasher(cpu_name), hasher(gpu_name), initial_data, device);
+  return TypedHandle<T>(handle);
+}
+
+template<typename T>
 inline TypedHandle<T> Create(size_t name_hash, T* initial_data, ID3D11Device* device) {
   const auto& t_info = typeid(T);
 
