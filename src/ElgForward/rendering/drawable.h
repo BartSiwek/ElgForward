@@ -131,8 +131,8 @@ public:
     return m_ps_.Get();
   }
 
-  bool SetMaterialConstantBuffer(Microsoft::WRL::ComPtr<ID3D11Buffer> buffer) {
-    if (m_material_constant_buffer_ == nullptr) {
+  bool SetMaterialConstantBuffer(ConstantBuffer::Handle buffer) {
+    if (!m_material_constant_buffer_.IsValid()) {
       m_material_constant_buffer_ = buffer;
       return true;
     }
@@ -140,19 +140,23 @@ public:
   }
 
   ID3D11Buffer* GetMaterialConstantBuffer() const {
-    return m_material_constant_buffer_.Get();
+    return ConstantBuffer::GetGpuBuffer(m_material_constant_buffer_).Get();
   }
 
   ID3D11Buffer* const* GetAddressOfMaterialConstantBuffer() const {
-    return m_material_constant_buffer_.GetAddressOf();
+    return ConstantBuffer::GetGpuBuffer(m_material_constant_buffer_).GetAddressOf();
   }
 
   ID3D11Buffer** GetAddressOfMaterialConstantBuffer() {
-    return m_material_constant_buffer_.GetAddressOf();
+    return ConstantBuffer::GetGpuBuffer(m_material_constant_buffer_).GetAddressOf();
   }
 
-  bool SetTransformConstantBuffer(Microsoft::WRL::ComPtr<ID3D11Buffer> buffer) {
-    if (m_transform_constant_buffer_ == nullptr) {
+  bool SendMaterialConstantBufferToGpu(ID3D11DeviceContext* context) {
+    ConstantBuffer::SendToGpu(m_material_constant_buffer_, context);
+  }
+
+  bool SetTransformConstantBuffer(ConstantBuffer::Handle buffer) {
+    if (!m_transform_constant_buffer_.IsValid()) {
       m_transform_constant_buffer_ = buffer;
       return true;
     }
@@ -160,15 +164,19 @@ public:
   }
 
   ID3D11Buffer* GetTransformConstantBuffer() const {
-    return m_transform_constant_buffer_.Get();
+    return ConstantBuffer::GetGpuBuffer(m_transform_constant_buffer_).Get();
   }
 
   ID3D11Buffer* const* GetAddressOfTransformConstantBuffer() const {
-    return m_transform_constant_buffer_.GetAddressOf();
+    return ConstantBuffer::GetGpuBuffer(m_transform_constant_buffer_).GetAddressOf();
   }
 
   ID3D11Buffer** GetAddressOfTransformConstantBuffer() {
-    return m_transform_constant_buffer_.GetAddressOf();
+    return ConstantBuffer::GetGpuBuffer(m_transform_constant_buffer_).GetAddressOf();
+  }
+
+  bool SendTransformConstantBufferToGpu(ID3D11DeviceContext* context) const {
+    return ConstantBuffer::SendToGpu(m_transform_constant_buffer_, context);
   }
 
 private:
@@ -184,9 +192,9 @@ private:
 
   Microsoft::WRL::ComPtr<ID3D11VertexShader> m_vs_ = nullptr;
   Microsoft::WRL::ComPtr<ID3D11PixelShader> m_ps_ = nullptr;
-  Microsoft::WRL::ComPtr<ID3D11Buffer> m_material_constant_buffer_ = nullptr;
+  ConstantBuffer::Handle m_material_constant_buffer_ = {};
 
-  Microsoft::WRL::ComPtr<ID3D11Buffer> m_transform_constant_buffer_ = nullptr;
+  ConstantBuffer::Handle m_transform_constant_buffer_ = {};
 };
 
 bool CreateDrawable(const Mesh::Mesh& mesh, const Material::Material& material, const Transform::Transform& transform,

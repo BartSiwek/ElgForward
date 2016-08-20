@@ -75,8 +75,6 @@ bool CreateDrawable(const Mesh::Mesh& mesh, const Material::Material& material, 
                     ID3D11Device* device, Drawable* drawable) {
   auto vertex_shader_ptr = Rendering::VertexShader::Retreive(material.VertexShader);
   auto pixel_shader_ptr = Rendering::PixelShader::Retreive(material.PixelShader);
-  auto material_constant_buffer_ptr = Rendering::ConstantBuffer::GetGpuBuffer(material.MaterialConstantBuffer);
-  auto transform_constant_buffer_ptr = Rendering::ConstantBuffer::GetGpuBuffer(transform.TransformConstantBuffer);
 
   std::vector<D3D11_INPUT_ELEMENT_DESC> input_layout_desc;
 
@@ -129,12 +127,12 @@ bool CreateDrawable(const Mesh::Mesh& mesh, const Material::Material& material, 
     return false;
   }
 
-  bool material_consntant_buffer_ok = drawable->SetMaterialConstantBuffer(material_constant_buffer_ptr);
+  bool material_consntant_buffer_ok = drawable->SetMaterialConstantBuffer(material.MaterialConstantBuffer);
   if (!material_consntant_buffer_ok) {
     return false;
   }
 
-  bool transform_consntant_buffer_ok = drawable->SetTransformConstantBuffer(transform_constant_buffer_ptr);
+  bool transform_consntant_buffer_ok = drawable->SetTransformConstantBuffer(transform.TransformConstantBuffer);
   if (!transform_consntant_buffer_ok) {
     return false;
   }

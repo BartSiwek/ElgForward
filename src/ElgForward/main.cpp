@@ -301,6 +301,11 @@ void SetConstantBuffers(const Drawable& drawable, Scene* scene, DirectXState* st
   constant_buffers[PER_OBJECT_CONSTANT_BUFFER_REGISTER] = drawable.GetTransformConstantBuffer();
   constant_buffers[PER_MATERIAL_CONSTANT_BUFFER_REGISTER] = drawable.GetMaterialConstantBuffer();
   state->device_context->VSSetConstantBuffers(0, D3D11_COMMONSHADER_CONSTANT_BUFFER_API_SLOT_COUNT, constant_buffers);
+
+  bool send_transforms_ok = drawable.SendTransformConstantBufferToGpu(state->device_context.Get());
+  if (!send_transforms_ok) {
+    DXFW_TRACE(__FILE__, __LINE__, false, "Error sending the transform constant buffer data to GPU");
+  }
 }
 
 void Render(Scene* scene, DirectXState* state) {
@@ -391,8 +396,8 @@ void UpdateCameraBuffers(Scene* scene, DirectXState* state) {
   }
 }
 
-void UpdateDrawableBuffers(const Drawable& drawable, Scene* scene, DirectXState* state) {
-  // TODO: Update the state
+void UpdateDrawableBuffers(Drawable* /* drawable */, Scene* /* scene */, DirectXState* /* state */) {
+  // Put update here
 }
 
 void Update(Scene* scene, DirectXState* state) {
@@ -411,7 +416,7 @@ void Update(Scene* scene, DirectXState* state) {
   UpdateCameraBuffers(scene, state);
 
   for (auto& drawable : scene->Drawables) {
-    UpdateDrawableBuffers(drawable, scene, state);
+    UpdateDrawableBuffers(&drawable, scene, state);
   }
 }
 
