@@ -306,6 +306,11 @@ void SetConstantBuffers(const Drawable& drawable, Scene* scene, DirectXState* st
   if (!send_transforms_ok) {
     DXFW_TRACE(__FILE__, __LINE__, false, "Error sending the transform constant buffer data to GPU");
   }
+
+  bool send_material_ok = drawable.SendMaterialConstantBufferToGpu(state->device_context.Get());
+  if (!send_material_ok) {
+    DXFW_TRACE(__FILE__, __LINE__, false, "Error sending the transform constant buffer data to GPU");
+  }
 }
 
 void Render(Scene* scene, DirectXState* state) {

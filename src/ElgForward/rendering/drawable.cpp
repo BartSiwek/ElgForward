@@ -1,5 +1,7 @@
 #include "rendering/drawable.h"
 
+#include "core/hash.h"
+
 namespace Rendering {
 
 int32_t GetVertexBufferIndex(VertexDataChannel channel, const Mesh::Mesh& mesh) {
@@ -71,7 +73,8 @@ bool IsVertexBufferFormatCompatible(uint32_t component_count, D3D_REGISTER_COMPO
   }
 }
 
-bool CreateDrawable(const Mesh::Mesh& mesh, const Material::Material& material, const Transform::Transform& transform,
+bool CreateDrawable(size_t drawable_name_hash, const Mesh::Mesh& mesh, size_t material_name_hash,
+                    const Material::Material& material, const Transform::Transform& transform,
                     ID3D11Device* device, Drawable* drawable) {
   auto vertex_shader_ptr = Rendering::VertexShader::Retreive(material.VertexShader);
   auto pixel_shader_ptr = Rendering::PixelShader::Retreive(material.PixelShader);
@@ -127,7 +130,12 @@ bool CreateDrawable(const Mesh::Mesh& mesh, const Material::Material& material, 
     return false;
   }
 
-  bool material_consntant_buffer_ok = drawable->SetMaterialConstantBuffer(material.MaterialConstantBuffer);
+  auto cpu_name_hash = drawable_name_hash;
+  hash_combine(cpu_name_hash, material_name_hash);
+  auto gpu_name_hash = std::hash<std::string>()("");
+
+  auto handle = ConstantBuffer::Create(cpu_name_hash, gpu_name_hash, material.TypeHash, material.Data.GetSize(), material.Data.GetAlign(), material.Data.GetBuffer(), device);
+  bool material_consntant_buffer_ok = drawable->SetMaterialConstantBuffer(handle);
   if (!material_consntant_buffer_ok) {
     return false;
   }

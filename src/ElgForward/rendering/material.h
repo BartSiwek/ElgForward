@@ -1,8 +1,8 @@
 #pragma once
 
+#include "core/buffer.h"
 #include "rendering/vertex_shader.h"
 #include "rendering/pixel_shader.h"
-#include "rendering/constant_buffer.h"
 
 namespace Rendering {
 namespace Material {
@@ -10,7 +10,8 @@ namespace Material {
 struct Material {
   VertexShader::Handle VertexShader;
   PixelShader::Handle PixelShader;
-  ConstantBuffer::Handle MaterialConstantBuffer;
+  Core::Buffer Data;
+  size_t TypeHash;
 };
 
 }  // namespace Material

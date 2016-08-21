@@ -151,8 +151,8 @@ public:
     return ConstantBuffer::GetGpuBuffer(m_material_constant_buffer_).GetAddressOf();
   }
 
-  bool SendMaterialConstantBufferToGpu(ID3D11DeviceContext* context) {
-    ConstantBuffer::SendToGpu(m_material_constant_buffer_, context);
+  bool SendMaterialConstantBufferToGpu(ID3D11DeviceContext* context) const {
+    return ConstantBuffer::SendToGpu(m_material_constant_buffer_, context);
   }
 
   bool SetTransformConstantBuffer(ConstantBuffer::Handle buffer) {
@@ -197,7 +197,8 @@ private:
   ConstantBuffer::Handle m_transform_constant_buffer_ = {};
 };
 
-bool CreateDrawable(const Mesh::Mesh& mesh, const Material::Material& material, const Transform::Transform& transform,
+bool CreateDrawable(size_t drawable_name_hash, const Mesh::Mesh& mesh, size_t material_name_hash,
+                    const Material::Material& material, const Transform::Transform& transform,
                     ID3D11Device* device, Drawable* drawable);
 
 }  // namespace Rendering

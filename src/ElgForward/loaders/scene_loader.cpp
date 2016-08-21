@@ -77,6 +77,7 @@ void BuildDrawables(const nlohmann::json& json_scene, const std::vector<MeshIden
     const std::string& material_name = json_drawable["material_name"];
 
     std::hash<std::string> hasher;
+    auto drawable_name_hash = hasher(drawable_name);
     auto mesh_name_hash = hasher(mesh_name);
     auto material_name_hash = hasher(material_name);
 
@@ -103,13 +104,14 @@ void BuildDrawables(const nlohmann::json& json_scene, const std::vector<MeshIden
     Rendering::Transform::Transform transform;
     ReadDrawableTransform(drawable_name, json_drawable, state, &transform);
 
-    drawables->emplace_back();
-    auto& drawable = drawables->back();
-    bool drawable_ok = CreateDrawable(*mesh, material_identifier_it->Material, transform, state->device.Get(), &drawable);
+    Rendering::Drawable drawable;
+    bool drawable_ok = CreateDrawable(drawable_name_hash, *mesh, material_identifier_it->Hash, material_identifier_it->Material, transform, state->device.Get(), &drawable);
     if (!drawable_ok) {
       DXFW_TRACE(__FILE__, __LINE__, false, "Error creating drawable from mesh %S and material %S - CreateDrawable failed", mesh_name.c_str(), material_name.c_str());
       continue;
     }
+
+    drawables->emplace_back(std::move(drawable));
   }
 }
 
@@ -124,7 +126,7 @@ void ReadMaterials(const nlohmann::json& json_scene, const filesystem::path& bas
       DXFW_TRACE(__FILE__, __LINE__, false, "Error loading material [%S]", json_material.dump().c_str());
     }
 
-    materials->emplace_back(new_material);
+    materials->emplace_back(std::move(new_material));
   }
 }
 

@@ -26,8 +26,9 @@ bool MaterialTypeFromString(const std::string& type, MaterialType* value) {
   return false;
 }
 
-bool CreateMaterial(const std::string& id, const filesystem::path& vs_path, const filesystem::path& ps_path, ID3D11Device* device,
-                    Rendering::ConstantBuffer::Handle material_constant_buffer, MaterialIdentifier* material) {
+bool CreateMaterial(const std::string& id, const filesystem::path& vs_path, const filesystem::path& ps_path,
+                    size_t type_hash, size_t type_size, size_t type_alignment, void* data,
+                    ID3D11Device* device, MaterialIdentifier* material) {
   material->Hash = std::hash<std::string>()(id);
 
   material->Material.VertexShader = Rendering::VertexShader::Create(vs_path, std::unordered_map<std::string, Rendering::VertexDataChannel>(), device);
@@ -40,7 +41,9 @@ bool CreateMaterial(const std::string& id, const filesystem::path& vs_path, cons
     return false;
   }
 
-  material->Material.MaterialConstantBuffer = material_constant_buffer;
+  material->Material.Data.Reset(type_size, type_alignment, data);
+
+  material->Material.TypeHash = type_hash;
 
   return true;
 }
@@ -68,12 +71,12 @@ bool ReadBasicMaterial(const nlohmann::json& json_material, const filesystem::pa
     basic_material.SpecularPower = specular_power;
   }
 
-  auto material_constant_buffer = Rendering::ConstantBuffer::Create(name, &basic_material, device);
-  if (!material_constant_buffer.IsValid()) {
-    return false;
-  }
+  const auto& t_info = typeid(Rendering::Materials::Basic);
+  size_t type_hash = t_info.hash_code();
+  size_t type_size = sizeof(Rendering::Materials::Basic);
+  size_t type_alignment = alignof(Rendering::Materials::Basic);
 
-  return CreateMaterial(name, vs_path, ps_path, device, static_cast<Rendering::ConstantBuffer::Handle>(material_constant_buffer), material);
+  return CreateMaterial(name, vs_path, ps_path, type_hash, type_size, type_alignment, &basic_material, device, material);
 }
 
 bool ReadMaterial(const nlohmann::json& json_material, const filesystem::path& base_path, ID3D11Device* device, MaterialIdentifier* material) {
