@@ -17,6 +17,10 @@ public:
     CopyDataToBuffer(initial_data, size);
   }
 
+  template<typename T>
+  Buffer(T* initial_data) : Buffer(sizeof(T), alignof(T), initial_data) {
+  }
+
   ~Buffer() = default;
 
   Buffer(const Buffer& other) = delete;
@@ -34,6 +38,11 @@ public:
   void Reset(size_t size, size_t align, void* data) {
     Reset(size, align);
     CopyDataToBuffer(data, size);
+  }
+
+  template<typename T>
+  void Reset(T* data) {
+    Reset(sizeof(T), alignof(T), data);
   }
 
   size_t GetSize() const {

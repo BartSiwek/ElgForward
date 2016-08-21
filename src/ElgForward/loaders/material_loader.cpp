@@ -26,8 +26,8 @@ bool MaterialTypeFromString(const std::string& type, MaterialType* value) {
   return false;
 }
 
-bool CreateMaterial(const std::string& id, const filesystem::path& vs_path, const filesystem::path& ps_path,
-                    size_t type_hash, size_t type_size, size_t type_alignment, void* data,
+template<typename T>
+bool CreateMaterial(const std::string& id, const filesystem::path& vs_path, const filesystem::path& ps_path, T* data,
                     ID3D11Device* device, MaterialIdentifier* material) {
   material->Hash = std::hash<std::string>()(id);
 
@@ -41,9 +41,10 @@ bool CreateMaterial(const std::string& id, const filesystem::path& vs_path, cons
     return false;
   }
 
-  material->Material.Data.Reset(type_size, type_alignment, data);
+  material->Material.Data.Reset(data);
 
-  material->Material.TypeHash = type_hash;
+  const auto& t_info = typeid(T);
+  material->Material.TypeHash = t_info.hash_code();
 
   return true;
 }
@@ -71,12 +72,7 @@ bool ReadBasicMaterial(const nlohmann::json& json_material, const filesystem::pa
     basic_material.SpecularPower = specular_power;
   }
 
-  const auto& t_info = typeid(Rendering::Materials::Basic);
-  size_t type_hash = t_info.hash_code();
-  size_t type_size = sizeof(Rendering::Materials::Basic);
-  size_t type_alignment = alignof(Rendering::Materials::Basic);
-
-  return CreateMaterial(name, vs_path, ps_path, type_hash, type_size, type_alignment, &basic_material, device, material);
+  return CreateMaterial(name, vs_path, ps_path, &basic_material, device, material);
 }
 
 bool ReadMaterial(const nlohmann::json& json_material, const filesystem::path& base_path, ID3D11Device* device, MaterialIdentifier* material) {
