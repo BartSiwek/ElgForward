@@ -8,6 +8,7 @@
 
 #include <dxfw/dxfw.h>
 
+#include "core/buffer.h"
 #include "core/resource_array.h"
 #include "core/handle_cache.h"
 
@@ -18,10 +19,9 @@ class Storage {
 public:
   Storage(size_t element_size, size_t element_align, size_t max_size)
     : m_element_size_(element_size),
-      m_element_align_(element_align),
       m_max_size_(max_size),
       m_current_size_(0),
-      m_cpu_buffer_(_aligned_malloc(element_size * max_size, element_align)) {
+      m_cpu_buffer_(element_size * max_size, element_align) {
   }
 
   bool Initialize(void* initial_data, size_t initial_size, ID3D11Device* device) {
@@ -36,10 +36,10 @@ public:
     HRESULT cb_result;
     if (initial_data != nullptr && initial_size > 0) {
       m_current_size_ = initial_size;
-      std::memcpy(m_cpu_buffer_.get(), initial_data, m_element_size_ * m_current_size_);
+      std::memcpy(m_cpu_buffer_.GetBuffer(), initial_data, m_element_size_ * m_current_size_);
 
       D3D11_SUBRESOURCE_DATA data;
-      data.pSysMem = m_cpu_buffer_.get();
+      data.pSysMem = m_cpu_buffer_.GetBuffer();
       data.SysMemPitch = 0;
       data.SysMemSlicePitch = 0;
 
@@ -69,12 +69,12 @@ public:
   }
 
   void* GetCpuBuffer() {
-    return m_cpu_buffer_.get();
+    return m_cpu_buffer_.GetBuffer();
   }
 
   void* GetElementAt(size_t index) {
     size_t offset = index * m_element_size_;
-    return static_cast<char*>(m_cpu_buffer_.get()) + offset;
+    return static_cast<char*>(m_cpu_buffer_.GetBuffer()) + offset;
   }
 
   Microsoft::WRL::ComPtr<ID3D11Buffer> GetGpuBuffer() {
@@ -125,7 +125,7 @@ public:
       return false;
     }
 
-    memcpy(mapped_subresource.pData, m_cpu_buffer_.get(), m_current_size_ * m_element_size_);
+    std::memcpy(mapped_subresource.pData, m_cpu_buffer_.GetBuffer(), m_current_size_ * m_element_size_);
 
     device_context->Unmap(m_gpu_buffer_.Get(), 0);
 
@@ -133,19 +133,12 @@ public:
   }
 
 private:
-  struct CpuBufferDeleter {
-    void operator()(void* ptr) {
-      _aligned_free(ptr);
-    }
-  };
-
   const size_t m_element_size_ = 0;
-  const size_t m_element_align_ = 0;
   const size_t m_max_size_ = 0;
 
   size_t m_current_size_ = 0;
 
-  std::unique_ptr<void, CpuBufferDeleter> m_cpu_buffer_ = {};
+  Core::Buffer m_cpu_buffer_ = {};
   Microsoft::WRL::ComPtr<ID3D11Buffer> m_gpu_buffer_ = {};
   Microsoft::WRL::ComPtr<ID3D11ShaderResourceView> m_srv_ = {};
 };
