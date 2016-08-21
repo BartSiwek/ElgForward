@@ -8,6 +8,7 @@
 
 #include <dxfw/dxfw.h>
 
+#include "core/buffer.h"
 #include "core/resource_array.h"
 #include "core/handle_cache.h"
 
@@ -87,15 +88,10 @@ struct GpuStorage {
 };
 
 struct CpuStorage {
-public:
+ public:
   CpuStorage(size_t size, size_t align, void* initial_data, GpuBufferHandle handle) 
-    : m_size_(size),
-      m_align_(align),
-      m_cpu_buffer_(_aligned_malloc(size, align)),
+    : m_buffer_(size, align, initial_data),
       m_gpu_handle_(handle) {
-    if (initial_data != nullptr) {
-      std::memcpy(m_cpu_buffer_.get(), initial_data, m_size_);
-    }
   }
 
   ~CpuStorage() = default;
@@ -107,31 +103,23 @@ public:
   CpuStorage& operator=(CpuStorage&&) = default;
 
   size_t GetSize() const {
-    return m_size_;
+    return m_buffer_.GetSize();
   }
 
   size_t GetAlign() const {
-    return m_align_;
+    return m_buffer_.GetAlign();
   }
 
   void* GetCpuBuffer() const {
-    return m_cpu_buffer_.get();
+    return m_buffer_.GetBuffer();
   }
 
   GpuBufferHandle GetGpuBufferHandle() const {
     return m_gpu_handle_;
   }
 
-private:
-  struct CpuBufferDeleter {
-    void operator()(void* ptr) {
-      _aligned_free(ptr);
-    }
-  };
-
-  size_t m_size_ = 0;
-  size_t m_align_ = 0;
-  std::unique_ptr<void, CpuBufferDeleter> m_cpu_buffer_ = {};
+ private:
+  Core::Buffer m_buffer_;
   GpuBufferHandle m_gpu_handle_;
 };
 
