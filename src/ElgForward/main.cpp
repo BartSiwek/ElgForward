@@ -13,7 +13,11 @@
 #include <wrl.h>
 #endif
 
+#pragma warning(push)
+#pragma warning(disable: 4244)
+#define STB_IMAGE_IMPLEMENTATION
 #include <stb_image.h>
+#pragma warning(pop)
 
 #include "core/filesystem.h"
 #include "dxfw/dxfw_wrapper.h"
@@ -445,6 +449,38 @@ int main(int /* argc */, char** /* argv */) {
   InitializeScene(&state, &scene);
   Loaders::LoadScene(base_path / "assets/scenes/cube.json", base_path, &state, &scene);
 
+  // TODO: Experimental
+  auto image_path = base_path / "assets/textures/default.png";
+  int image_width;
+  int image_height;
+  int image_components;
+  auto image = stbi_load(image_path.generic_string().c_str(), &image_width, &image_height, &image_components, STBI_rgb_alpha);
+
+  DXFW_TRACE(__FILE__, __LINE__, false, "Loaded image of size %d x %d with %d components", image_width, image_height, image_components);
+
+  D3D11_TEXTURE2D_DESC desc = {};
+  desc.Width = image_width;
+  desc.Height = image_height;
+  desc.MipLevels = desc.ArraySize = 1;
+  desc.Format = DXGI_FORMAT_R8G8B8A8_UNORM;
+  desc.SampleDesc.Count = 1;
+  desc.Usage = D3D11_USAGE_DYNAMIC;
+  desc.BindFlags = D3D11_BIND_SHADER_RESOURCE;
+  desc.CPUAccessFlags = D3D11_CPU_ACCESS_WRITE;
+  desc.MiscFlags = 0;
+
+  D3D11_SUBRESOURCE_DATA data = {};
+  data.pSysMem = image;
+  data.SysMemPitch = image_components * image_width;
+  data.SysMemSlicePitch = image_components * image_width * image_height;
+
+  auto texture_result = state.device->CreateTexture2D(&desc, &data, scene.Texture.GetAddressOf());
+  if (FAILED(texture_result)) {
+    DXFW_DIRECTX_TRACE(__FILE__, __LINE__, true, texture_result);
+  }
+
+  // TODO: End Experimental
+
   while (!Dxfw::ShouldWindowClose(state.window.get())) {
     Update(&scene, &state);
 
@@ -454,6 +490,8 @@ int main(int /* argc */, char** /* argv */) {
 
     Dxfw::PollOsEvents();
   }
+
+  stbi_image_free(image);
 
   state.device_context->ClearState();
 
