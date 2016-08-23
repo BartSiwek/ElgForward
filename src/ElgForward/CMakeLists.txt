@@ -14,6 +14,7 @@ include("${CMAKE_EXTRAS}/dxfw.cmake")
 include("${CMAKE_EXTRAS}/assimp.cmake")
 include("${CMAKE_EXTRAS}/json.cmake")
 include("${CMAKE_EXTRAS}/chaiscript.cmake")
+include("${CMAKE_EXTRAS}/stb.cmake")
 
 set(TARGET_NAME ElgForward)
 
