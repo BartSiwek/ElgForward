@@ -40,5 +40,6 @@ struct Scene {
   Rendering::StructuredBuffer::TypedHandle<Rendering::Lights::SpotLight> SpotLightsStructuredBuffer;
   Rendering::StructuredBuffer::TypedHandle<Rendering::Lights::PointLight> PointLightsStructuredBuffer;
 
-  Microsoft::WRL::ComPtr<ID3D11Texture2D > Texture;
+  Microsoft::WRL::ComPtr<ID3D11Texture2D> Texture;
+  Microsoft::WRL::ComPtr<ID3D11ShaderResourceView> TextureView;
 };

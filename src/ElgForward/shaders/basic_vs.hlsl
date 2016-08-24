@@ -38,13 +38,7 @@ struct PointLight {
   float pad;
 };
 
-StructuredBuffer <PointLight> PointLights : register(t0);
-
-struct VertexShaderInput {
-  float3 PositionMs : POSITION;
-  float3 NormalMs : NORMAL;
-  float2 TexCoord : TEXCOORD0;
-};
+StructuredBuffer <PointLight> PointLights : POINT_LIGHT_BUFFER_REGISTER;
 
 VertexShaderOutput main(VertexShaderInput input) {
   VertexShaderOutput output;
@@ -54,25 +48,10 @@ VertexShaderOutput main(VertexShaderInput input) {
   float4x4 modelViewMatrixInverseTranspose = mul(ModelMatrixInverseTranspose, ViewMatrixInverseTranspose);
 
   float4 positionMs = float4(input.PositionMs, 1.0);
-  float4 positionVs = mul(positionMs, modelViewMatrix);
-
-  float3 nu = mul(input.NormalMs, (float3x3)modelViewMatrixInverseTranspose);
-  float3 n = normalize(nu);
-
-  float4 finalColor = float4(0.0, 0.0, 0.0, 1.0);
-  for (int i = 0; i < PointLightCount; ++i) {
-    float4 lightPositionVs = mul(PointLights[i].PositionWorldSpace, ViewMatrix);
-
-    float3 lu = (lightPositionVs - positionVs).xyz;
-    float3 l = normalize(lu);
-
-    float nDotL = dot(l, n);
-
-    finalColor += PointLights[i].DiffuseColor * DiffuseColor * max(nDotL, 0);
-  }
-
-  output.Position = mul(positionMs, modelViewProjectionMatrix);
-  output.Color = finalColor;
+  output.PositionClipSpace = mul(positionMs, modelViewProjectionMatrix);
+  output.PositionViewSpace = mul(positionMs, modelViewMatrix);
+  output.Normal = mul(input.NormalMs, (float3x3)modelViewMatrixInverseTranspose);
+  output.TexCoord = input.TexCoord;
 
   return output;
 }

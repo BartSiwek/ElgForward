@@ -307,6 +307,7 @@ void SetConstantBuffers(const Drawable& drawable, Scene* scene, DirectXState* st
   constant_buffers[PER_OBJECT_CONSTANT_BUFFER_REGISTER] = drawable.GetTransformConstantBuffer();
   constant_buffers[PER_MATERIAL_CONSTANT_BUFFER_REGISTER] = drawable.GetMaterialConstantBuffer();
   state->device_context->VSSetConstantBuffers(0, D3D11_COMMONSHADER_CONSTANT_BUFFER_API_SLOT_COUNT, constant_buffers);
+  state->device_context->PSSetConstantBuffers(0, D3D11_COMMONSHADER_CONSTANT_BUFFER_API_SLOT_COUNT, constant_buffers);
 
   bool send_transforms_ok = drawable.SendTransformConstantBufferToGpu(state->device_context.Get());
   if (!send_transforms_ok) {
@@ -331,6 +332,9 @@ void Render(Scene* scene, DirectXState* state) {
 
     SetConstantBuffers(drawable, scene, state);
 
+    state->device_context->VSSetShaderResources(EXPERIMENTAL_TEXTURE_REGISTER, 1, scene->TextureView.GetAddressOf());
+    state->device_context->PSSetShaderResources(EXPERIMENTAL_TEXTURE_REGISTER, 1, scene->TextureView.GetAddressOf());
+
     state->device_context->IASetVertexBuffers(0,
                                               D3D11_IA_VERTEX_INPUT_RESOURCE_SLOT_COUNT,
                                               drawable.GetVertexBuffers(),
@@ -354,7 +358,8 @@ void UpdateFrameBuffers(Scene* scene, DirectXState* state) {
   
   bool point_update_ok = SendToGpu(scene->PointLightsStructuredBuffer, state->device_context.Get());
   if (point_update_ok) {
-    state->device_context->VSSetShaderResources(0, 1, GetShaderResourceView(scene->PointLightsStructuredBuffer).GetAddressOf());
+    state->device_context->VSSetShaderResources(POINT_LIGHT_BUFFER_REGISTER, 1, GetShaderResourceView(scene->PointLightsStructuredBuffer).GetAddressOf());
+    state->device_context->PSSetShaderResources(POINT_LIGHT_BUFFER_REGISTER, 1, GetShaderResourceView(scene->PointLightsStructuredBuffer).GetAddressOf());
   } else {
     DXFW_TRACE(__FILE__, __LINE__, false, "Error updating point light buffer", "");
   }
@@ -366,7 +371,8 @@ void UpdateFrameBuffers(Scene* scene, DirectXState* state) {
 
   bool spot_update_ok = SendToGpu(scene->SpotLightsStructuredBuffer, state->device_context.Get());
   if (spot_update_ok) {
-    state->device_context->VSSetShaderResources(1, 1, GetShaderResourceView(scene->SpotLightsStructuredBuffer).GetAddressOf());
+    state->device_context->VSSetShaderResources(SPOT_LIGHT_BUFFER_REGISTER, 1, GetShaderResourceView(scene->SpotLightsStructuredBuffer).GetAddressOf());
+    state->device_context->PSSetShaderResources(SPOT_LIGHT_BUFFER_REGISTER, 1, GetShaderResourceView(scene->SpotLightsStructuredBuffer).GetAddressOf());
   } else {
     DXFW_TRACE(__FILE__, __LINE__, false, "Error updating spot light buffer", "");
   }
@@ -378,7 +384,8 @@ void UpdateFrameBuffers(Scene* scene, DirectXState* state) {
 
   bool dir_update_ok = SendToGpu(scene->DirectionalLightsStructuredBuffer, state->device_context.Get());
   if (dir_update_ok) {
-    state->device_context->VSSetShaderResources(2, 1, GetShaderResourceView(scene->DirectionalLightsStructuredBuffer).GetAddressOf());
+    state->device_context->VSSetShaderResources(DIRECTIONAL_LIGHT_BUFFER_REGISTER, 1, GetShaderResourceView(scene->DirectionalLightsStructuredBuffer).GetAddressOf());
+    state->device_context->PSSetShaderResources(DIRECTIONAL_LIGHT_BUFFER_REGISTER, 1, GetShaderResourceView(scene->DirectionalLightsStructuredBuffer).GetAddressOf());
   } else {
     DXFW_TRACE(__FILE__, __LINE__, false, "Error updating directional light buffer", "");
   }
@@ -477,6 +484,17 @@ int main(int /* argc */, char** /* argv */) {
   auto texture_result = state.device->CreateTexture2D(&desc, &data, scene.Texture.GetAddressOf());
   if (FAILED(texture_result)) {
     DXFW_DIRECTX_TRACE(__FILE__, __LINE__, true, texture_result);
+  }
+
+  D3D11_SHADER_RESOURCE_VIEW_DESC srv_desc = {};
+  srv_desc.Format = DXGI_FORMAT_R8G8B8A8_UNORM;
+  srv_desc.ViewDimension = D3D11_SRV_DIMENSION_TEXTURE2D;
+  srv_desc.Texture2D.MipLevels = 1;
+  srv_desc.Texture2D.MostDetailedMip = 0;
+
+  auto texture_view_result = state.device->CreateShaderResourceView(scene.Texture.Get(), &srv_desc, scene.TextureView.GetAddressOf());
+  if (FAILED(texture_view_result)) {
+    DXFW_DIRECTX_TRACE(__FILE__, __LINE__, true, texture_view_result);
   }
 
   // TODO: End Experimental
