@@ -41,6 +41,14 @@ source_group(Assets\\Sctipts FILES ${TARGET_ASSETS_SCRIPTS})
 # Textures
 set(TARGET_ASSETS_TEXTURES
   ${TARGET_ASSETS_DIR}/textures/default.png
+  ${TARGET_ASSETS_DIR}/textures/default_mip/default_0.png
+  ${TARGET_ASSETS_DIR}/textures/default_mip/default_1.png
+  ${TARGET_ASSETS_DIR}/textures/default_mip/default_2.png
+  ${TARGET_ASSETS_DIR}/textures/default_mip/default_3.png
+  ${TARGET_ASSETS_DIR}/textures/default_mip/default_4.png
+  ${TARGET_ASSETS_DIR}/textures/default_mip/default_5.png
+  ${TARGET_ASSETS_DIR}/textures/default_mip/default_6.png
+  ${TARGET_ASSETS_DIR}/textures/default_mip/default_7.png
 )
 
 source_group(Assets\\Textures FILES ${TARGET_ASSETS_TEXTURES})

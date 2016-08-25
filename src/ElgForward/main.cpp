@@ -457,31 +457,52 @@ int main(int /* argc */, char** /* argv */) {
   Loaders::LoadScene(base_path / "assets/scenes/cube.json", base_path, &state, &scene);
 
   // TODO: Experimental
-  auto image_path = base_path / "assets/textures/default.png";
-  int image_width;
-  int image_height;
-  int image_components;
-  auto image = stbi_load(image_path.generic_string().c_str(), &image_width, &image_height, &image_components, STBI_rgb_alpha);
+  struct TextureDeleter {
+    void operator()(stbi_uc* ptr) {
+      stbi_image_free(ptr);
+    }
+  };
 
-  DXFW_TRACE(__FILE__, __LINE__, false, "Loaded image of size %d x %d with %d components", image_width, image_height, image_components);
+  int image_width = 0;
+  int image_height = 0;
+  std::vector<std::unique_ptr<stbi_uc, TextureDeleter>> textures;
+  std::vector<D3D11_SUBRESOURCE_DATA> data = {};
+  for (size_t i = 0; i < 8; ++i) {
+    auto current_image_path = base_path / ("assets/textures/default_mip/default_" + std::to_string(i) + ".png");
+
+    int current_image_width;
+    int current_image_height;
+    int current_image_components;
+    auto image = stbi_load(current_image_path.generic_string().c_str(), &current_image_width, &current_image_height, &current_image_components, STBI_rgb_alpha);
+
+    DXFW_TRACE(__FILE__, __LINE__, false, "Loaded image of size %d x %d with %d components", current_image_width, current_image_height, current_image_components);
+
+    textures.emplace_back(image);
+
+    D3D11_SUBRESOURCE_DATA data_desc = {};
+    data_desc.pSysMem = image;
+    data_desc.SysMemPitch = current_image_components * current_image_width;
+    data_desc.SysMemSlicePitch = current_image_components * current_image_width * current_image_height;
+
+    data.emplace_back(data_desc);
+
+    image_width = std::max(image_width, current_image_width);
+    image_height = std::max(image_height, current_image_height);
+  }
 
   D3D11_TEXTURE2D_DESC desc = {};
   desc.Width = image_width;
   desc.Height = image_height;
-  desc.MipLevels = desc.ArraySize = 1;
+  desc.MipLevels = data.size();
+  desc.ArraySize = 1;
   desc.Format = DXGI_FORMAT_R8G8B8A8_UNORM;
   desc.SampleDesc.Count = 1;
-  desc.Usage = D3D11_USAGE_DYNAMIC;
+  desc.Usage = D3D11_USAGE_IMMUTABLE;
   desc.BindFlags = D3D11_BIND_SHADER_RESOURCE;
-  desc.CPUAccessFlags = D3D11_CPU_ACCESS_WRITE;
+  desc.CPUAccessFlags = 0;
   desc.MiscFlags = 0;
 
-  D3D11_SUBRESOURCE_DATA data = {};
-  data.pSysMem = image;
-  data.SysMemPitch = image_components * image_width;
-  data.SysMemSlicePitch = image_components * image_width * image_height;
-
-  auto texture_result = state.device->CreateTexture2D(&desc, &data, scene.Texture.GetAddressOf());
+  auto texture_result = state.device->CreateTexture2D(&desc, &data[0], scene.Texture.GetAddressOf());
   if (FAILED(texture_result)) {
     DXFW_DIRECTX_TRACE(__FILE__, __LINE__, true, texture_result);
   }
@@ -489,7 +510,7 @@ int main(int /* argc */, char** /* argv */) {
   D3D11_SHADER_RESOURCE_VIEW_DESC srv_desc = {};
   srv_desc.Format = DXGI_FORMAT_R8G8B8A8_UNORM;
   srv_desc.ViewDimension = D3D11_SRV_DIMENSION_TEXTURE2D;
-  srv_desc.Texture2D.MipLevels = 1;
+  srv_desc.Texture2D.MipLevels = desc.MipLevels;
   srv_desc.Texture2D.MostDetailedMip = 0;
 
   auto texture_view_result = state.device->CreateShaderResourceView(scene.Texture.Get(), &srv_desc, scene.TextureView.GetAddressOf());
@@ -508,8 +529,6 @@ int main(int /* argc */, char** /* argv */) {
 
     Dxfw::PollOsEvents();
   }
-
-  stbi_image_free(image);
 
   state.device_context->ClearState();
 
