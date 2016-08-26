@@ -458,14 +458,14 @@ int main(int /* argc */, char** /* argv */) {
 
   // TODO: Experimental
   struct TextureDeleter {
-    void operator()(stbi_uc* ptr) {
+    void operator()(unsigned char* ptr) {
       stbi_image_free(ptr);
     }
   };
 
   int image_width = 0;
   int image_height = 0;
-  std::vector<std::unique_ptr<stbi_uc, TextureDeleter>> textures;
+  std::vector<std::unique_ptr<unsigned char, TextureDeleter>> textures;
   std::vector<D3D11_SUBRESOURCE_DATA> data = {};
   for (size_t i = 0; i < 8; ++i) {
     auto current_image_path = base_path / ("assets/textures/default_mip/default_" + std::to_string(i) + ".png");
