@@ -14,6 +14,7 @@
 #include "rendering/drawable.h"
 #include "rendering/typed_constant_buffer.h"
 #include "rendering/typed_structured_buffer.h"
+#include "rendering/texture.h"
 
 struct PerFrame {
   int DirectionalLightCount = 0;
@@ -40,6 +41,5 @@ struct Scene {
   Rendering::StructuredBuffer::TypedHandle<Rendering::Lights::SpotLight> SpotLightsStructuredBuffer;
   Rendering::StructuredBuffer::TypedHandle<Rendering::Lights::PointLight> PointLightsStructuredBuffer;
 
-  Microsoft::WRL::ComPtr<ID3D11Texture2D> Texture;
-  Microsoft::WRL::ComPtr<ID3D11ShaderResourceView> TextureView;
+  Rendering::Texture::Handle Texure;
 };

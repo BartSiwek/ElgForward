@@ -81,6 +81,8 @@ set(TARGET_SOURCES_RENDERING
   ${TARGET_SOURCE_DIR}/rendering/screen.h
   ${TARGET_SOURCE_DIR}/rendering/structured_buffer.cpp
   ${TARGET_SOURCE_DIR}/rendering/structured_buffer.h
+  ${TARGET_SOURCE_DIR}/rendering/texture.cpp
+  ${TARGET_SOURCE_DIR}/rendering/texture.h
   ${TARGET_SOURCE_DIR}/rendering/transform.h
   ${TARGET_SOURCE_DIR}/rendering/transform_and_inverse_transpose.h
   ${TARGET_SOURCE_DIR}/rendering/typed_constant_buffer.h
