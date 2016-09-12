@@ -8,6 +8,7 @@
 
 #include "core/filesystem.h"
 #include "core/handle.h"
+#include "rendering/shader_reflection.h"
 
 namespace Rendering {
 namespace PixelShader {
@@ -28,6 +29,7 @@ struct ShaderData {
 
   Microsoft::WRL::ComPtr<ID3DBlob> Buffer = nullptr;
   Microsoft::WRL::ComPtr<ID3D11PixelShader> Shader = nullptr;
+  ShaderReflection::ReflectionData ReflectionData = {};
 };
 
 Handle Create(const filesystem::path& path, ID3D11Device* device);

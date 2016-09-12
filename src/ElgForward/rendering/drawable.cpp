@@ -82,7 +82,7 @@ bool CreateDrawable(size_t drawable_name_hash, const Mesh::Mesh& mesh, size_t ma
   std::vector<D3D11_INPUT_ELEMENT_DESC> input_layout_desc;
 
   uint32_t slot_index = 0;
-  for (const auto& input_desc : vertex_shader_ptr->InputDescription) {
+  for (const auto& input_desc : vertex_shader_ptr->ReflectionData.Inputs) {
     auto input_index = GetVertexBufferIndex(input_desc.Channel, mesh);
 
     if (input_index == -1) {

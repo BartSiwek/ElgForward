@@ -38,8 +38,6 @@ struct PointLight {
   float pad;
 };
 
-StructuredBuffer <PointLight> PointLights : POINT_LIGHT_BUFFER_REGISTER;
-
 VertexShaderOutput main(VertexShaderInput input) {
   VertexShaderOutput output;
 

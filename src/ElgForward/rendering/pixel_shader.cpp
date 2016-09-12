@@ -13,6 +13,7 @@
 #include "core/hash.h"
 #include "core/resource_array.h"
 #include "core/handle_cache.h"
+#include "rendering/shader_reflection.h"
 
 namespace Rendering {
 namespace PixelShader {
@@ -43,6 +44,11 @@ Handle Create(const filesystem::path& path, ID3D11Device* device) {
 
   if (FAILED(shader_creation_result)) {
     DXFW_DIRECTX_TRACE(__FILE__, __LINE__, true, shader_creation_result);
+    return {};
+  }
+
+  bool texture_reflection_ok = ShaderReflection::ReflectTextures(data.Buffer.Get(), &data.ReflectionData);
+  if (!texture_reflection_ok) {
     return {};
   }
 

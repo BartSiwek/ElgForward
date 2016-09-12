@@ -8,7 +8,8 @@
 
 #include "core/filesystem.h"
 #include "core/handle.h"
-#include "vertex_data.h"
+#include "rendering/vertex_data.h"
+#include "rendering/shader_reflection.h"
 
 namespace Rendering {
 namespace VertexShader {
@@ -45,7 +46,7 @@ struct ShaderData {
 
   Microsoft::WRL::ComPtr<ID3DBlob> Buffer = nullptr;
   Microsoft::WRL::ComPtr<ID3D11VertexShader> Shader = nullptr;
-  std::vector<InputDescription> InputDescription = {};
+  ShaderReflection::ReflectionData ReflectionData = {};
 };
 
 Handle Create(const filesystem::path& path, const std::unordered_map<std::string, VertexDataChannel>& custom_channel_map, ID3D11Device* device);

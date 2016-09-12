@@ -79,6 +79,8 @@ set(TARGET_SOURCES_RENDERING
   ${TARGET_SOURCE_DIR}/rendering/pixel_shader.cpp
   ${TARGET_SOURCE_DIR}/rendering/pixel_shader.h
   ${TARGET_SOURCE_DIR}/rendering/screen.h
+  ${TARGET_SOURCE_DIR}/rendering/shader_reflection.cpp
+  ${TARGET_SOURCE_DIR}/rendering/shader_reflection.h
   ${TARGET_SOURCE_DIR}/rendering/structured_buffer.cpp
   ${TARGET_SOURCE_DIR}/rendering/structured_buffer.h
   ${TARGET_SOURCE_DIR}/rendering/texture.cpp
