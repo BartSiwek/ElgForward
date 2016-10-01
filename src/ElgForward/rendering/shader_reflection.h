@@ -26,14 +26,35 @@ struct InputDescription {
   D3D_REGISTER_COMPONENT_TYPE ComponentType = D3D_REGISTER_COMPONENT_UNKNOWN;
 };
 
+enum class TextureType {
+  UNKNOWN,
+  DIM_1,
+  DIM_1_ARRAY,
+  DIM_2,
+  DIM_2_ARRAY,
+  DIM_2_MULTI,
+  DIM_2_MULTI_ARRAY,
+  DIM_3,
+  CUBE,
+  CUBE_ARRAY
+};
+
 struct TexureDescription {
-  TexureDescription(const char* name, uint32_t component_count)
+  TexureDescription(const char* name, TextureType type, uint32_t samples, uint32_t channels, uint32_t bind_slot_start, uint32_t bind_slot_count)
     : Name(name),
-      ComponentCount(component_count) {
+      Type(type),
+      Samples(samples),
+      Channels(channels),
+      BindSlotStart(bind_slot_start),
+      BindSlotCount(bind_slot_count) {
   }
 
   std::string Name = "";
-  uint32_t ComponentCount = 0;
+  TextureType Type;
+  uint32_t Samples;
+  uint32_t Channels;
+  uint32_t BindSlotStart;
+  uint32_t BindSlotCount;
 };
 
 struct ReflectionData {

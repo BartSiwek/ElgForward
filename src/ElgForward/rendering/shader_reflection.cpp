@@ -106,6 +106,35 @@ bool ReflectInputs(ID3DBlob* blob, const std::unordered_map<std::string, VertexD
   return true;
 }
 
+TextureType DimensionToTextureDescription(D3D_SRV_DIMENSION dimension) {
+  switch (dimension) {
+    case D3D_SRV_DIMENSION_TEXTURE1D:
+      return TextureType::DIM_1;
+    case D3D_SRV_DIMENSION_TEXTURE1DARRAY:
+      return TextureType::DIM_1_ARRAY;
+    case D3D_SRV_DIMENSION_TEXTURE2D:
+      return TextureType::DIM_2;
+    case D3D_SRV_DIMENSION_TEXTURE2DARRAY:
+      return TextureType::DIM_2_ARRAY;
+    case D3D_SRV_DIMENSION_TEXTURE2DMS:
+      return TextureType::DIM_2_MULTI;
+    case D3D_SRV_DIMENSION_TEXTURE2DMSARRAY:
+      return TextureType::DIM_2_MULTI_ARRAY;
+    case D3D_SRV_DIMENSION_TEXTURE3D:
+      return TextureType::DIM_3;
+    case D3D_SRV_DIMENSION_TEXTURECUBE:
+      return TextureType::CUBE;
+    case D3D_SRV_DIMENSION_TEXTURECUBEARRAY:
+      return TextureType::CUBE_ARRAY;
+    default:
+      return TextureType::UNKNOWN;
+  }
+}
+
+uint32_t UFlagsToChannels(UINT flags) {
+  return 1 + ((flags >> 2) & 0x3);
+}
+
 bool ReflectTextures(ID3DBlob* blob, ReflectionData* output) {
   if (output == nullptr) {
     return false;
@@ -129,18 +158,19 @@ bool ReflectTextures(ID3DBlob* blob, ReflectionData* output) {
   for (uint32_t i = 0; i < shader_desc.ConstantBuffers; ++i) {
     reflector->GetResourceBindingDesc(i, &bind_desc);
 
-    DXFW_TRACE(__FILE__, __LINE__, false, "%d - %d %d %d %S %d %d %d %d",
-               i,
-               bind_desc.BindCount,
-               bind_desc.BindPoint,
-               bind_desc.Dimension,
-               bind_desc.Name,
-               bind_desc.NumSamples,
-               bind_desc.ReturnType,
-               bind_desc.Type,
-               bind_desc.uFlags);
-
     if (bind_desc.Type == D3D_SIT_TEXTURE) {
+      auto type = DimensionToTextureDescription(bind_desc.Dimension);
+      if (type == TextureType::UNKNOWN) {
+        DXFW_TRACE(__FILE__, __LINE__, false, "Error reflecting dimension of texture %S (%d)", bind_desc.Name, bind_desc.Dimension);
+        continue;
+      }
+
+      output->Texures.emplace_back(bind_desc.Name,
+                                   type,
+                                   bind_desc.NumSamples,
+                                   UFlagsToChannels(bind_desc.uFlags),
+                                   bind_desc.BindPoint,
+                                   bind_desc.BindCount);
     }
   }
 
