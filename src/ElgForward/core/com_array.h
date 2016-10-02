@@ -73,7 +73,7 @@ class ComArray {
      }
   }
 
-  std::array<value_type, Size> m_array_;
+  std::array<value_type, Size> m_array_ = { nullptr };
 };
 
 }  // namespace Core

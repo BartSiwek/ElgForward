@@ -179,7 +179,44 @@ public:
     return ConstantBuffer::SendToGpu(m_transform_constant_buffer_, context);
   }
 
+  void SetVertexShaderResourceView(size_t index, ID3D11ShaderResourceView* view) {
+    if (index < D3D11_COMMONSHADER_INPUT_RESOURCE_SLOT_COUNT) {
+      m_vs_shader_resource_views_[index] = view;
+    }
+  }
+
+  void BuildVertexShaderResourceView(ID3D11ShaderResourceView** view) {
+    for (auto i = 0; i < D3D11_COMMONSHADER_INPUT_RESOURCE_SLOT_COUNT; ++i) {
+      if (m_vs_shader_resource_views_[i] != nullptr && view[i] == nullptr) {
+        view[i] = m_vs_shader_resource_views_[i];
+      }
+    }
+  }
+
+  void SetPixelShaderResourceView(size_t index, ID3D11ShaderResourceView* view) {
+    if (index < D3D11_COMMONSHADER_INPUT_RESOURCE_SLOT_COUNT) {
+      m_ps_shader_resource_views_[index] = view;
+    }
+  }
+
+  void BuildPixelShaderResourceView(ID3D11ShaderResourceView** view) const {
+    for (auto i = 0; i < D3D11_COMMONSHADER_INPUT_RESOURCE_SLOT_COUNT; ++i) {
+      if (m_ps_shader_resource_views_[i] != nullptr && view[i] == nullptr) {
+        view[i] = m_ps_shader_resource_views_[i];
+      }
+    }
+  }
+
 private:
+  template<typename T, size_t N>
+  static void CombineArrays(const Core::ComArray<T, N>& from, T** to) {
+    for (auto i = 0; i < N; ++i) {
+      if (from[i] != nullptr && to[i] == nullptr) {
+        to[i] = from[i];
+      }
+    }
+  }
+
   Core::ComArray<ID3D11Buffer, D3D11_IA_VERTEX_INPUT_RESOURCE_SLOT_COUNT> m_vertex_buffers_ = {};
   std::array<uint32_t, D3D11_IA_VERTEX_INPUT_RESOURCE_SLOT_COUNT> m_vertex_buffer_strides_ = {};
   std::array<uint32_t, D3D11_IA_VERTEX_INPUT_RESOURCE_SLOT_COUNT> m_vertex_buffer_offsets_ = {};
@@ -192,8 +229,11 @@ private:
 
   Microsoft::WRL::ComPtr<ID3D11VertexShader> m_vs_ = nullptr;
   Microsoft::WRL::ComPtr<ID3D11PixelShader> m_ps_ = nullptr;
-  ConstantBuffer::Handle m_material_constant_buffer_ = {};
 
+  Core::ComArray<ID3D11ShaderResourceView, D3D11_COMMONSHADER_INPUT_RESOURCE_SLOT_COUNT> m_vs_shader_resource_views_ = {};
+  Core::ComArray<ID3D11ShaderResourceView, D3D11_COMMONSHADER_INPUT_RESOURCE_SLOT_COUNT> m_ps_shader_resource_views_ = {};
+
+  ConstantBuffer::Handle m_material_constant_buffer_ = {};
   ConstantBuffer::Handle m_transform_constant_buffer_ = {};
 };
 

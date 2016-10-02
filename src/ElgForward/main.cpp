@@ -320,6 +320,14 @@ void SetConstantBuffers(const Drawable& drawable, Scene* scene, DirectXState* st
   }
 }
 
+void SetShaderResources(const Drawable& drawable, Scene* scene, DirectXState* state) {
+  auto texture_view = Rendering::Texture::GetShaderResourceView(scene->Texure);
+
+  state->device_context->VSSetShaderResources(EXPERIMENTAL_TEXTURE_REGISTER, 1, texture_view.GetAddressOf());
+
+  state->device_context->PSSetShaderResources(EXPERIMENTAL_TEXTURE_REGISTER, 1, texture_view.GetAddressOf());
+}
+
 void Render(Scene* scene, DirectXState* state) {
   float bgColor[4] = { 0.0f, 0.0f, 0.0f, 0.0f };
   state->device_context->ClearRenderTargetView(state->render_target_view.Get(), bgColor);
@@ -331,11 +339,7 @@ void Render(Scene* scene, DirectXState* state) {
     state->device_context->PSSetShader(drawable.GetPixelShader(), 0, 0);
 
     SetConstantBuffers(drawable, scene, state);
-
-    auto texture_view = Rendering::Texture::GetShaderResourceView(scene->Texure);
-
-    state->device_context->VSSetShaderResources(EXPERIMENTAL_TEXTURE_REGISTER, 1, texture_view.GetAddressOf());
-    state->device_context->PSSetShaderResources(EXPERIMENTAL_TEXTURE_REGISTER, 1, texture_view.GetAddressOf());
+    SetShaderResources(drawable, scene, state);
 
     state->device_context->IASetVertexBuffers(0,
                                               D3D11_IA_VERTEX_INPUT_RESOURCE_SLOT_COUNT,
