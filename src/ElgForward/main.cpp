@@ -321,11 +321,23 @@ void SetConstantBuffers(const Drawable& drawable, Scene* scene, DirectXState* st
 }
 
 void SetShaderResources(const Drawable& drawable, Scene* scene, DirectXState* state) {
-  auto texture_view = Rendering::Texture::GetShaderResourceView(scene->Texure);
+  // Vertex shader
+  Core::ComArray<ID3D11ShaderResourceView, D3D11_COMMONSHADER_INPUT_RESOURCE_SLOT_COUNT> vs_shader_resources = {};
+  vs_shader_resources.Set(POINT_LIGHT_BUFFER_REGISTER, GetShaderResourceView(scene->PointLightsStructuredBuffer).Get());
+  vs_shader_resources.Set(SPOT_LIGHT_BUFFER_REGISTER, GetShaderResourceView(scene->SpotLightsStructuredBuffer).Get());
+  vs_shader_resources.Set(DIRECTIONAL_LIGHT_BUFFER_REGISTER, GetShaderResourceView(scene->DirectionalLightsStructuredBuffer).Get());
+  
+  drawable.BuildVertexShaderResourceView(&vs_shader_resources);
+  state->device_context->VSSetShaderResources(0, D3D11_COMMONSHADER_INPUT_RESOURCE_SLOT_COUNT, &vs_shader_resources.Get(0));
 
-  state->device_context->VSSetShaderResources(EXPERIMENTAL_TEXTURE_REGISTER, 1, texture_view.GetAddressOf());
+  // Pixel shader
+  Core::ComArray<ID3D11ShaderResourceView, D3D11_COMMONSHADER_INPUT_RESOURCE_SLOT_COUNT> ps_shader_resources = {};
+  ps_shader_resources.Set(POINT_LIGHT_BUFFER_REGISTER, GetShaderResourceView(scene->PointLightsStructuredBuffer).Get());
+  ps_shader_resources.Set(SPOT_LIGHT_BUFFER_REGISTER, GetShaderResourceView(scene->SpotLightsStructuredBuffer).Get());
+  ps_shader_resources.Set(DIRECTIONAL_LIGHT_BUFFER_REGISTER, GetShaderResourceView(scene->DirectionalLightsStructuredBuffer).Get());
 
-  state->device_context->PSSetShaderResources(EXPERIMENTAL_TEXTURE_REGISTER, 1, texture_view.GetAddressOf());
+  drawable.BuildPixelShaderResourceView(&ps_shader_resources);
+  state->device_context->PSSetShaderResources(0, D3D11_COMMONSHADER_INPUT_RESOURCE_SLOT_COUNT, &ps_shader_resources.Get(0));
 }
 
 void Render(Scene* scene, DirectXState* state) {
@@ -363,10 +375,7 @@ void UpdateFrameBuffers(Scene* scene, DirectXState* state) {
   }
   
   bool point_update_ok = SendToGpu(scene->PointLightsStructuredBuffer, state->device_context.Get());
-  if (point_update_ok) {
-    state->device_context->VSSetShaderResources(POINT_LIGHT_BUFFER_REGISTER, 1, GetShaderResourceView(scene->PointLightsStructuredBuffer).GetAddressOf());
-    state->device_context->PSSetShaderResources(POINT_LIGHT_BUFFER_REGISTER, 1, GetShaderResourceView(scene->PointLightsStructuredBuffer).GetAddressOf());
-  } else {
+  if (!point_update_ok) {
     DXFW_TRACE(__FILE__, __LINE__, false, "Error updating point light buffer", "");
   }
 
@@ -376,10 +385,7 @@ void UpdateFrameBuffers(Scene* scene, DirectXState* state) {
   }
 
   bool spot_update_ok = SendToGpu(scene->SpotLightsStructuredBuffer, state->device_context.Get());
-  if (spot_update_ok) {
-    state->device_context->VSSetShaderResources(SPOT_LIGHT_BUFFER_REGISTER, 1, GetShaderResourceView(scene->SpotLightsStructuredBuffer).GetAddressOf());
-    state->device_context->PSSetShaderResources(SPOT_LIGHT_BUFFER_REGISTER, 1, GetShaderResourceView(scene->SpotLightsStructuredBuffer).GetAddressOf());
-  } else {
+  if (!spot_update_ok) {
     DXFW_TRACE(__FILE__, __LINE__, false, "Error updating spot light buffer", "");
   }
 
@@ -390,9 +396,6 @@ void UpdateFrameBuffers(Scene* scene, DirectXState* state) {
 
   bool dir_update_ok = SendToGpu(scene->DirectionalLightsStructuredBuffer, state->device_context.Get());
   if (dir_update_ok) {
-    state->device_context->VSSetShaderResources(DIRECTIONAL_LIGHT_BUFFER_REGISTER, 1, GetShaderResourceView(scene->DirectionalLightsStructuredBuffer).GetAddressOf());
-    state->device_context->PSSetShaderResources(DIRECTIONAL_LIGHT_BUFFER_REGISTER, 1, GetShaderResourceView(scene->DirectionalLightsStructuredBuffer).GetAddressOf());
-  } else {
     DXFW_TRACE(__FILE__, __LINE__, false, "Error updating directional light buffer", "");
   }
 
@@ -489,6 +492,10 @@ int main(int /* argc */, char** /* argv */) {
   }
 
   textures.clear();
+
+  for (auto& drawble : scene.Drawables) {
+    drawble.SetPixelShaderResourceView(EXPERIMENTAL_TEXTURE_REGISTER, Rendering::Texture::GetShaderResourceView(scene.Texure).Get());
+  }
 
   // TODO: End Experimental
 

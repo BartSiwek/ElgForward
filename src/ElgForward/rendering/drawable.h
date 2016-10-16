@@ -27,11 +27,7 @@ public:
   bool SetVertexBuffer(uint32_t index, Rendering::VertexBuffer::Handle buffer_handle, uint32_t stride) {
     if (buffer_handle.IsValid()) {
       auto buffer = Rendering::VertexBuffer::Retreive(buffer_handle);
-      auto buffer_ptr = buffer.Get();
-
-      buffer_ptr->AddRef();
-
-      m_vertex_buffers_[index] = buffer_ptr;
+      m_vertex_buffers_.Set(index, buffer.Get());
       m_vertex_buffer_strides_[index] = stride;
       m_vertex_buffer_offsets_[index] = 0;
 
@@ -42,26 +38,14 @@ public:
   }
 
   ID3D11Buffer* const* GetVertexBuffers() const {
-    return &m_vertex_buffers_[0];
-  }
-
-  ID3D11Buffer** GetVertexBuffers() {
-    return &m_vertex_buffers_[0];
+    return &m_vertex_buffers_.Get(0);
   }
 
   const uint32_t* GetVertexBufferStrides() const {
     return &m_vertex_buffer_strides_[0];
   }
 
-  uint32_t* GetVertexBufferStrides() {
-    return &m_vertex_buffer_strides_[0];
-  }
-
   const uint32_t* GetVertexBufferOffsets() const {
-    return &m_vertex_buffer_offsets_[0];
-  }
-
-  uint32_t* GetVertexBufferOffsets() {
     return &m_vertex_buffer_offsets_[0];
   }
 
@@ -181,38 +165,30 @@ public:
 
   void SetVertexShaderResourceView(size_t index, ID3D11ShaderResourceView* view) {
     if (index < D3D11_COMMONSHADER_INPUT_RESOURCE_SLOT_COUNT) {
-      m_vs_shader_resource_views_[index] = view;
+      m_vs_shader_resource_views_.Set(index, view);
     }
   }
 
-  void BuildVertexShaderResourceView(ID3D11ShaderResourceView** view) {
-    for (auto i = 0; i < D3D11_COMMONSHADER_INPUT_RESOURCE_SLOT_COUNT; ++i) {
-      if (m_vs_shader_resource_views_[i] != nullptr && view[i] == nullptr) {
-        view[i] = m_vs_shader_resource_views_[i];
-      }
-    }
+  void BuildVertexShaderResourceView(Core::ComArray<ID3D11ShaderResourceView, D3D11_COMMONSHADER_INPUT_RESOURCE_SLOT_COUNT>* view) const {
+    CombineArrays(m_vs_shader_resource_views_, view);
   }
 
   void SetPixelShaderResourceView(size_t index, ID3D11ShaderResourceView* view) {
     if (index < D3D11_COMMONSHADER_INPUT_RESOURCE_SLOT_COUNT) {
-      m_ps_shader_resource_views_[index] = view;
+      m_ps_shader_resource_views_.Set(index, view);
     }
   }
 
-  void BuildPixelShaderResourceView(ID3D11ShaderResourceView** view) const {
-    for (auto i = 0; i < D3D11_COMMONSHADER_INPUT_RESOURCE_SLOT_COUNT; ++i) {
-      if (m_ps_shader_resource_views_[i] != nullptr && view[i] == nullptr) {
-        view[i] = m_ps_shader_resource_views_[i];
-      }
-    }
+  void BuildPixelShaderResourceView(Core::ComArray<ID3D11ShaderResourceView, D3D11_COMMONSHADER_INPUT_RESOURCE_SLOT_COUNT>* view) const {
+    CombineArrays(m_ps_shader_resource_views_, view);
   }
 
 private:
   template<typename T, size_t N>
-  static void CombineArrays(const Core::ComArray<T, N>& from, T** to) {
+  static void CombineArrays(const Core::ComArray<T, N>& from, Core::ComArray<T, N>* to) {
     for (auto i = 0; i < N; ++i) {
-      if (from[i] != nullptr && to[i] == nullptr) {
-        to[i] = from[i];
+      if (from.Get(i) != nullptr && to->Get(i) == nullptr) {
+        to->Set(i, from.Get(i));
       }
     }
   }

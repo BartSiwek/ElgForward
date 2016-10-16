@@ -44,12 +44,21 @@ class ComArray {
     InternalRelease();
   }
 
-  const value_type& operator[](size_t index) const {
+  const value_type& Get(size_t index) const {
+    // TODO: Add asserts on index
     return m_array_[index];
   }
 
-  value_type& operator[](size_t index) {
-    return m_array_[index];
+  void Set(size_t index, const value_type& value) {
+    // TODO: Add asserts on index
+    if (m_array_[index] != nullptr) {
+      SAFE_RELEASE(m_array_[index]);
+    }
+
+    if (value != nullptr) {
+      m_array_[index] = value;
+      m_array_[index]->AddRef();
+    }
   }
 
  private:
