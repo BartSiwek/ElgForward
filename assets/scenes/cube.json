@@ -6,30 +6,105 @@
       "options": {
         "index_buffer_format": "32_UINT"
       }
+    },
+    {
+      "prefix": "teapot",
+      "path": "assets/meshes/teapot.obj",
+      "options": {
+        "index_buffer_format": "32_UINT"
+      }
     }
   ],
   "materials": [
     {
-      "name": "basic",
-      "vertex_shader": "vs.cso",
-      "pixel_shader": "ps.cso"
+      "name": "basic1",
+      "type": "basic",
+      "diffuse": [0.2, 0.4, 0.8, 1.0],
+      "specular": [1.0, 1.0, 1.0, 1.0],
+      "specular_power": 100.0,
+      "diffuse_texture": "default"
+    },
+    {
+      "name": "basic2",
+      "type": "basic",
+      "diffuse": [0.8, 0.4, 0.2, 1.0],
+      "specular": [1.0, 1.0, 1.0, 1.0],
+      "specular_power": 100.0,
+      "diffuse_texture": "default"
     }
   ],
-  "scene" : [
+  "lights": "assets/lights/cube_lights.json",
+  "textures": "assets/textures/cube_textures.json",
+  "scene": [
     {
-      "name" : "cube_drawable",
-      "mesh_name" : "cube g cube",
-      "material_name" : "basic"
+      "name": "drawable_1",
+      "mesh_name": "cube cube",
+      "material_name": "basic1",
+      "transform" : {
+        "translation": [-1.0, 0.0, -1.0],
+        "rotation": [1.0, 1.0, 1.0, 90.0],
+        "scale": [0.5, 0.5, 0.5]
+      }
+    },
+    {
+      "name": "drawable_2",
+      "mesh_name": "teapot Base",
+      "material_name": "basic1",
+      "transform" : {
+        "translation": [1.0, -0.25, -1.0],
+        "rotation": [0.0, 1.0, 0.0, 0.0],
+        "scale": [0.005, 0.005, 0.005]
+      }
+    },
+    {
+      "name": "drawable_3",
+      "mesh_name": "teapot Top",
+      "material_name": "basic1",
+      "transform" : {
+        "translation": [1.0, -0.25, -1.0],
+        "rotation": [0.0, 1.0, 0.0, 0.0],
+        "scale": [0.005, 0.005, 0.005]
+      }
+    },
+    {
+      "name": "drawable_4",
+      "mesh_name": "cube cube",
+      "material_name": "basic2",
+      "transform" : {
+        "translation": [-1.0, 0.0, 1.0],
+        "rotation": [1.0, 1.0, 1.0, 90.0],
+        "scale": [0.5, 0.5, 0.5]
+      }
+    },
+    {
+      "name": "drawable_5",
+      "mesh_name": "teapot Base",
+      "material_name": "basic2",
+      "transform" : {
+        "translation": [1.0, -0.25, 1.0],
+        "rotation": [0.0, 1.0, 0.0, 0.0],
+        "scale": [0.005, 0.005, 0.005]
+      }
+    },
+    {
+      "name": "drawable_6",
+      "mesh_name": "teapot Top",
+      "material_name": "basic2",
+      "transform" : {
+        "translation": [1.0, -0.25, 1.0],
+        "rotation": [0.0, 1.0, 0.0, 0.0],
+        "scale": [0.005, 0.005, 0.005]
+      }
     }
   ],
   "camera": {
     "prespective_lens": {
       "near_plane": 1.0,
-      "far_plane": 3.0,
+      "far_plane": 9.0,
       "fov": 90.0
     },
     "trackball_camera": {
-      "radius": 2.0,
+      "radius": 4.0,
       "position": [0.0, 0.0, 0.0]
     },
     "script": "assets/scripts/camera.chai"

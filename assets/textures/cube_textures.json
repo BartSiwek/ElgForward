@@ -1,0 +1,17 @@
+{
+  "textures": [
+    {
+      "name": "default",
+      "filename": [
+        "assets/textures/default_mip/default_0.png",
+        "assets/textures/default_mip/default_1.png",
+        "assets/textures/default_mip/default_2.png",
+        "assets/textures/default_mip/default_3.png",
+        "assets/textures/default_mip/default_4.png",
+        "assets/textures/default_mip/default_5.png",
+        "assets/textures/default_mip/default_6.png",
+        "assets/textures/default_mip/default_7.png"
+      ]
+    }
+  ]
+}
