@@ -201,6 +201,33 @@ bool InitalizeDepthStencilState(DirectXState* state) {
   return true;
 }
 
+bool InitializeSamplers(DirectXState* state) {
+  // Linear sampler
+  D3D11_SAMPLER_DESC linear_sampler_desc;
+  ZeroMemory(&linear_sampler_desc, sizeof(linear_sampler_desc));
+
+  linear_sampler_desc.Filter = D3D11_FILTER_MIN_MAG_MIP_LINEAR;
+  linear_sampler_desc.AddressU = D3D11_TEXTURE_ADDRESS_CLAMP;
+  linear_sampler_desc.AddressV = D3D11_TEXTURE_ADDRESS_CLAMP;
+  linear_sampler_desc.AddressW = D3D11_TEXTURE_ADDRESS_CLAMP;
+  linear_sampler_desc.MipLODBias = 0.0;
+  linear_sampler_desc.MaxAnisotropy = 4;
+  linear_sampler_desc.ComparisonFunc = D3D11_COMPARISON_LESS;
+  linear_sampler_desc.MinLOD = 0.0f;
+  linear_sampler_desc.MaxLOD = D3D11_FLOAT32_MAX;
+
+  auto linear_sampler_result = state->device->CreateSamplerState(&linear_sampler_desc, state->linear_sampler.GetAddressOf());
+  if (FAILED(linear_sampler_result)) {
+    DXFW_DIRECTX_TRACE(__FILE__, __LINE__, true, linear_sampler_result);
+    return false;
+  }
+
+  state->device_context->VSSetSamplers(LINEAR_SAMPLER_REGISTER, 1, state->linear_sampler.GetAddressOf());
+  state->device_context->PSSetSamplers(LINEAR_SAMPLER_REGISTER, 1, state->linear_sampler.GetAddressOf());
+
+  return true;
+}
+
 bool InitializeDirect3d11(DirectXState* state) {
   // Crate window
   const uint32_t DefaultWidth = 800;
@@ -226,6 +253,12 @@ bool InitializeDirect3d11(DirectXState* state) {
   // Create the depth/stencil state
   bool depth_stencil_ok = InitalizeDepthStencilState(state);
   if (!depth_stencil_ok) {
+    return false;
+  }
+
+  // Create samplers
+  bool samplers_ok = InitializeSamplers(state);
+  if (!samplers_ok) {
     return false;
   }
 

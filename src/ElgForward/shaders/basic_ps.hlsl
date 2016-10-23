@@ -24,7 +24,7 @@ struct PointLight {
 StructuredBuffer <PointLight> PointLights : POINT_LIGHT_BUFFER_REGISTER;
 
 Texture2D<float4> DiffuseTexture : DIFFUSE_TEXTURE_REGISTER;
-SamplerState ExperimentalSampler;
+SamplerState LinearSampler;
 
 float4 main(VertexShaderOutput input) : SV_TARGET {
   float3 n = normalize(input.Normal);
@@ -38,7 +38,7 @@ float4 main(VertexShaderOutput input) : SV_TARGET {
 
     float4 diffuse_color = float4(0.0, 0.0, 0.0, 0.0);
     if (HasDiffuseTexture) {
-      diffuse_color = DiffuseTexture.Sample(ExperimentalSampler, input.TexCoord);
+      diffuse_color = DiffuseTexture.Sample(LinearSampler, input.TexCoord);
     } else {
       diffuse_color = DiffuseColor;
     }

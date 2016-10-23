@@ -24,4 +24,12 @@
 
 #define DIFFUSE_TEXTURE_REGISTER TEXTURE_REGISTER(3)
 
+#ifdef __cplusplus
+#define SAMPLER_REGISTER(num) num
+#else
+#define SAMPLER_REGISTER(num) register(s##num)
+#endif // __cplusplus
+
+#define LINEAR_SAMPLER_REGISTER SAMPLER_REGISTER(0)
+
 #endif  // ELGFORWARD_SHADERS_REGISTERS_H_

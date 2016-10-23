@@ -14,5 +14,6 @@ struct DirectXState {
   Microsoft::WRL::ComPtr<ID3D11RenderTargetView> render_target_view;
   Microsoft::WRL::ComPtr<ID3D11DepthStencilView> depth_stencil_view;
   Microsoft::WRL::ComPtr<ID3D11DepthStencilState> depth_stencil_state;
+  Microsoft::WRL::ComPtr<ID3D11SamplerState> linear_sampler;
   D3D11_VIEWPORT viewport;
 };

@@ -40,6 +40,4 @@ struct Scene {
   Rendering::StructuredBuffer::TypedHandle<Rendering::Lights::DirectionalLight> DirectionalLightsStructuredBuffer;
   Rendering::StructuredBuffer::TypedHandle<Rendering::Lights::SpotLight> SpotLightsStructuredBuffer;
   Rendering::StructuredBuffer::TypedHandle<Rendering::Lights::PointLight> PointLightsStructuredBuffer;
-
-  Rendering::Texture::Handle Texure;
 };
