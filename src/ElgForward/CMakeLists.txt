@@ -60,6 +60,8 @@ set(TARGET_SOURCES_LOADERS
   ${TARGET_SOURCE_DIR}/loaders/mesh_loader.h
   ${TARGET_SOURCE_DIR}/loaders/scene_loader.cpp
   ${TARGET_SOURCE_DIR}/loaders/scene_loader.h
+  ${TARGET_SOURCE_DIR}/loaders/texture_loader.cpp
+  ${TARGET_SOURCE_DIR}/loaders/texture_loader.h
   ${TARGET_SOURCE_DIR}/loaders/transform_loader.cpp
   ${TARGET_SOURCE_DIR}/loaders/transform_loader.h
 )
@@ -71,6 +73,8 @@ set(TARGET_SOURCES_RENDERING
   ${TARGET_SOURCE_DIR}/rendering/constant_buffer.h
   ${TARGET_SOURCE_DIR}/rendering/drawable.cpp
   ${TARGET_SOURCE_DIR}/rendering/drawable.h
+  ${TARGET_SOURCE_DIR}/rendering/dxgi_format_helper.cpp
+  ${TARGET_SOURCE_DIR}/rendering/dxgi_format_helper.h
   ${TARGET_SOURCE_DIR}/rendering/index_buffer.cpp
   ${TARGET_SOURCE_DIR}/rendering/index_buffer.h
   ${TARGET_SOURCE_DIR}/rendering/material.h

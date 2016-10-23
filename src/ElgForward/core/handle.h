@@ -39,7 +39,7 @@ class Handle {
     ++m_generation_;
   }
 
-  bool IsValid() {
+  bool IsValid() const {
     return m_index_ != MaxIndex && m_generation_ != MaxGenerarion;
   }
 

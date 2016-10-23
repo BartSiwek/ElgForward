@@ -106,28 +106,28 @@ bool ReflectInputs(ID3DBlob* blob, const std::unordered_map<std::string, VertexD
   return true;
 }
 
-TextureType DimensionToTextureDescription(D3D_SRV_DIMENSION dimension) {
+Texture::Type DimensionToTextureDescription(D3D_SRV_DIMENSION dimension) {
   switch (dimension) {
     case D3D_SRV_DIMENSION_TEXTURE1D:
-      return TextureType::DIM_1;
+      return Texture::Type::DIM_1;
     case D3D_SRV_DIMENSION_TEXTURE1DARRAY:
-      return TextureType::DIM_1_ARRAY;
+      return Texture::Type::DIM_1_ARRAY;
     case D3D_SRV_DIMENSION_TEXTURE2D:
-      return TextureType::DIM_2;
+      return Texture::Type::DIM_2;
     case D3D_SRV_DIMENSION_TEXTURE2DARRAY:
-      return TextureType::DIM_2_ARRAY;
+      return Texture::Type::DIM_2_ARRAY;
     case D3D_SRV_DIMENSION_TEXTURE2DMS:
-      return TextureType::DIM_2_MULTI;
+      return Texture::Type::DIM_2_MULTI;
     case D3D_SRV_DIMENSION_TEXTURE2DMSARRAY:
-      return TextureType::DIM_2_MULTI_ARRAY;
+      return Texture::Type::DIM_2_MULTI_ARRAY;
     case D3D_SRV_DIMENSION_TEXTURE3D:
-      return TextureType::DIM_3;
+      return Texture::Type::DIM_3;
     case D3D_SRV_DIMENSION_TEXTURECUBE:
-      return TextureType::CUBE;
+      return Texture::Type::CUBE;
     case D3D_SRV_DIMENSION_TEXTURECUBEARRAY:
-      return TextureType::CUBE_ARRAY;
+      return Texture::Type::CUBE_ARRAY;
     default:
-      return TextureType::UNKNOWN;
+      return Texture::Type::UNKNOWN;
   }
 }
 
@@ -160,7 +160,7 @@ bool ReflectTextures(ID3DBlob* blob, ReflectionData* output) {
 
     if (bind_desc.Type == D3D_SIT_TEXTURE) {
       auto type = DimensionToTextureDescription(bind_desc.Dimension);
-      if (type == TextureType::UNKNOWN) {
+      if (type == Texture::Type::UNKNOWN) {
         DXFW_TRACE(__FILE__, __LINE__, false, "Error reflecting dimension of texture %S (%d)", bind_desc.Name, bind_desc.Dimension);
         continue;
       }

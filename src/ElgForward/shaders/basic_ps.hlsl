@@ -3,28 +3,11 @@
 #include "registers.h"
 #include "basic.h"
 
-cbuffer PerFrameConstants : PER_FRAME_CONSTANT_BUFFER_REGISTER {
-  int DirectionalLightCount;
-  int SpotLightCount;
-  int PointLightCount;
-  float pad;
-};
-
-cbuffer PerCamersConstants : PER_CAMERA_CONSTANT_BUFFER_REGISTER {
-  float4x4 ViewMatrix;
-  float4x4 ViewMatrixInverseTranspose;
-  float4x4 ProjectionMatrix;
-}
-
-cbuffer PerObjectConstants : PER_OBJECT_CONSTANT_BUFFER_REGISTER {
-  float4x4 ModelMatrix;
-  float4x4 ModelMatrixInverseTranspose;
-}
-
 cbuffer PerMaterialConstants : PER_MATERIAL_CONSTANT_BUFFER_REGISTER {
   float4 DiffuseColor;
   float4 SpecularColor;
   float SpecularPower;
+  bool HasDiffuseTexture;
 };
 
 struct PointLight {
@@ -40,7 +23,7 @@ struct PointLight {
 
 StructuredBuffer <PointLight> PointLights : POINT_LIGHT_BUFFER_REGISTER;
 
-Texture2D<float4> ExperimentalTexture : EXPERIMENTAL_TEXTURE_REGISTER;
+Texture2D<float4> DiffuseTexture : DIFFUSE_TEXTURE_REGISTER;
 SamplerState ExperimentalSampler;
 
 float4 main(VertexShaderOutput input) : SV_TARGET {
@@ -53,7 +36,14 @@ float4 main(VertexShaderOutput input) : SV_TARGET {
 
     float nDotL = dot(l, n);
 
-    finalColor += PointLights[i].DiffuseColor * DiffuseColor * ExperimentalTexture.Sample(ExperimentalSampler, input.TexCoord) * max(nDotL, 0);
+    float4 diffuse_color = float4(0.0, 0.0, 0.0, 0.0);
+    if (HasDiffuseTexture) {
+      diffuse_color = DiffuseTexture.Sample(ExperimentalSampler, input.TexCoord);
+    } else {
+      diffuse_color = DiffuseColor;
+    }
+
+    finalColor += PointLights[i].DiffuseColor * diffuse_color * max(nDotL, 0);
   }
 
   return finalColor;

@@ -13,12 +13,6 @@
 #include <wrl.h>
 #endif
 
-#pragma warning(push)
-#pragma warning(disable: 4244)
-#define STB_IMAGE_IMPLEMENTATION
-#include <stb_image.h>
-#pragma warning(pop)
-
 #include "core/filesystem.h"
 #include "dxfw/dxfw_wrapper.h"
 #include "dxfw/dxfw_helpers.h"
@@ -464,40 +458,6 @@ int main(int /* argc */, char** /* argv */) {
   Scene scene;
   InitializeScene(&state, &scene);
   Loaders::LoadScene(base_path / "assets/scenes/cube.json", base_path, &state, &scene);
-
-  // TODO: Experimental
-  struct TextureDeleter {
-    void operator()(unsigned char* ptr) {
-      stbi_image_free(ptr);
-    }
-  };
-  
-  std::vector<std::unique_ptr<unsigned char, TextureDeleter>> textures;
-  std::vector<Rendering::Texture::ImageData> data = {};
-  for (size_t i = 0; i < 8; ++i) {
-    auto current_image_path = base_path / ("assets/textures/default_mip/default_" + std::to_string(i) + ".png");
-
-    int current_image_width;
-    int current_image_height;
-    int current_image_components;
-    auto image = stbi_load(current_image_path.generic_string().c_str(), &current_image_width, &current_image_height, &current_image_components, STBI_rgb_alpha);
-    textures.emplace_back(image);
-
-    data.emplace_back(current_image_width, current_image_height, current_image_components, DXGI_FORMAT_R8G8B8A8_UNORM, image);
-  }
-
-  scene.Texure = Rendering::Texture::Create("texture", data, state.device.Get());
-  if (!scene.Texure.IsValid()) {
-    return -1;
-  }
-
-  textures.clear();
-
-  for (auto& drawble : scene.Drawables) {
-    drawble.SetPixelShaderResourceView(EXPERIMENTAL_TEXTURE_REGISTER, Rendering::Texture::GetShaderResourceView(scene.Texure).Get());
-  }
-
-  // TODO: End Experimental
 
   while (!Dxfw::ShouldWindowClose(state.window.get())) {
     Update(&scene, &state);

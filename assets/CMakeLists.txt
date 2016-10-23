@@ -49,6 +49,7 @@ set(TARGET_ASSETS_TEXTURES
   ${TARGET_ASSETS_DIR}/textures/default_mip/default_5.png
   ${TARGET_ASSETS_DIR}/textures/default_mip/default_6.png
   ${TARGET_ASSETS_DIR}/textures/default_mip/default_7.png
+  ${TARGET_ASSETS_DIR}/textures/cube_textures.json
 )
 
 source_group(Assets\\Textures FILES ${TARGET_ASSETS_TEXTURES})

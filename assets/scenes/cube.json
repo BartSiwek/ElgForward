@@ -21,17 +21,20 @@
       "type": "basic",
       "diffuse": [0.2, 0.4, 0.8, 1.0],
       "specular": [1.0, 1.0, 1.0, 1.0],
-      "specular_power": 100.0
+      "specular_power": 100.0,
+      "diffuse_texture": "default"
     },
     {
       "name": "basic2",
       "type": "basic",
       "diffuse": [0.8, 0.4, 0.2, 1.0],
       "specular": [1.0, 1.0, 1.0, 1.0],
-      "specular_power": 100.0
+      "specular_power": 100.0,
+      "diffuse_texture": "default"
     }
   ],
   "lights": "assets/lights/cube_lights.json",
+  "textures": "assets/textures/cube_textures.json",
   "scene": [
     {
       "name": "drawable_1",
@@ -42,7 +45,7 @@
         "rotation": [1.0, 1.0, 1.0, 90.0],
         "scale": [0.5, 0.5, 0.5]
       }
-    }, 
+    },
     {
       "name": "drawable_2",
       "mesh_name": "teapot Base",

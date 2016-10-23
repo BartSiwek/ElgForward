@@ -16,7 +16,13 @@ namespace Texture {
 
 class Storage {
  public:
-  Storage() = default;
+  Storage(DXGI_FORMAT format, size_t samples, Type type, size_t slot_count)
+      : m_format_(format),
+        m_samples_(samples),
+        m_type_(type),
+        m_slot_count_(slot_count) {
+  }
+
   ~Storage() = default;
 
   Storage(const Storage& other) = delete;
@@ -24,6 +30,22 @@ class Storage {
 
   Storage(Storage&& other) = default;
   Storage& operator=(Storage&& other) = default;
+
+  DXGI_FORMAT GetFormat() const {
+    return m_format_;
+  }
+
+  size_t GetSamples() const {
+    return m_samples_;
+  }
+
+  Type GetType() const {
+    return m_type_;
+  }
+
+  size_t GetSlotCount() const {
+    return m_slot_count_;
+  }
 
   const Microsoft::WRL::ComPtr<ID3D11Texture2D>& GetTexture() const {
     return m_texture_;
@@ -42,6 +64,10 @@ class Storage {
   }
 
  private:
+  DXGI_FORMAT m_format_ = DXGI_FORMAT_UNKNOWN;
+  size_t m_samples_ = static_cast<size_t>(-1);
+  Type m_type_ = Type::UNKNOWN;
+  size_t m_slot_count_ = 1;
   Microsoft::WRL::ComPtr<ID3D11Texture2D> m_texture_ = nullptr;
   Microsoft::WRL::ComPtr<ID3D11ShaderResourceView> m_view_ = nullptr;
 };
@@ -89,7 +115,7 @@ Handle Create(size_t name_hash, const std::vector<ImageData>& data, ID3D11Device
   desc.CPUAccessFlags = 0;
   desc.MiscFlags = 0;
 
-  Storage new_storage;
+  Storage new_storage(format, static_cast<size_t>(-1), Type::DIM_2, 1);
   auto texture_result = device->CreateTexture2D(&desc, &initial_data[0], new_storage.GetTexture().GetAddressOf());
   if (FAILED(texture_result)) {
     DXFW_DIRECTX_TRACE(__FILE__, __LINE__, true, texture_result);
@@ -117,6 +143,22 @@ Handle Create(size_t name_hash, const std::vector<ImageData>& data, ID3D11Device
 Handle Create(const std::string& name, const std::vector<ImageData>& data, ID3D11Device* device) {
   std::hash<std::string> hasher;
   return Create(hasher(name), data, device);
+}
+
+DXGI_FORMAT GetFormat(Handle handle) {
+  return g_storage_.Get(handle).GetFormat();
+}
+
+size_t GetSamples(Handle handle) {
+  return g_storage_.Get(handle).GetSamples();
+}
+
+Type GetType(Handle handle) {
+  return g_storage_.Get(handle).GetType();
+}
+
+size_t GetSlotCount(Handle handle) {
+  return g_storage_.Get(handle).GetSlotCount();
 }
 
 Microsoft::WRL::ComPtr<ID3D11ShaderResourceView> GetShaderResourceView(Handle handle) {

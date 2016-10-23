@@ -7,6 +7,7 @@
 
 #include "core/filesystem.h"
 #include "rendering/material.h"
+#include "loaders/texture_loader.h"
 #include "directx_state.h"
 
 namespace Loaders {
@@ -16,6 +17,8 @@ struct MaterialIdentifier {
   Rendering::Material::Material Material;
 };
 
-bool ReadMaterial(const nlohmann::json& json_material, const filesystem::path& base_path, ID3D11Device* device, MaterialIdentifier* material);
+bool ReadMaterial(const nlohmann::json& json_material, const filesystem::path& base_path,
+                  const std::vector<TextureIdentifier>& identifiers, ID3D11Device* device,
+                  MaterialIdentifier* material);
 
 }  // namespace Loaders

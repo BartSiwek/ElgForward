@@ -13,6 +13,7 @@
 #include "loaders/material_loader.h"
 #include "loaders/mesh_loader.h"
 #include "loaders/transform_loader.h"
+#include "loaders/texture_loader.h"
 #include "rendering/screen.h"
 #include "rendering/material.h"
 #include "rendering/mesh.h"
@@ -115,13 +116,14 @@ void BuildDrawables(const nlohmann::json& json_scene, const std::vector<MeshIden
   }
 }
 
-void ReadMaterials(const nlohmann::json& json_scene, const filesystem::path& base_path, DirectXState* state,
+void ReadMaterials(const nlohmann::json& json_scene, const filesystem::path& base_path,
+                   const std::vector<TextureIdentifier>& textures, DirectXState* state,
                    std::vector<MaterialIdentifier>* materials) {
   const auto& json_materials = json_scene["materials"];
 
   for (const auto& json_material : json_materials) {
     MaterialIdentifier new_material;
-    bool material_ok = ReadMaterial(json_material, base_path, state->device.Get(), &new_material);
+    bool material_ok = ReadMaterial(json_material, base_path, textures, state->device.Get(), &new_material);
     if (!material_ok) {
       DXFW_TRACE(__FILE__, __LINE__, false, "Error loading material [%S]", json_material.dump().c_str());
     }
@@ -131,19 +133,42 @@ void ReadMaterials(const nlohmann::json& json_scene, const filesystem::path& bas
 }
 
 void ReadLights(const nlohmann::json& json_scene, const filesystem::path& base_path, Scene* scene) {
-  const auto& json_lights = json_scene["lights"];
-
-  if (!json_lights.is_string()) {
-    DXFW_TRACE(__FILE__, __LINE__, false, "Invalid lights entry [%S]", json_lights.dump().c_str());
+  auto lights_it = json_scene.find("lights");
+  if (lights_it == json_scene.end()) {
     return;
   }
 
-  const std::string& lights_relative_path = json_lights;
+  if (!lights_it->is_string()) {
+    DXFW_TRACE(__FILE__, __LINE__, false, "Invalid lights entry [%S]", lights_it->dump().c_str());
+    return;
+  }
+
+  const std::string& lights_relative_path = *lights_it;
   auto lights_path = base_path / lights_relative_path;
   bool lights_ok = ReadLightsFromFile(lights_path, scene->DirectionalLightsStructuredBuffer,
                                       scene->SpotLightsStructuredBuffer, scene->PointLightsStructuredBuffer);
   if (!lights_ok) {
     DXFW_TRACE(__FILE__, __LINE__, false, "Error reading lights from [%S]", lights_path.c_str());
+  }
+}
+
+void ReadTextures(const nlohmann::json& json_scene, const filesystem::path& base_path, DirectXState* state, std::vector<TextureIdentifier>* textures) {
+  auto textures_it = json_scene.find("textures");
+  if (textures_it == json_scene.end()) {
+    return;
+  }
+
+  if (!textures_it->is_string()) {
+    DXFW_TRACE(__FILE__, __LINE__, false, "Invalid textures entry [%S]", textures_it->dump().c_str());
+    return;
+  }
+
+  const std::string& textures_relative_path = *textures_it;
+  auto textures_path = base_path / textures_relative_path;
+  bool textures_ok = ReadTexturesFromFile(textures_path, base_path, state->device.Get(), textures);
+
+  if (!textures_ok) {
+    DXFW_TRACE(__FILE__, __LINE__, false, "Error reading textures from [%S]", textures_path.c_str());
   }
 }
 
@@ -173,8 +198,11 @@ bool LoadScene(const filesystem::path& path, const filesystem::path& base_path, 
   std::vector<MeshIdentifier> mesh_identifiers;
   ReadMeshes(json_scene, base_path, state, &mesh_identifiers);
   
+  std::vector<TextureIdentifier> textures;
+  ReadTextures(json_scene, base_path, state, &textures);
+
   std::vector<MaterialIdentifier> materials;
-  ReadMaterials(json_scene, base_path, state, &materials);
+  ReadMaterials(json_scene, base_path, textures, state, &materials);
   
   ReadLights(json_scene, base_path, scene);
 

@@ -1,6 +1,7 @@
 #include "rendering/drawable.h"
 
 #include "core/hash.h"
+#include "rendering/dxgi_format_helper.h"
 
 namespace Rendering {
 
@@ -14,63 +15,17 @@ int32_t GetVertexBufferIndex(VertexDataChannel channel, const Mesh::Mesh& mesh) 
 }
 
 bool IsVertexBufferFormatCompatible(uint32_t component_count, D3D_REGISTER_COMPONENT_TYPE component_type, DXGI_FORMAT mesh_channel_format) {
-  static std::unordered_map<DXGI_FORMAT, std::pair<uint32_t, D3D_REGISTER_COMPONENT_TYPE>> type_map = {
-    { DXGI_FORMAT_R32_FLOAT, { 1, D3D_REGISTER_COMPONENT_FLOAT32 } },
-    { DXGI_FORMAT_R32G32_FLOAT, { 2, D3D_REGISTER_COMPONENT_FLOAT32 } },
-    { DXGI_FORMAT_R32G32B32_FLOAT, { 3, D3D_REGISTER_COMPONENT_FLOAT32 } },
-    { DXGI_FORMAT_R32G32B32A32_FLOAT, { 4, D3D_REGISTER_COMPONENT_FLOAT32 } },
-    { DXGI_FORMAT_R16_FLOAT, { 1, D3D_REGISTER_COMPONENT_FLOAT32 } },
-    { DXGI_FORMAT_R16G16_FLOAT, { 2, D3D_REGISTER_COMPONENT_FLOAT32 } },
-    { DXGI_FORMAT_R16G16B16A16_FLOAT, { 4, D3D_REGISTER_COMPONENT_FLOAT32 } },
-    { DXGI_FORMAT_R11G11B10_FLOAT, { 3, D3D_REGISTER_COMPONENT_FLOAT32 } },
-    { DXGI_FORMAT_R32_UINT, { 1, D3D10_REGISTER_COMPONENT_UINT32 } },
-    { DXGI_FORMAT_R32G32_UINT, { 2, D3D10_REGISTER_COMPONENT_UINT32 } },
-    { DXGI_FORMAT_R32G32B32_UINT, { 3, D3D10_REGISTER_COMPONENT_UINT32 } },
-    { DXGI_FORMAT_R32G32B32A32_UINT, { 4, D3D10_REGISTER_COMPONENT_UINT32 } },
-    { DXGI_FORMAT_R16_UINT, { 1, D3D10_REGISTER_COMPONENT_UINT32 } },
-    { DXGI_FORMAT_R16G16_UINT, { 2, D3D10_REGISTER_COMPONENT_UINT32 } },
-    { DXGI_FORMAT_R16G16B16A16_UINT, { 4, D3D10_REGISTER_COMPONENT_UINT32 } },
-    { DXGI_FORMAT_R8_UINT, { 1, D3D10_REGISTER_COMPONENT_UINT32 } },
-    { DXGI_FORMAT_R8G8_UINT, { 2, D3D10_REGISTER_COMPONENT_UINT32 } },
-    { DXGI_FORMAT_R8G8B8A8_UINT, { 4, D3D10_REGISTER_COMPONENT_UINT32 } },
-    { DXGI_FORMAT_R10G10B10A2_UINT, { 4, D3D10_REGISTER_COMPONENT_UINT32 } },
-    { DXGI_FORMAT_R32_SINT, { 1, D3D10_REGISTER_COMPONENT_SINT32 } },
-    { DXGI_FORMAT_R32G32_SINT, { 2, D3D10_REGISTER_COMPONENT_SINT32 } },
-    { DXGI_FORMAT_R32G32B32_SINT, { 3, D3D10_REGISTER_COMPONENT_SINT32 } },
-    { DXGI_FORMAT_R32G32B32A32_SINT, { 4, D3D10_REGISTER_COMPONENT_SINT32 } },
-    { DXGI_FORMAT_R16_SINT, { 1, D3D10_REGISTER_COMPONENT_SINT32 } },
-    { DXGI_FORMAT_R16G16_SINT, { 2, D3D10_REGISTER_COMPONENT_SINT32 } },
-    { DXGI_FORMAT_R16G16B16A16_SINT, { 4, D3D10_REGISTER_COMPONENT_SINT32 } },
-    { DXGI_FORMAT_R8_SINT, { 1, D3D10_REGISTER_COMPONENT_SINT32 } },
-    { DXGI_FORMAT_R8G8_SINT, { 2, D3D10_REGISTER_COMPONENT_SINT32 } },
-    { DXGI_FORMAT_R8G8B8A8_SINT, { 4, D3D10_REGISTER_COMPONENT_SINT32 } },
-    { DXGI_FORMAT_R16_UNORM, { 1, D3D_REGISTER_COMPONENT_FLOAT32 } },
-    { DXGI_FORMAT_R16G16_UNORM, { 2, D3D_REGISTER_COMPONENT_FLOAT32 } },
-    { DXGI_FORMAT_R16G16B16A16_UNORM, { 4, D3D_REGISTER_COMPONENT_FLOAT32 } },
-    { DXGI_FORMAT_R8_UNORM, { 1, D3D_REGISTER_COMPONENT_FLOAT32 } },
-    { DXGI_FORMAT_R8G8_UNORM, { 2, D3D_REGISTER_COMPONENT_FLOAT32 } },
-    { DXGI_FORMAT_R8G8B8A8_UNORM, { 4, D3D_REGISTER_COMPONENT_FLOAT32 } },
-    { DXGI_FORMAT_B8G8R8A8_UNORM, { 4, D3D_REGISTER_COMPONENT_FLOAT32 } },
-    { DXGI_FORMAT_B8G8R8X8_UNORM, { 4, D3D_REGISTER_COMPONENT_FLOAT32 } },
-    { DXGI_FORMAT_R10G10B10A2_UNORM, { 4, D3D_REGISTER_COMPONENT_FLOAT32 } },
-    { DXGI_FORMAT_R16_SNORM, { 1, D3D_REGISTER_COMPONENT_FLOAT32 } },
-    { DXGI_FORMAT_R16G16_SNORM, { 2, D3D_REGISTER_COMPONENT_FLOAT32 } },
-    { DXGI_FORMAT_R16G16B16A16_SNORM, { 4, D3D_REGISTER_COMPONENT_FLOAT32 } },
-    { DXGI_FORMAT_R8_SNORM, { 1, D3D_REGISTER_COMPONENT_FLOAT32 } },
-    { DXGI_FORMAT_R8G8_SNORM, { 2, D3D_REGISTER_COMPONENT_FLOAT32 } },
-    { DXGI_FORMAT_R8G8B8A8_SNORM, { 4, D3D_REGISTER_COMPONENT_FLOAT32 } },
-  };
+  auto components_and_format = DxgiFormatToComponentsAndType(mesh_channel_format);
 
-  auto it = type_map.find(mesh_channel_format);
-  if (it != std::end(type_map)) {
-    if (component_count == it->second.first && component_type == it->second.second) {
-      return true;
-    } else {
-      return false;
-    }
-  } else {
+  if (components_and_format.second == D3D_REGISTER_COMPONENT_UNKNOWN) {
     return false;
   }
+
+  if (component_count != components_and_format.first || component_type != components_and_format.second) {
+    return false;
+  }
+
+  return true;
 }
 
 bool CreateDrawable(size_t drawable_name_hash, const Mesh::Mesh& mesh, size_t material_name_hash,
@@ -143,6 +98,18 @@ bool CreateDrawable(size_t drawable_name_hash, const Mesh::Mesh& mesh, size_t ma
   bool transform_consntant_buffer_ok = drawable->SetTransformConstantBuffer(transform.TransformConstantBuffer);
   if (!transform_consntant_buffer_ok) {
     return false;
+  }
+
+  for (size_t i = 0; i < material.VertexShaderTextures.size(); ++i) {
+    if (material.VertexShaderTextures[i].IsValid()) {
+      drawable->SetVertexShaderResourceView(i, Texture::GetShaderResourceView(material.VertexShaderTextures[i]).Get());
+    }
+  }
+
+  for (size_t i = 0; i < material.PixelShaderTextures.size(); ++i) {
+    if (material.PixelShaderTextures[i].IsValid()) {
+      drawable->SetPixelShaderResourceView(i, Texture::GetShaderResourceView(material.PixelShaderTextures[i]).Get());
+    }
   }
 
   return true;

@@ -6,6 +6,7 @@
 #include <d3d11.h>
 
 #include "vertex_data.h"
+#include "texture.h"
 
 namespace Rendering {
 namespace ShaderReflection {
@@ -26,21 +27,8 @@ struct InputDescription {
   D3D_REGISTER_COMPONENT_TYPE ComponentType = D3D_REGISTER_COMPONENT_UNKNOWN;
 };
 
-enum class TextureType {
-  UNKNOWN,
-  DIM_1,
-  DIM_1_ARRAY,
-  DIM_2,
-  DIM_2_ARRAY,
-  DIM_2_MULTI,
-  DIM_2_MULTI_ARRAY,
-  DIM_3,
-  CUBE,
-  CUBE_ARRAY
-};
-
 struct TexureDescription {
-  TexureDescription(const char* name, TextureType type, uint32_t samples, uint32_t channels, uint32_t bind_slot_start, uint32_t bind_slot_count)
+  TexureDescription(const char* name, Texture::Type type, uint32_t samples, uint32_t channels, uint32_t bind_slot_start, uint32_t bind_slot_count)
     : Name(name),
       Type(type),
       Samples(samples),
@@ -50,7 +38,7 @@ struct TexureDescription {
   }
 
   std::string Name = "";
-  TextureType Type;
+  Texture::Type Type;
   uint32_t Samples;
   uint32_t Channels;
   uint32_t BindSlotStart;
