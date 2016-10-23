@@ -24,7 +24,7 @@ struct PointLight {
 StructuredBuffer <PointLight> PointLights : POINT_LIGHT_BUFFER_REGISTER;
 
 Texture2D<float4> DiffuseTexture : DIFFUSE_TEXTURE_REGISTER;
-SamplerState LinearSampler;
+SamplerState LinearSampler : LINEAR_SAMPLER_REGISTER;
 
 float4 main(VertexShaderOutput input) : SV_TARGET {
   float3 n = normalize(input.Normal);

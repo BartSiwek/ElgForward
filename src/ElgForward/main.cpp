@@ -422,7 +422,7 @@ void UpdateFrameBuffers(Scene* scene, DirectXState* state) {
   }
 
   bool dir_update_ok = SendToGpu(scene->DirectionalLightsStructuredBuffer, state->device_context.Get());
-  if (dir_update_ok) {
+  if (!dir_update_ok) {
     DXFW_TRACE(__FILE__, __LINE__, false, "Error updating directional light buffer", "");
   }
 
