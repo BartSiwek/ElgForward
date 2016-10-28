@@ -13,6 +13,7 @@
 #include <wrl.h>
 #endif
 
+#include "core/assert.h"
 #include "core/filesystem.h"
 #include "dxfw/dxfw_wrapper.h"
 #include "dxfw/dxfw_helpers.h"

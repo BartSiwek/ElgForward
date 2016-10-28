@@ -24,6 +24,7 @@ set(TARGET_ASSETS_DIR "${ROOT_DIR}/assets")
 
 # Sources
 set(TARGET_SOURCES_CORE
+  ${TARGET_SOURCE_DIR}/core/assert.h
   ${TARGET_SOURCE_DIR}/core/buffer.h
   ${TARGET_SOURCE_DIR}/core/chaiscript_helpers.cpp
   ${TARGET_SOURCE_DIR}/core/chaiscript_helpers.h
