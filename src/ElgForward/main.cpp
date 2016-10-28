@@ -35,7 +35,7 @@
 
 using namespace Rendering;
 
-bool InitializeDeviceAndSwapChain(DirectXState* state) {
+void InitializeDeviceAndSwapChain(DirectXState* state) {
   // Device settings
   UINT create_device_flags = 0;
 #ifdef _DEBUG
@@ -95,18 +95,10 @@ bool InitializeDeviceAndSwapChain(DirectXState* state) {
     }
   }
 
-  if (FAILED(hr)) {
-    DXFW_DIRECTX_TRACE(__FILE__, __LINE__, true, hr);
-    return false;
-  }
+  ASSERT_HRESULT(hr);
 
   auto debug_result = state->device.As(&state->debug);
-if (FAILED(debug_result)) {
-    DXFW_DIRECTX_TRACE(__FILE__, __LINE__, true, hr);
-    return false;
-  }
-
-  return true;
+  ASSERT_HRESULT(debug_result);
 }
 
 bool InitializeRenderTarget(DirectXState* state, uint32_t width, uint32_t height) {
@@ -240,10 +232,7 @@ bool InitializeDirect3d11(DirectXState* state) {
   }
 
   // Create device
-  bool device_ok = InitializeDeviceAndSwapChain(state);
-  if (!device_ok) {
-    return false;
-  }
+  InitializeDeviceAndSwapChain(state);
 
   // Create RT
   bool rt_ok = InitializeRenderTarget(state, DefaultWidth, DefaultHeight);
