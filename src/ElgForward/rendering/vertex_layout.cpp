@@ -25,7 +25,7 @@ Handle Create(const std::vector<D3D11_INPUT_ELEMENT_DESC>& input_layout, ID3DBlo
 
   Microsoft::WRL::ComPtr<ID3D11InputLayout> vertex_layout;
   auto create_input_layout_result = device->CreateInputLayout(&input_layout[0],
-                                                              input_layout.size(),
+                                                              static_cast<UINT>(input_layout.size()),
                                                               shader_blob->GetBufferPointer(),
                                                               shader_blob->GetBufferSize(),
                                                               vertex_layout.GetAddressOf());

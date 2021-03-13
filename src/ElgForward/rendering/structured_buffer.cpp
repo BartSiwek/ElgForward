@@ -26,12 +26,12 @@ public:
 
   bool Initialize(void* initial_data, size_t initial_size, ID3D11Device* device) {
     D3D11_BUFFER_DESC desc;
-    desc.ByteWidth = m_element_size_ * m_max_size_;
+    desc.ByteWidth = static_cast<UINT>(m_element_size_ * m_max_size_);
     desc.Usage = D3D11_USAGE_DYNAMIC;
     desc.BindFlags = D3D11_BIND_SHADER_RESOURCE;
     desc.CPUAccessFlags = D3D11_CPU_ACCESS_WRITE;
     desc.MiscFlags = D3D11_RESOURCE_MISC_BUFFER_STRUCTURED;
-    desc.StructureByteStride = m_element_size_;
+    desc.StructureByteStride = static_cast<UINT>(m_element_size_);
 
     HRESULT cb_result;
     if (initial_data != nullptr && initial_size > 0) {
@@ -57,7 +57,7 @@ public:
     srv_desc.Format = DXGI_FORMAT_UNKNOWN;
     srv_desc.ViewDimension = D3D11_SRV_DIMENSION_BUFFER;
     srv_desc.Buffer.FirstElement = 0;
-    srv_desc.Buffer.NumElements = m_max_size_;
+    srv_desc.Buffer.NumElements = static_cast<UINT>(m_max_size_);
 
     auto srv_result = device->CreateShaderResourceView(m_gpu_buffer_.Get(), &srv_desc, m_srv_.GetAddressOf());
     if (FAILED(srv_result)) {

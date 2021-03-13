@@ -418,9 +418,9 @@ void UpdateFrameBuffers(Scene* scene, DirectXState* state) {
 
   // Light data buffer
   auto buffer = ConstantBuffer::GetCpuBuffer(scene->PerFrameConstantBuffer);
-  buffer->PointLightCount = GetCurrentSize(scene->PointLightsStructuredBuffer);
-  buffer->SpotLightCount = GetCurrentSize(scene->SpotLightsStructuredBuffer);
-  buffer->DirectionalLightCount = GetCurrentSize(scene->DirectionalLightsStructuredBuffer);
+  buffer->PointLightCount = static_cast<int>(GetCurrentSize(scene->PointLightsStructuredBuffer));
+  buffer->SpotLightCount = static_cast<int>(GetCurrentSize(scene->SpotLightsStructuredBuffer));
+  buffer->DirectionalLightCount = static_cast<int>(GetCurrentSize(scene->DirectionalLightsStructuredBuffer));
 
   bool update_ok = SendToGpu(scene->PerFrameConstantBuffer, state->device_context.Get());
   if (!update_ok) {

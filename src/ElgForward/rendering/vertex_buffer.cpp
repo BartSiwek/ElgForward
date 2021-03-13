@@ -24,7 +24,7 @@ Handle Create(size_t hash, const void* data, size_t data_size, ID3D11Device* dev
   ZeroMemory(&bufferDesc, sizeof(bufferDesc));
 
   bufferDesc.Usage = D3D11_USAGE_DEFAULT;
-  bufferDesc.ByteWidth = data_size;
+  bufferDesc.ByteWidth = static_cast<UINT>(data_size);
   bufferDesc.BindFlags = D3D11_BIND_VERTEX_BUFFER;
   bufferDesc.CPUAccessFlags = 0;
   bufferDesc.MiscFlags = 0;

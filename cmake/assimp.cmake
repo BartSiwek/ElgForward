@@ -25,32 +25,17 @@ if(NOT DEFINED ASSIMP_CONFIGURED)
 
 	# Figure out the lib name (from assimp's CMakeLists.txt)
 	if( MSVC )
-		if( MSVC70 OR MSVC71 )
-			set(MSVC_PREFIX "vc70")
-		elseif( MSVC80 )
-			set(MSVC_PREFIX "vc80")
-		elseif( MSVC90 )
-			set(MSVC_PREFIX "vc90")
-		elseif( MSVC10 )
-			set(MSVC_PREFIX "vc100")
-		elseif( MSVC11 )
-			set(MSVC_PREFIX "vc110")
-		elseif( MSVC12 )
-			set(MSVC_PREFIX "vc120")
-		elseif( MSVC14 )
-			set(MSVC_PREFIX "vc140")
-		else()
-			set(MSVC_PREFIX "vc150")
-		endif()
-		set(LIBRARY_SUFFIX "${ASSIMP_LIBRARY_SUFFIX}-${MSVC_PREFIX}-mt" CACHE STRING "the suffix for the assimp windows library")
+		set(LIBRARY_SUFFIX "-vc${MSVC_TOOLSET_VERSION}-mt" CACHE STRING "the suffix for the assimp windows library")
 	endif()
 
 	# Set libassimp properties
 	set_target_properties(libassimp PROPERTIES
-	  "IMPORTED_IMPLIB" "${binary_dir}/code/${CMAKE_CFG_INTDIR}/assimp${LIBRARY_SUFFIX}.lib"
-	  "IMPORTED_LOCATION" "${binary_dir}/code/${CMAKE_CFG_INTDIR}/assimp${LIBRARY_SUFFIX}.dll"
+	  "IMPORTED_IMPLIB" "${binary_dir}/lib/${CMAKE_CFG_INTDIR}/assimp${LIBRARY_SUFFIX}.lib"
+	  "IMPORTED_IMPLIB_DEBUG" "${binary_dir}/lib/${CMAKE_CFG_INTDIR}/assimp${LIBRARY_SUFFIX}d.lib"
+	  "IMPORTED_LOCATION" "${binary_dir}/bin/${CMAKE_CFG_INTDIR}/assimp${LIBRARY_SUFFIX}.dll"
+	  "IMPORTED_LOCATION_DEBUG" "${binary_dir}/bin/${CMAKE_CFG_INTDIR}/assimp${LIBRARY_SUFFIX}d.dll"
 	)
-	include_directories("${source_dir}/include")
+	include_directories("${source_dir}/include" "${binary_dir}/include")
 
 	set(ASSIMP_CONFIGURED TRUE)
 endif()

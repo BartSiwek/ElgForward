@@ -16,7 +16,7 @@ namespace Texture {
 
 class Storage {
  public:
-  Storage(DXGI_FORMAT format, size_t samples, Type type, size_t slot_count)
+  Storage(DXGI_FORMAT format, uint32_t samples, Type type, size_t slot_count)
       : m_format_(format),
         m_samples_(samples),
         m_type_(type),
@@ -35,7 +35,7 @@ class Storage {
     return m_format_;
   }
 
-  size_t GetSamples() const {
+  uint32_t GetSamples() const {
     return m_samples_;
   }
 
@@ -65,7 +65,7 @@ class Storage {
 
  private:
   DXGI_FORMAT m_format_ = DXGI_FORMAT_UNKNOWN;
-  size_t m_samples_ = static_cast<size_t>(-1);
+  uint32_t m_samples_ = static_cast<uint32_t>(-1);
   Type m_type_ = Type::UNKNOWN;
   size_t m_slot_count_ = 1;
   Microsoft::WRL::ComPtr<ID3D11Texture2D> m_texture_ = nullptr;
@@ -106,7 +106,7 @@ Handle Create(size_t name_hash, const std::vector<ImageData>& data, ID3D11Device
   D3D11_TEXTURE2D_DESC desc = {};
   desc.Width = width;
   desc.Height = height;
-  desc.MipLevels = initial_data.size();
+  desc.MipLevels = static_cast<UINT>(initial_data.size());
   desc.ArraySize = 1;
   desc.Format = format;
   desc.SampleDesc.Count = 1;
@@ -115,7 +115,7 @@ Handle Create(size_t name_hash, const std::vector<ImageData>& data, ID3D11Device
   desc.CPUAccessFlags = 0;
   desc.MiscFlags = 0;
 
-  Storage new_storage(format, static_cast<size_t>(-1), Type::DIM_2, 1);
+  Storage new_storage(format, static_cast<uint32_t>(-1), Type::DIM_2, 1);
   auto texture_result = device->CreateTexture2D(&desc, &initial_data[0], new_storage.GetTexture().GetAddressOf());
   if (FAILED(texture_result)) {
     DXFW_DIRECTX_TRACE(__FILE__, __LINE__, true, texture_result);

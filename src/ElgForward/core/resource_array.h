@@ -54,7 +54,7 @@ class ResourceArray {
 
     auto generation = m_array_[index].Generation;
 
-    return { index, generation };
+    return { static_cast<HandleType::StorageType>(index), static_cast<HandleType::StorageType>(generation) };
   }
 
   bool IsActive(HandleType handle) const {

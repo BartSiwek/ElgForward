@@ -2,7 +2,7 @@
 
 #pragma warning(push)
 #pragma warning(disable: 4706)
-#include <json.hpp>
+#include <nlohmann/json.hpp>
 #pragma warning(pop)
 
 #include <dxfw/dxfw.h>
@@ -193,7 +193,7 @@ bool ReadLightsFromFile(const filesystem::path& lights_path,
 
   bool load_ok = Core::ReadJsonFile(lights_path, &json_lights);
   if (!load_ok) {
-    DXFW_TRACE(__FILE__, __LINE__, false, "Error reading lights file from %s", lights_path.string());
+    DXFW_TRACE(__FILE__, __LINE__, false, "Error reading lights file from %s", lights_path.string().c_str());
     return false;
   }
 

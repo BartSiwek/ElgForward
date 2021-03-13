@@ -32,7 +32,7 @@ struct GpuStorage {
 
   bool Initialize(size_t size, void* initial_data, ID3D11Device* device) {
     D3D11_BUFFER_DESC desc;
-    desc.ByteWidth = size;
+    desc.ByteWidth = static_cast<UINT>(size);
     desc.Usage = D3D11_USAGE_DYNAMIC;
     desc.BindFlags = D3D11_BIND_CONSTANT_BUFFER;
     desc.CPUAccessFlags = D3D11_CPU_ACCESS_WRITE;

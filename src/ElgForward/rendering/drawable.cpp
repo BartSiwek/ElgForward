@@ -8,7 +8,7 @@ namespace Rendering {
 int32_t GetVertexBufferIndex(VertexDataChannel channel, const Mesh::Mesh& mesh) {
   auto it = std::find(std::begin(mesh.VertexDataChannels), std::end(mesh.VertexDataChannels), channel);
   if (it != std::end(mesh.VertexDataChannels)) {
-    int32_t index = std::distance(std::begin(mesh.VertexDataChannels), it);
+    int32_t index = static_cast<int32_t>(std::distance(std::begin(mesh.VertexDataChannels), it));
     return index;
   }
   return -1;

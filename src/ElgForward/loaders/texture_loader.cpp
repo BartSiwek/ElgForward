@@ -4,7 +4,7 @@
 
 #pragma warning(push)
 #pragma warning(disable: 4706)
-#include <json.hpp>
+#include <nlohmann/json.hpp>
 #pragma warning(pop)
 
 #pragma warning(push)
@@ -61,7 +61,7 @@ bool ReadWithStbi(const std::string& path, const filesystem::path& base_path,
     return false;
   }
 
-  data->emplace_back(current_image_width, current_image_height, current_image_components, dxgi_format, image);
+  data->emplace_back(current_image_width, current_image_height, static_cast<uint8_t>(current_image_components), dxgi_format, image);
 
   return true;
 }
@@ -143,7 +143,7 @@ bool ReadTexturesFromFile(const filesystem::path& lights_path, const filesystem:
 
   bool load_ok = Core::ReadJsonFile(lights_path, &json_textures);
   if (!load_ok) {
-    DXFW_TRACE(__FILE__, __LINE__, false, "Error reading textures file from %s", lights_path.string());
+    DXFW_TRACE(__FILE__, __LINE__, false, "Error reading textures file from %s", lights_path.string().c_str());
     return false;
   }
 

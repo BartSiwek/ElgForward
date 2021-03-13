@@ -2,6 +2,12 @@ cmake_minimum_required(VERSION 3.4)
 
 project(ElgForward VERSION 0.1 LANGUAGES CXX)
 
+set (CMAKE_CXX_STANDARD 17)
+
+if (MSVC)
+  add_compile_options(/bigobj)
+endif()
+
 include(CheckIncludeFiles)
 
 set(ROOT_DIR "${CMAKE_CURRENT_SOURCE_DIR}")

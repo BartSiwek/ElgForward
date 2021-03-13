@@ -169,3 +169,5 @@ target_link_libraries(${TARGET_NAME} libdxfw libassimp libjson libchaiscript d3d
 
 set_target_properties(${TARGET_NAME} PROPERTIES COMPILE_DEFINITIONS "_UNICODE;UNICODE;NOMINMAX")
 set_target_properties(${TARGET_NAME} PROPERTIES LINK_FLAGS "/subsystem:windows /ENTRY:mainCRTStartup")
+
+add_custom_command(TARGET ElgForward POST_BUILD COMMAND ${CMAKE_COMMAND} -E copy_if_different $<TARGET_FILE:libassimp> $<TARGET_FILE_DIR:ElgForward>)

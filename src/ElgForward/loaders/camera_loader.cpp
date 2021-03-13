@@ -2,7 +2,7 @@
 
 #pragma warning(push)
 #pragma warning(disable: 4706)
-#include <json.hpp>
+#include <nlohmann/json.hpp>
 #pragma warning(pop)
 
 #include "core/filesystem.h"
@@ -86,10 +86,10 @@ bool ReadCamera(const nlohmann::json& json_camera, const filesystem::path& base_
 
   const auto& json_camera_script = json_camera["script"];
   if (json_camera_script.is_string()) {
-    auto path = base_path / json_camera_script;
+    auto path = base_path / json_camera_script.get<std::string>();
     bool init_ok = script->init(path, camera, lens);
     if (!init_ok) {
-      DXFW_TRACE(__FILE__, __LINE__, false, "Error initializing camera script from file %S", path.string());
+      DXFW_TRACE(__FILE__, __LINE__, false, "Error initializing camera script from file %S", path.string().c_str());
     }
   }
 

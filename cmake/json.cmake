@@ -9,6 +9,7 @@ if(NOT DEFINED JSON_CONFIGURED)
 	  GIT_TAG master
 	  PREFIX ${CMAKE_CURRENT_BINARY_DIR}/json
 	  INSTALL_COMMAND ""
+	  CMAKE_ARGS -DJSON_BuildTests=OFF
 	)
 
 	# Get the binary and source dirs
@@ -19,7 +20,7 @@ if(NOT DEFINED JSON_CONFIGURED)
 	add_dependencies(libjson json)
 
 	# Set libjson properties
-	include_directories("${source_dir}/src")
+	include_directories("${source_dir}/include")
 
 	set(JSON_CONFIGURED TRUE)
 endif()

@@ -16,7 +16,7 @@
 
 #pragma warning(push)
 #pragma warning(disable: 4706)
-#include <json.hpp>
+#include <nlohmann/json.hpp>
 #pragma warning(pop)
 
 #include <dxfw/dxfw.h>
@@ -76,7 +76,7 @@ bool AddVertexBufferToMesh(size_t hash, const std::vector<T>& data, DXGI_FORMAT 
 
   mesh->VertexBuffers.emplace_back(vb_handle);
   mesh->VertexBufferFormats.emplace_back(format);
-  mesh->VertexBufferStrides.emplace_back(sizeof(T));
+  mesh->VertexBufferStrides.emplace_back(static_cast<uint32_t>(sizeof(T)));
   mesh->VertexDataChannels.emplace_back(channel);
 
   return true;

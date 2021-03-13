@@ -58,7 +58,7 @@ class CameraScript {
    }
 
  private:
-  chaiscript::ChaiScript m_script_ = { chaiscript::Std_Lib::library() };
+  chaiscript::ChaiScript m_script_ = {};
 
   std::function<void(float)> m_update_fun_ = {};
 };

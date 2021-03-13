@@ -22,7 +22,7 @@ Core::ResourceArray<Handle, ShaderData, 255> g_pixel_shader_storage_;
 Core::HandleCache<size_t, Handle> g_pixel_shader_cache_;
 
 Handle Create(const filesystem::path& path, ID3D11Device* device) {
-  std::hash<filesystem::path> hasher;
+  std::hash<std::filesystem::path> hasher;
   size_t path_hash = hasher(path);
 
   auto cached_handle = g_pixel_shader_cache_.Get(path_hash);
